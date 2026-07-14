@@ -1,0 +1,220 @@
+MODEL_EXECUTION_POLICY.md – Patch v1.1
+
+Änderung 1 – Modellklassen ersetzen
+
+Die Tabelle “Verbindliche Modellklassen” wird vollständig ersetzt durch:
+
+Modellklasse	Bevorzugte Verwendung
+LOCAL_FAST	lokale Routineaufgaben
+LOCAL_CODER	lokales Coding
+FLASH_FREE	kostenlose Cloud-Routineaufgaben
+LUNA	leichte Cloud-Aufgaben
+TERRA	Standardmodell für anspruchsvolle Entwicklungsarbeit
+SOL	Eskalationsmodell
+
+⸻
+
+Änderung 2 – Zielzuordnung ersetzen
+
+LOCAL_FAST
+- qwen3.5:4b
+- qwen2.5:3b
+- vergleichbare lokale General-Purpose-Modelle
+LOCAL_CODER
+- qwen2.5-coder:7b
+- vergleichbare lokale Coding-Modelle
+FLASH_FREE
+- deepseek-v4-flash-free
+- deepseek-v4-flash (Free Provider)
+- vergleichbare kostenlose Flash-Endpunkte
+LUNA
+- jedes von OpenAI als Luna bezeichnete Modell
+TERRA
+- jedes von OpenAI als Terra bezeichnete Modell
+- deepseek-v4-pro
+SOL
+- jedes von OpenAI als Sol bezeichnete Modell
+
+Die Zuordnung erfolgt über den tatsächlichen Modellnamen oder Provider-Metadaten. DeepSeek V4 Flash und V4 Pro unterstützen beide Agenten-Workflows, Tool-Calls und einen Kontext von bis zu 1 Mio. Tokens.(api-docs.deepseek.com)
+
+⸻
+
+Änderung 3 – Neuer Abschnitt 3.3 FLASH_FREE
+
+Einfügen unmittelbar nach LOCAL_CODER.
+
+3.3 FLASH_FREE
+
+FLASH_FREE ist das bevorzugte kostenlose Cloud-Modell.
+
+Standard für:
+
+* Repository scannen
+* Codebasis analysieren
+* Logdateien lesen
+* Ticketanalyse
+* Zusammenfassungen
+* Brainstorming
+* Dokumentation
+* Commit Messages
+* Changelogs
+* erste Fehlersuche
+* Exploration
+* Voranalyse
+* Recherche innerhalb des Projekts
+* Klassifikation
+* einfache Refactorings
+* Generierung kleiner Hilfsfunktionen
+
+FLASH_FREE darf verwendet werden, wenn:
+
+* keine tiefgreifende Architekturentscheidung getroffen wird,
+* kein sicherheitskritischer Code geändert wird,
+* keine umfangreiche Migration erfolgt,
+* keine komplexe systemübergreifende Analyse erforderlich ist.
+
+FLASH_FREE ist das bevorzugte Cloud-Modell, sofern seine Fähigkeiten für die Aufgabe ausreichen.
+
+⸻
+
+Änderung 4 – Abschnitt LUNA anpassen
+
+LUNA wird geändert zu:
+
+LUNA dient als allgemeines Cloud-Modell.
+
+Wenn FLASH_FREE die Aufgabe erfüllen kann, ist FLASH_FREE vorzuziehen.
+
+LUNA wird verwendet, wenn:
+
+* FLASH_FREE qualitativ nicht ausreicht,
+* ein OpenAI-Modell ausdrücklich gewünscht ist,
+* spezifische OpenAI-Funktionen benötigt werden.
+
+⸻
+
+Änderung 5 – Abschnitt TERRA ersetzen
+
+TERRA ist das Standardmodell für anspruchsvolle Entwicklungsarbeit.
+
+Zulässige Modelle:
+
+* OpenAI Terra
+* DeepSeek V4 Pro
+
+Beide Modelle gelten innerhalb dieser Policy als gleichwertige TERRA-Klasse.
+
+Verwendung für:
+
+* Architektur
+* größere Features
+* API-Design
+* komplexe Refactorings
+* Reviews
+* schwierige Debugging-Aufgaben
+* systemübergreifende Analyse
+* Implementierungsplanung
+* technische Konzepte
+
+DeepSeek V4 Pro ist für Agentic Coding optimiert und stellt gemeinsam mit V4 Flash Tool-Calling sowie einen Kontext von bis zu 1 Mio. Tokens bereit.(api-docs.deepseek.com)
+
+⸻
+
+Änderung 6 – Abschnitt SOL ersetzen
+
+Vor jeder Verwendung von SOL MUSS Slarti prüfen:
+
+1. Kann LOCAL_CODER die Aufgabe erledigen?
+2. Kann FLASH_FREE die Aufgabe erledigen?
+3. Kann LUNA die Aufgabe erledigen?
+4. Kann TERRA (OpenAI Terra oder DeepSeek V4 Pro) die Aufgabe erledigen?
+
+Nur wenn alle vorherigen Optionen ausscheiden oder bereits ernsthaft versucht wurden, darf SOL vorgeschlagen werden.
+
+⸻
+
+Änderung 7 – Neue Prioritätsreihenfolge
+
+Neue verbindliche Reihenfolge:
+
+1. LOCAL_CODER
+2. LOCAL_FAST
+3. FLASH_FREE
+4. LUNA
+5. TERRA
+6. SOL
+
+Slarti muss immer das niedrigste geeignete Modell wählen.
+
+Ein Überspringen mehrerer Klassen ist nur zulässig, wenn die Aufgabenklassifikation dies eindeutig rechtfertigt.
+
+⸻
+
+Änderung 8 – Neue Eskalationsregel
+
+Vor jeder Eskalation nach SOL muss Slarti zusätzlich dokumentieren:
+
+* warum FLASH_FREE ungeeignet war,
+* warum LUNA ungeeignet war,
+* warum TERRA (OpenAI Terra oder DeepSeek V4 Pro) nicht ausreichte,
+* welche konkreten Lösungsversuche unternommen wurden.
+
+Fehlt diese Dokumentation, ist die Eskalation nach SOL unzulässig.
+
+⸻
+
+Änderung 9 – model-policy.yaml ersetzen
+
+version: 1.1
+default_cloud_model: FLASH_FREE
+default_local_coding_model: LOCAL_CODER
+default_local_general_model: LOCAL_FAST
+classes:
+  LOCAL_FAST:
+    patterns:
+      - "qwen3.5:4b"
+      - "qwen2.5:3b"
+  LOCAL_CODER:
+    patterns:
+      - "qwen2.5-coder:7b"
+  FLASH_FREE:
+    patterns:
+      - "deepseek-v4-flash-free"
+      - "deepseek-v4-flash"
+  LUNA:
+    patterns:
+      - "luna"
+  TERRA:
+    patterns:
+      - "terra"
+      - "deepseek-v4-pro"
+  SOL:
+    patterns:
+      - "sol"
+rules:
+  documentation: FLASH_FREE
+  summarization: FLASH_FREE
+  repository_scan: FLASH_FREE
+  log_analysis: FLASH_FREE
+  ticket_management: FLASH_FREE
+  brainstorming: FLASH_FREE
+  bash: LOCAL_CODER
+  python_utility: LOCAL_CODER
+  docker: LOCAL_CODER
+  ci_cd: LOCAL_CODER
+  tests: LOCAL_CODER
+  small_bugfix: LOCAL_CODER
+  medium_implementation: LOCAL_CODER
+  architecture: TERRA
+  api_design: TERRA
+  large_feature: TERRA
+  migration_planning: TERRA
+  complex_debugging: TERRA
+  security_review: TERRA
+  blocked_after_terra: SOL
+  critical_recovery: SOL
+confirmation:
+  required_on_any_mismatch: true
+  explicit_sol_confirmation: true
+  unknown_model_is_blocking: true
+  confirmation_scope: task
