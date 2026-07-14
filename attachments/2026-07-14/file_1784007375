@@ -1,0 +1,246 @@
+MODEL_EXECUTION_POLICY.md – Patch v1.2
+
+Zweck
+
+Dieser Patch erweitert die bestehende Policy um lokal verfügbare Ollama-Modelle, die über OpenCode direkt erreichbar sind.
+
+Lokale Modelle sind gleichberechtigte Modelle innerhalb der Modellhierarchie und stellen die bevorzugte Ausführungsumgebung dar, sofern ihre Fähigkeiten für die jeweilige Aufgabe ausreichen.
+
+⸻
+
+Änderung 1 – Local First Principle
+
+Vor Kapitel “Verbindliche Modellklassen” einfügen.
+
+Local First Principle
+
+Lokale Modelle besitzen grundsätzlich Vorrang vor Cloud-Modellen.
+
+Slarti SHALL immer zuerst prüfen, ob die Aufgabe mit einem lokalen Modell erfolgreich bearbeitet werden kann.
+
+Cloud-Modelle stellen eine Eskalationsstufe dar und sind nicht die Standardwahl.
+
+Ein Wechsel auf ein Cloud-Modell muss technisch oder fachlich begründet werden.
+
+⸻
+
+Änderung 2 – LOCAL_FAST ersetzen
+
+LOCAL_FAST wird ersetzt durch:
+
+LOCAL_FAST
+
+Zugelassene Modelle
+
+* qwen2.5:0.5b
+* qwen2.5:3b
+* qwen3.5:4b
+* llama3.1
+
+Standardaufgaben
+
+* Dokumentation
+* Zusammenfassungen
+* Ticketpflege
+* Repository durchsuchen
+* Commit Messages
+* Changelogs
+* Markdown
+* Brainstorming
+* Klassifikation
+* Log-Zusammenfassungen
+* einfache Shell-Erklärungen
+* kleinere Textarbeiten
+
+LOCAL_FAST ist das bevorzugte Modell für alle einfachen Routinearbeiten.
+
+⸻
+
+Änderung 3 – LOCAL_CODER ersetzen
+
+LOCAL_CODER wird ersetzt durch:
+
+LOCAL_CODER
+
+Zugelassene Modelle
+
+* qwen2.5-coder:7b
+
+Standardaufgaben
+
+* Bash
+* Python
+* Docker
+* Docker Compose
+* YAML
+* JSON
+* CI/CD
+* Git
+* Tests
+* Bugfixes
+* Refactoring
+* kleine und mittlere Implementierungen
+* Tooling
+
+LOCAL_CODER ist das Standardmodell für nahezu sämtliche lokale Entwicklungsarbeiten.
+
+⸻
+
+Änderung 4 – Modellzuordnung erweitern
+
+Die Modellklassifizierung wird ergänzt.
+
+Modell	Klasse
+qwen2.5:0.5b	LOCAL_FAST
+qwen2.5:3b	LOCAL_FAST
+qwen3.5:4b	LOCAL_FAST
+llama3.1	LOCAL_FAST
+qwen2.5-coder:7b	LOCAL_CODER
+deepseek-v4-flash-free	FLASH_FREE
+deepseek-v4-pro	TERRA
+Luna	LUNA
+Terra	TERRA
+Sol	SOL
+
+Providerpräfixe, Versionssuffixe und Aliasnamen ändern die Modellklasse nicht.
+
+Beispiele:
+
+* ollama/qwen2.5-coder:7b
+* ollama:qwen2.5-coder
+* qwen2.5-coder
+
+werden sämtlich der Klasse LOCAL_CODER zugeordnet.
+
+⸻
+
+Änderung 5 – Prioritätsreihenfolge ersetzen
+
+Die verbindliche Prioritätsreihenfolge lautet:
+
+1. LOCAL_CODER
+2. LOCAL_FAST
+3. FLASH_FREE
+4. LUNA
+5. TERRA
+6. SOL
+
+Slarti SHALL immer die niedrigste Modellklasse verwenden, welche die Aufgabe voraussichtlich erfolgreich lösen kann.
+
+⸻
+
+Änderung 6 – Eskalationsmatrix ergänzen
+
+Die Eskalationsreihenfolge lautet:
+
+LOCAL_FAST
+
+↓
+
+LOCAL_CODER
+
+↓
+
+FLASH_FREE
+
+↓
+
+LUNA
+
+↓
+
+TERRA
+
+↓
+
+SOL
+
+Das Überspringen einer oder mehrerer Eskalationsstufen ist nur zulässig, wenn Slarti die technische Begründung dokumentiert.
+
+⸻
+
+Änderung 7 – Pflichtprüfung erweitern
+
+Vor jeder Nutzung eines Cloud-Modells MUSS Slarti zusätzlich prüfen:
+
+1. Kann LOCAL_FAST diese Aufgabe lösen?
+
+Falls JA:
+
+→ LOCAL_FAST verwenden.
+
+Falls NEIN:
+
+2. Kann LOCAL_CODER diese Aufgabe lösen?
+
+Falls JA:
+
+→ LOCAL_CODER verwenden.
+
+Falls NEIN:
+
+3. Kann FLASH_FREE diese Aufgabe lösen?
+
+Erst wenn sämtliche niedrigeren Modellklassen ausscheiden, darf die nächsthöhere Klasse verwendet werden.
+
+⸻
+
+Änderung 8 – Neue Warnung
+
+Falls Slarti ein Cloud-Modell auswählt, obwohl ein lokales Modell laut Policy ausreichend erscheint, muss folgende Warnung ausgegeben werden:
+
+MODELLABWEICHUNG
+
+Ein lokales Modell könnte diese Aufgabe voraussichtlich ausreichend bearbeiten.
+
+Empfohlenes Modell:
+
+<lokales Modell>
+
+Aktuelles Modell:
+
+<Cloudmodell>
+
+Die Nutzung des Cloud-Modells verbraucht unnötig Kontingent.
+
+Bitte bestätigen ausdrücklich:
+
+“Cloudmodell trotzdem verwenden.”
+
+Vor Eingang dieser Bestätigung dürfen keine Schreiboperationen ausgeführt werden.
+
+⸻
+
+Änderung 9 – YAML erweitern
+
+Die Datei model-policy.yaml wird wie folgt ergänzt:
+
+classes:
+  LOCAL_FAST:
+    patterns:
+      - "qwen2.5:0.5b"
+      - "qwen2.5:3b"
+      - "qwen3.5:4b"
+      - "llama3.1"
+  LOCAL_CODER:
+    patterns:
+      - "qwen2.5-coder:7b"
+priority:
+  - LOCAL_CODER
+  - LOCAL_FAST
+  - FLASH_FREE
+  - LUNA
+  - TERRA
+  - SOL
+
+⸻
+
+Änderung 10 – OpenCode-Hinweis
+
+Slarti SHALL lokale Ollama-Modelle und Cloud-Modelle gleichwertig behandeln.
+
+Die Herkunft eines Modells (Ollama, OpenAI, DeepSeek oder anderer Provider) darf die Klassifizierung nicht beeinflussen.
+
+Entscheidend ist ausschließlich die Modellklasse gemäß dieser Policy.
+
+Lokale Ollama-Modelle gelten als vollständig unterstützte Ausführungsmodelle innerhalb von OpenCode.
