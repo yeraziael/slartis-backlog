@@ -1,1 +1,45 @@
-so, hier haben wir eine neue Arbeitsweise. hier werden wir für jedes EPIC einen Ordner anlegen in dem wir dann in Dateien statt in Issues ausplanen was Slarti zu tun hat. Slarti wird dieses Repo entweder direkt oder via repo mirror auf dem gitea-Server auslesen und sich die Issues entsprechend selbst bauen. Es kommt mir darauf an dass die Ordnerstruktur EPIC -> Milestone -> Task widerspiegelt. Jeder Milestone bekommt außerdem ein prerequisites-file das die Voraussetzungen für den Beginn des Milestones auflistet (tests die passen müssen), EPIC, Milestone und Task sind außerdem Ordner in denen sich die Dateien context, prerequisites, tests, dod und contract befinden (baue das ggf. noch aus). Alle contracts müssen so ausdefiniert sein dass deep seek v4 flash free sie erledigen kann, der Kontext muss minimal sein, jede task muss mit einem branch out bgeinnen und mit einem pr enden. die CICD - pipeline-Anteile werden für in EPIC definiert, in den Meilensteinen verfeinert und in den Tasks ausdefiniert. klar soweit? Stelle Fragen zur Präzisierung, die Handlungsanweisung für dich schreibst du wie einen SKILL in das slartiBacklog-REPO, du rufst das dann auf wenn wir ein EPIC anlegen und du es ausplanen musst.
+# Slarti's Backlog
+
+> Repository zur strukturierten Ausplanung von Entwicklungsarbeit vor der Implementierung.
+
+## Ziel
+
+Dieses Repository dient **nicht** als klassisches Issue-Tracking. Stattdessen werden Epics als Verzeichnisstruktur modelliert und so detailliert vorbereitet, dass Slarti daraus eigenständig Gitea-Issues und Branches erzeugen kann.
+
+```
+EPIC/
+├── context.md
+├── contract.md
+├── prerequisites.md
+├── tests.md
+├── dod.md
+├── ci-cd.md
+└── milestones/
+    └── M01/
+        ├── context.md
+        ├── prerequisites.md
+        ├── contract.md
+        ├── tests.md
+        ├── dod.md
+        └── tasks/
+            └── T001/
+                ├── context.md
+                ├── contract.md
+                ├── prerequisites.md
+                ├── tests.md
+                ├── dod.md
+                └── implementation.md
+```
+
+## Engineering-Regeln
+
+- Ein Epic definiert Architektur und Gesamtziel.
+- Jeder Milestone besitzt explizite Voraussetzungen (`prerequisites.md`).
+- Jede Task startet mit einem Branch und endet mit einem Pull Request.
+- CI/CD-Anforderungen werden auf Epic-Ebene definiert, in Milestones konkretisiert und in Tasks vollständig ausformuliert.
+- Jeder Contract muss so präzise sein, dass ein leistungsfähiger Coding-Agent ihn ohne zusätzliche Interpretation umsetzen kann.
+- Kontext wird so klein wie möglich gehalten und nur dort wiederholt, wo er für die jeweilige Ebene erforderlich ist.
+
+## Rolle dieses Repositories
+
+Dieses Repository ist die gemeinsame Planungsgrundlage zwischen Operator, ChatGPT und Slarti. ChatGPT plant und strukturiert die Umsetzung, Slarti übernimmt daraus die technische Implementierung und überführt die Ergebnisse in das operative Gitea-Backlog.
