@@ -43,3 +43,10 @@ EPIC/
 ## Rolle dieses Repositories
 
 Dieses Repository ist die gemeinsame Planungsgrundlage zwischen Operator, ChatGPT und Slarti. ChatGPT plant und strukturiert die Umsetzung, Slarti übernimmt daraus die technische Implementierung und überführt die Ergebnisse in das operative Gitea-Backlog.
+
+## Gitea-Kontext
+
+`context.md` dokumentiert die Gitea-Pfade, Issue-Typen und Slartis Konvention
+fuer Epics und ausfuehrbare Arbeitspakete. Der einmalige, oeffentlich bereinigte
+Snapshot aller Backlog-Issues liegt unter `GITEA/`; Synchronisationsskripte sind bewusst
+nicht Bestandteil dieses Stands.
