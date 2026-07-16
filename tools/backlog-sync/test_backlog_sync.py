@@ -1,6 +1,7 @@
 import importlib.util
 import json
 import pathlib
+import sys
 import tempfile
 import unittest
 
@@ -8,6 +9,7 @@ MODULE_PATH = pathlib.Path(__file__).with_name("backlog_sync.py")
 SPEC = importlib.util.spec_from_file_location("backlog_sync", MODULE_PATH)
 assert SPEC and SPEC.loader
 sync = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = sync
 SPEC.loader.exec_module(sync)
 
 
