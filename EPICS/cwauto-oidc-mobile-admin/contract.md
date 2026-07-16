@@ -5,4 +5,5 @@
 3. Der Fork nutzt vorhandene CWA-OIDC-Funktionen, sofern sie die Anforderungen erfuellen; nur fehlende oder fehlerhafte Teile werden erweitert.
 4. OIDC ist fuer CWA via Konfiguration aktivierbar, ohne Secrets im Repository.
 5. Die mobile Administration ist fuer definierte, reproduzierte Fehler auf aktuellen iOS-Safari-Ansichten repariert.
-6. Upstream-Updates bleiben nachvollziehbar integrierbar.
+6. Der vorhandene REST-API-Funktionsumfang ist analysiert; fehlende, begruendete Funktionen werden als versionierte und abgesicherte API im Fork ergaenzt.
+7. Upstream-Updates bleiben nachvollziehbar integrierbar.
