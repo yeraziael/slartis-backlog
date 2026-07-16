@@ -1,0 +1,20 @@
+[github]
+repo_root = "."
+epics_dir = "EPICS"
+state_file = ".sync/backlog-sync-state.json"
+lock_file = ".sync/backlog-sync.lock"
+commit_message = "status: synchronize Gitea backlog"
+
+[gitea]
+base_url = "https://gitea.hl.maier.wtf"
+owner = "Homelab"
+repository = "slarti-backlog"
+token_env = "GITEA_TOKEN"
+epic_label = "type/epic"
+managed_label = "sync/managed"
+blocked_label = "status/blocked"
+
+[sync]
+request_timeout_seconds = 20
+managed_marker_start = "<!-- backlog-sync:managed:start -->"
+managed_marker_end = "<!-- backlog-sync:managed:end -->"
