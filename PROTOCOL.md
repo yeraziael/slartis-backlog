@@ -12,6 +12,7 @@ ChatGPT
   -> Gitea-Mirror
   -> Slarti-Importer
   -> internes Gitea-Backlog / Branch / Implementierung
+  -> slartis-backlog/FEEDBACK/architecture
   -> homelab-dashboard/input
   -> ChatGPT Review und Sachstand
 ```
@@ -55,7 +56,27 @@ EPICS/<epic-id>/
 6. Aenderungen an importierten Tasks muessen als Revision erkannt und kontrolliert synchronisiert werden.
 7. Contracts muessen so klein und eindeutig sein, dass DeepSeek v4 Flash Free sie ohne zusaetzliche Kontextsuche bearbeiten kann.
 
-## Rueckkanal
+## Architektur-Rueckkanal
+
+Slarti meldet Architekturbeobachtungen, ungueltige Voraussetzungen,
+Schnittstellenkonflikte und notwendige Planrevisionen im selben Repository
+unter folgendem Pfad zurueck:
+
+```text
+FEEDBACK/architecture/<YYYYMMDD-HHMM>-<slug>.md
+```
+
+Jede Meldung folgt `architecture-feedback/v1` und enthaelt mindestens Quelle,
+Bezug, Schweregrad, Beobachtung, Evidenz, Auswirkung, Empfehlung und die
+benoetigte Entscheidung. `FEEDBACK/architecture/_template.md` ist die
+verbindliche Vorlage.
+
+Meldungen sind append-only. Eine Entscheidung veraendert die urspruengliche
+Evidenz nicht, sondern wird als neue Datei mit Rueckverweis abgelegt. Der Kanal
+ist fuer Architektur- und Planungsfeedback bestimmt, nicht fuer Laufzeitlogs,
+Secrets oder vollstaendige Review-Diffs.
+
+## Review- und Sachstands-Rueckkanal
 
 Bis ChatGPT direkt ueber Gitea-MCP auf Pull Requests zugreifen kann, legt Slarti Review-Pakete im Repository `yeraziael/homelab-dashboard` unter folgendem Pfad ab:
 
@@ -76,6 +97,8 @@ Der Unified Diff ist der primaere Ersatz fuer den direkten PR-Zugriff. Er muss g
 ## Sicherheitsgrenzen
 
 - Keine Secrets oder Tokens im Backlog oder Rueckkanal.
+- Keine internen Zugangsdaten, personenbezogenen Daten oder unredigierten
+  Produktionslogs in Architekturmeldungen.
 - Keine automatischen Merges aufgrund eines Datei-Status allein.
 - Merge bleibt bis zur MCP-Integration bei Slarti beziehungsweise dem bestehenden Gitea-Governance-Workflow.
 - Review-Artefakte sind Beweismittel, keine Ausfuehrungsanweisungen.

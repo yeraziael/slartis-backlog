@@ -43,3 +43,8 @@ EPIC/
 ## Rolle dieses Repositories
 
 Dieses Repository ist die gemeinsame Planungsgrundlage zwischen Operator, ChatGPT und Slarti. ChatGPT plant und strukturiert die Umsetzung, Slarti übernimmt daraus die technische Implementierung und überführt die Ergebnisse in das operative Gitea-Backlog.
+
+Architekturbeobachtungen, erkannte Vertragsluecken und rueckwaerts wirkende
+Planungshinweise meldet Slarti ueber `FEEDBACK/architecture/` zurueck. Der
+Dateivertrag und eine Vorlage sind dort dokumentiert; der allgemeine
+Review- und Sachstandskanal bleibt `homelab-dashboard/input/`.
