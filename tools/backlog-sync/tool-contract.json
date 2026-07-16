@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "tool": {
+    "name": "backlog.sync",
+    "owner": "lydia",
+    "scheduler": "eddie",
+    "description": "Synchronize the canonical GitHub file backlog with Slarti's operational Gitea issue backlog without an LLM call.",
+    "command": [
+      "python3",
+      "tools/backlog-sync/backlog_sync.py",
+      "sync",
+      "--config",
+      "tools/backlog-sync/config.toml",
+      "--commit",
+      "--push"
+    ],
+    "working_directory": "repository-root",
+    "timeout_seconds": 300,
+    "exclusive_lock": ".sync/backlog-sync.lock",
+    "required_environment": [
+      "GITEA_TOKEN"
+    ],
+    "success_exit_codes": [
+      0,
+      10
+    ],
+    "retryable_exit_codes": [
+      40,
+      60
+    ],
+    "non_retryable_exit_codes": [
+      20,
+      30,
+      50
+    ],
+    "stdout": "single-json-object",
+    "stderr": "operational-log"
+  },
+  "schedule_recommendation": {
+    "periodic_minutes": 15,
+    "event_debounce_seconds": 60,
+    "maximum_event_delay_seconds": 300,
+    "events": [
+      "github-backlog-updated",
+      "gitea-epic-state-changed",
+      "gitea-epic-closed",
+      "gitea-epic-reopened"
+    ]
+  }
+}
