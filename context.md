@@ -14,9 +14,10 @@ Die stabilen, hostunabhaengigen Pfade sind:
   nicht im Backlog-Repository.
 
 `GITEA/issues.json` indexiert den einmaligen, oeffentlich bereinigten Snapshot
-der erkannten Epic-Issues. Die einzelnen Inhalte liegen unter
+aller offenen und geschlossenen Backlog-Issues. Die einzelnen Inhalte liegen unter
 `GITEA/issues/<number>-<slug>.md`. Interne URLs, Transport-Absender,
 Attachments, lokale Pfade und Zugangsdaten sind nicht Teil dieses Snapshots.
+Das Feld `is_epic` kennzeichnet die zusaetzlich als Epic erkannten Records.
 
 ## Issue-Typen
 

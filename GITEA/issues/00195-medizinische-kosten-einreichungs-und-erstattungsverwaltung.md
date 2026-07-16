@@ -1,8 +1,9 @@
 ---
-snapshot_version: gitea-epic-issue/v1
+snapshot_version: gitea-backlog-issue/v1
 source: slarti/backlog#195
 state: open
 updated_at: 2026-07-14T08:48:33+02:00
+is_epic: true
 labels:
   - "epic"
 publication: sanitized
