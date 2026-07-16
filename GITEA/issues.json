@@ -1,0 +1,169 @@
+{
+  "epic_count": 12,
+  "epics": [
+    {
+      "artifact": "GITEA/issues/00015-messenger-channels-policy.md",
+      "body_sha256": "01b07895c624049e9a7829dc6081f125f0773b848f7fc4fb4f0cd6e4914d717d",
+      "labels": [
+        "Systemarchitektur",
+        "epic"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#15",
+      "state": "closed",
+      "title": "Messenger Channels & Policy",
+      "updated_at": "2026-07-15T01:38:16+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00016-avatar-tooling.md",
+      "body_sha256": "85476dc9a30fbacf39ceefeb51825ba24c4d2b67c8f08b8e73409a7160d9e49a",
+      "labels": [
+        "Werkzeuge",
+        "epic"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#16",
+      "state": "closed",
+      "title": "Avatar Tooling",
+      "updated_at": "2026-07-15T01:38:16+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00089-lydia-tutor-skill.md",
+      "body_sha256": "ce6cb3ac21efe3a936d8fc199e9c1e7dc961e0da48b2a36bdae8bf0aaf19f93c",
+      "labels": [
+        "Systemarchitektur",
+        "epic"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#89",
+      "state": "open",
+      "title": "Lydia-Tutor-Skill",
+      "updated_at": "2026-07-14T00:32:50+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00147-ci-cd-foundation-fur-agenten-gestutzte-entwicklung.md",
+      "body_sha256": "0d4c6438ec3ff3e68bd6fe88e7bb486c38f633548a444e3cc5a536d4ca7d6ffd",
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#147",
+      "state": "closed",
+      "title": "CI/CD Foundation für Agenten-gestützte Entwicklung",
+      "updated_at": "2026-07-14T00:32:27+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00149-lydia-always-on-operations-agent-office-automation-engine.md",
+      "body_sha256": "2c9def91ef7b93854d9ada6d06dd38484a663c42b386cc5205756b71d2994391",
+      "labels": [
+        "Systemarchitektur",
+        "epic",
+        "in-progress",
+        "project:homelab-agenten-ausbau"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#149",
+      "state": "open",
+      "title": "Lydia Always-On Operations Agent & Office Automation Engine",
+      "updated_at": "2026-07-14T00:34:20+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00157-eddie-homelab-orchestration-scheduling-engine.md",
+      "body_sha256": "ba828a79f37fd31c60ad14777264ed613f4d8e66a5258c71e68b3c85ec4cad56",
+      "labels": [
+        "Systemarchitektur",
+        "epic",
+        "project:homelab-agenten-ausbau",
+        "ready"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#157",
+      "state": "closed",
+      "title": "Eddie – Homelab Orchestration & Scheduling Engine",
+      "updated_at": "2026-07-13T18:36:00+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00173-homelab-release-management-versioning.md",
+      "body_sha256": "17f3d54baf9dc2382f14ed49d0b88128ecf00397a05d51e878a7f05f2623fa2d",
+      "labels": [
+        "Systemarchitektur",
+        "epic",
+        "project:homelab-agenten-ausbau",
+        "ready"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#173",
+      "state": "open",
+      "title": "Homelab Release Management & Versioning",
+      "updated_at": "2026-07-14T16:54:32+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00174-release-management-versioning.md",
+      "body_sha256": "17f3d54baf9dc2382f14ed49d0b88128ecf00397a05d51e878a7f05f2623fa2d",
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#174",
+      "state": "closed",
+      "title": "Release Management & Versioning",
+      "updated_at": "2026-07-14T00:31:51+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00176-disaster-recovery-backup-resilience.md",
+      "body_sha256": "a36de7d571b71e39bdc2974931a6815d82f4c6b8be57b9cd99d7f48cdfa0a05f",
+      "labels": [
+        "Systemarchitektur",
+        "epic",
+        "project:homelab-agenten-ausbau",
+        "ready"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#176",
+      "state": "open",
+      "title": "Disaster Recovery & Backup Resilience",
+      "updated_at": "2026-07-14T00:35:49+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00195-medizinische-kosten-einreichungs-und-erstattungsverwaltung.md",
+      "body_sha256": "6bcb8b2df9c19f0d470e154e431a388e346e2a447323219916f78550da0bff66",
+      "labels": [
+        "epic"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#195",
+      "state": "open",
+      "title": "Medizinische Kosten-, Einreichungs- und Erstattungsverwaltung",
+      "updated_at": "2026-07-14T08:48:33+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00212-matrix-als-primarer-kommunikationskanal-fur-lydia-und-interne-homelab-ag.md",
+      "body_sha256": "6b7ba54f3a501f46350624cc8f9736d7ca29e9e6faa1d4de1e3a72532d4f973d",
+      "labels": [
+        "Systemarchitektur",
+        "clarifying",
+        "epic",
+        "project:homelab-agenten-ausbau"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#212",
+      "state": "open",
+      "title": "Matrix als primärer Kommunikationskanal für Lydia und interne Homelab-Agenten",
+      "updated_at": "2026-07-16T22:14:59+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00213-chatgpt-work-an-selbst-gehosteten-gitea-server-anbinden.md",
+      "body_sha256": "ddd1b8c931f27f2fddd4acebe8bdccdcf39b2761431953ecb158e9d094fd5a58",
+      "labels": [
+        "Systemarchitektur",
+        "epic",
+        "project:homelab-agenten-ausbau",
+        "ready"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#213",
+      "state": "closed",
+      "title": "ChatGPT Work an selbst gehosteten Gitea-Server anbinden",
+      "updated_at": "2026-07-14T15:37:01+02:00"
+    }
+  ],
+  "issue_count": 235,
+  "schema_version": "gitea-epic-snapshot/v1",
+  "source": "slarti/backlog"
+}
