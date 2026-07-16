@@ -1,9 +1,192 @@
 {
   "epic_count": 12,
-  "epics": [
+  "issue_count": 235,
+  "issues": [
+    {
+      "artifact": "GITEA/issues/00001-slarti-branchfast-agent-spec.md",
+      "body_sha256": "87c0500dd540ce56f13b1fc487f037250fcf121f291db10960a39025f24ada7d",
+      "is_epic": false,
+      "labels": [
+        "done",
+        "in-progress"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#1",
+      "state": "closed",
+      "title": "Slarti Branchfast — Agent Spec",
+      "updated_at": "2026-07-14T14:19:55+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00002-recover-or-recreate-i-accidentally-deleted-avatar-py.md",
+      "body_sha256": "69cbf81ac86eae382866ba5ff4083258bf10f047359d7d1ca78e96242850442a",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#2",
+      "state": "closed",
+      "title": "Recover or recreate, I Accidentally deleted avatar.py",
+      "updated_at": "2026-06-23T13:03:03+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00003-decouple-avatar-generation-from-gitea-avatar-setting.md",
+      "body_sha256": "37ee5624a7336c9d0c8670138bb3031f6d2bbd01bd9226c34fbd0b2cf65ac407",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#3",
+      "state": "closed",
+      "title": "Decouple avatar generation from gitea avatar setting",
+      "updated_at": "2026-07-14T12:28:13+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00004-extend-the-wallpaper-gen-photo-to-take-photo-as-input.md",
+      "body_sha256": "ef5c819132b4c04049faea2bd44e93b8c1b8e3a6211138652ab28dfaf4722ff8",
+      "is_epic": false,
+      "labels": [
+        "Werkzeuge"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#4",
+      "state": "closed",
+      "title": "Extend the wallpaper/gen_photo to take photo as input",
+      "updated_at": "2026-07-01T00:39:19+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00005-lily-bloom-agent-fur-lokale-kurzfilm-produktion-backlog.md",
+      "body_sha256": "9b0274abc60be063360e550b2f804956e9b80d138614bf45661c98e485adacd9",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "clarifying"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#5",
+      "state": "open",
+      "title": "🌸 Lily Bloom – Agent für lokale Kurzfilm-Produktion (Backlog)",
+      "updated_at": "2026-07-14T14:46:24+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00006-lydia-pdf-formular-assistent-via-telegram-bot-plugin-pdf-form-filler.md",
+      "body_sha256": "7138e880242034e09aba502576c4917cd710a744085d1725d04538b89ba48c70",
+      "is_epic": false,
+      "labels": [
+        "Werkzeuge",
+        "clarifying"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#6",
+      "state": "open",
+      "title": "Lydia PDF-Formular-Assistent via Telegram-Bot (Plugin: pdf-form-filler)",
+      "updated_at": "2026-07-14T08:47:47+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00007-avatarbilder-fur-alle-orgas-und-repos.md",
+      "body_sha256": "ed0c0794468db74bfde09df8d11b250cdc668422c706a5b32a29d207527938f9",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "ready"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#7",
+      "state": "open",
+      "title": "Avatarbilder für alle Orgas und Repos",
+      "updated_at": "2026-07-15T00:20:23+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00008-telegram-watcher-admin-nachrichten-werden-geloggt-aber-nicht-beantwortet.md",
+      "body_sha256": "88bb54b09f9b2f439ee742a95de91c4496a94e45a4d3cd307797bb518489fece",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#8",
+      "state": "closed",
+      "title": "Telegram Watcher: Admin-Nachrichten werden geloggt aber nicht beantwortet",
+      "updated_at": "2026-07-14T18:21:22+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00009-paperless-ngx-fork-automatische-entschlusselung-verschlusselter-dokument.md",
+      "body_sha256": "a2e4d0fc19945e8b9e7f7197b3a25f7863d0833c9d7059ec8bf867bd6514722e",
+      "is_epic": false,
+      "labels": [
+        "Werkzeuge",
+        "clarifying"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#9",
+      "state": "open",
+      "title": "Paperless-ngx Fork: Automatische Entschlüsselung verschlüsselter Dokumente beim Import",
+      "updated_at": "2026-07-14T21:19:36+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00010-signal-bot-setup-integration-konsolidiert.md",
+      "body_sha256": "0d603054a68724a97979a7e622a65b0b6e9d64a87c221ce39a00339ccef3a8e6",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#10",
+      "state": "closed",
+      "title": "Signal-Bot Setup & Integration (konsolidiert)",
+      "updated_at": "2026-07-14T23:18:09+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00011-messenger-policy-berechtigungen-fur-haushaltsmitglieder-definieren-grill.md",
+      "body_sha256": "e015b471ea35f494c50d92b64d3c952b53f966aecf3276a76a6c1ceda5265851",
+      "is_epic": false,
+      "labels": [
+        "ready"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#11",
+      "state": "closed",
+      "title": "Messenger Policy – Berechtigungen für Haushaltsmitglieder definieren (Grill-Me-Session nach Signal-Setup)",
+      "updated_at": "2026-07-15T00:49:58+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00012-konzept-opencode-agent-zur-analyse-von-paperless-ngx-auf-erstattungsstat.md",
+      "body_sha256": "332d8de64cfac34ba18ac7a30829b0bd0bdc295cbe7dfd3417cbc6151f98ec05",
+      "is_epic": false,
+      "labels": [
+        "done"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#12",
+      "state": "closed",
+      "title": "Konzept: Opencode-Agent zur Analyse von Paperless-ngx auf Erstattungsstatus",
+      "updated_at": "2026-07-15T00:49:58+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00013-lydia-execution-layer-agent-implementation.md",
+      "body_sha256": "275b072eb9ec04abc06b83a0f0938b4780612db6da454cfe6eaa3308a38986cd",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "in-progress"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#13",
+      "state": "closed",
+      "title": "Lydia - Execution Layer Agent Implementation",
+      "updated_at": "2026-07-15T01:01:05+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00014-telegram-watcher-neuentwurf-der-architektur.md",
+      "body_sha256": "2e6d857676070eba45e577ed8686fd9cc3d8ec6b64515e12449598ae23e344b2",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#14",
+      "state": "closed",
+      "title": "Telegram Watcher – Neuentwurf der Architektur",
+      "updated_at": "2026-07-15T01:12:36+02:00"
+    },
     {
       "artifact": "GITEA/issues/00015-messenger-channels-policy.md",
       "body_sha256": "01b07895c624049e9a7829dc6081f125f0773b848f7fc4fb4f0cd6e4914d717d",
+      "is_epic": true,
       "labels": [
         "Systemarchitektur",
         "epic"
@@ -17,6 +200,7 @@
     {
       "artifact": "GITEA/issues/00016-avatar-tooling.md",
       "body_sha256": "85476dc9a30fbacf39ceefeb51825ba24c4d2b67c8f08b8e73409a7160d9e49a",
+      "is_epic": true,
       "labels": [
         "Werkzeuge",
         "epic"
@@ -28,8 +212,922 @@
       "updated_at": "2026-07-15T01:38:16+02:00"
     },
     {
+      "artifact": "GITEA/issues/00017-telegram-operator.md",
+      "body_sha256": "69b72fd92a089645e0cb9b4d716d8935c2864eb2a6279b7a30b68619c6ff29ad",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#17",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-15T01:48:41+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00018-telegram-operator.md",
+      "body_sha256": "33cec0e294b6bc9da4d4fb61a6ee8ab94d7c790a63c0ca284bd4e50a942bc63c",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#18",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-15T02:01:26+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00019-telegram-operator.md",
+      "body_sha256": "ed40e5d264ff956654dc36b630ff25aa5e6c51722bf8ce4102c77a5394a04831",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#19",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-15T05:36:35+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00020-telegram-operator.md",
+      "body_sha256": "ffe85c2cf4b9820063ef8d229a226a0957d3ff4bb798653433032b5d471e4fbb",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#20",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-15T08:25:29+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00021-telegram-operator.md",
+      "body_sha256": "558a30a25d5ed4556152583b11af500763df3da432d7ab0a03fc221c18dc9942",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#21",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-15T06:53:53+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00022-telegram-operator.md",
+      "body_sha256": "46185ee74f54c717b14b4028a6d84596e8c1c4ae276fd050f6d45ef78c4d29af",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#22",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-15T07:23:39+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00023-telegram-operator.md",
+      "body_sha256": "1a1e3b7287dc6d9c30b90617cb8763ab36f99ba16fd976243591eb042d852f42",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#23",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-15T07:48:00+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00024-telegram-operator.md",
+      "body_sha256": "4b349ccc30187bb858b646a24a1bebf9d8c81afbaa5d4d28f101b2dc37569689",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#24",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-16T22:45:52+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00025-telegram-operator.md",
+      "body_sha256": "0cfd1a21c57ab5caa852e74a4c4cb3ab28cd005c2213bdc486fb6b7a477d58d0",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#25",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-16T23:07:15+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00026-telegram-operator.md",
+      "body_sha256": "65f8708a0729a0c7b2cc67ac62b20736db78626c3fd8650a17eb48e1e057bad3",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#26",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T10:28:46+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00027-messenger-michael-sh-opencodeagent-fork.md",
+      "body_sha256": "973a70c8e6a712b3c60c47a3596e1f480aee614c743726a9b108aa5668c0d08a",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#27",
+      "state": "closed",
+      "title": "messenger_michael.sh — OpenCodeAgent Fork",
+      "updated_at": "2026-07-03T11:56:19+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00028-telegram-operator.md",
+      "body_sha256": "24f388f8b15880fbdf976044322706e87f1593c4395fa84809238d91663cfd0b",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#28",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T10:21:19+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00030-telegram-operator.md",
+      "body_sha256": "24f388f8b15880fbdf976044322706e87f1593c4395fa84809238d91663cfd0b",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#30",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T10:21:09+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00031-telegram-operator.md",
+      "body_sha256": "315a437df83ef78cd147d4f270eef2d490dec4c4e12ea84886d3d45c57d3dd71",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#31",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T10:20:29+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00032-session-2026-06-24-cleanup-testing.md",
+      "body_sha256": "05c20898bf056a63de3fc2bb91ca79fc610f3d1010d20bc0ded8160308e580aa",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#32",
+      "state": "closed",
+      "title": "Session 2026-06-24 — Cleanup + Testing",
+      "updated_at": "2026-06-30T22:11:55+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00033-telegram-operator.md",
+      "body_sha256": "f0eb44fd94d34b0810fb1cd6e393a86596c29f2341173b4ca9b9ffb5204b2c2a",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#33",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:46+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00034-telegram-operator.md",
+      "body_sha256": "a26b2e0d953f790fd2898286cd37948d4bb862a7e715d19de66036fa176549bf",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#34",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:46+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00035-telegram-operator.md",
+      "body_sha256": "d16affccd625fbdae979e9c6f82b6757df4d2bcb6bc47df7f2f5d353005a64c7",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#35",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:46+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00036-telegram-operator.md",
+      "body_sha256": "b0c382a612633003e03ef7a713e04cde6526600e0c471a622204d767717a4540",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#36",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:47+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00037-telegram-operator.md",
+      "body_sha256": "857b79fbf62dcaa7959ea0b835c8388203c7d512ba27b0d5ecc5eea32bb31179",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#37",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:47+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00038-telegram-operator.md",
+      "body_sha256": "e57018343e54e06d1e4d0a0cd22ba121b5b0e48518b214ed9fb5656e5d028029",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#38",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:47+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00039-telegram-operator.md",
+      "body_sha256": "0baaed837f1509191b1178e7554a9646c9ee81d38a269b8d3980bb7d094b9a39",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#39",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:47+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00040-telegram-operator.md",
+      "body_sha256": "1fe8ec5a989b0e9ec7b5d94e9ffdc3fa9c3fa48c077c74759aa117f694c70634",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#40",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:47+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00041-telegram-operator.md",
+      "body_sha256": "49a6493dc440758f40cf5620c3019489e80ab5e677b147b11f549a1324423f5e",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#41",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:48+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00042-telegram-operator.md",
+      "body_sha256": "a469e34cee8b00da653f4290dd83dd465207e647b5ce64d27124c5bf7a7b2e2c",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#42",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:48+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00043-telegram-operator.md",
+      "body_sha256": "d0fddae50bed52305549e469b56ad2ceeb28d7e8329b415d56906945dc759727",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#43",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:48+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00044-telegram-operator.md",
+      "body_sha256": "0f516501c177d9148872c9a1985db53801312c4045ee6b0272b5952b5fd98e23",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#44",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:48+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00045-telegram-operator.md",
+      "body_sha256": "fdec4f8aaaefb9f48f66ae964fb32ddf1089364667a2ad25228a63bcb098a3bd",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#45",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:48+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00046-telegram-operator.md",
+      "body_sha256": "d3acd853f075445a3d605999e31ff98d6fdce18058ad4d03fe0909fd4b992951",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#46",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:49+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00047-telegram-operator.md",
+      "body_sha256": "cf4ae41e68b5ddf4fe5bc5cadae3b0670f110712d6182c5bf5b7d61f8dc89d0f",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#47",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:49+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00048-telegram-operator.md",
+      "body_sha256": "b3b558c5ab55eab44da723a379cdc89af2c283c48064f3293c99f2cd3f45c7cb",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#48",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:49+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00049-telegram-operator.md",
+      "body_sha256": "81db4f15dcc38288ae40f55676466e0e81d53c7107e094fec0cf62c448735d11",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#49",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:49+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00050-telegram-operator.md",
+      "body_sha256": "7e98d12e9cf692c175031d42d488b004074d75cc5409a6464928fd3acb4c436a",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#50",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:49+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00051-telegram-operator.md",
+      "body_sha256": "22c54b3201cdf99e5c39146a89051f131d069154e7db7a8ad071f71e14fe6ee5",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#51",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T11:54:50+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00052-ephemeral-worker-protokoll-contract-system.md",
+      "body_sha256": "d9c9291d60c149113c7d8c7fa2fb05d97974403cd15b5bd4c1859ba019ee54d3",
+      "is_epic": false,
+      "labels": [
+        "project:homelab-agenten-ausbau"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#52",
+      "state": "closed",
+      "title": "Ephemeral Worker — Protokoll & Contract-System",
+      "updated_at": "2026-07-14T00:32:52+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00053-critical-design-rules-system-invarianten.md",
+      "body_sha256": "ee3a2885d40530c60685ac4336529ce2596358bee7ddf4351bec41149bdcf683",
+      "is_epic": false,
+      "labels": [
+        "project:homelab-agenten-ausbau"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#53",
+      "state": "closed",
+      "title": "CRITICAL Design Rules — System-Invarianten",
+      "updated_at": "2026-06-30T16:01:52+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00054-worker-dispatch-gpu-scheduling.md",
+      "body_sha256": "c57eeeec747ff76f97be041cac280b791713fc7117eb44de747983e4b3ce3669",
+      "is_epic": false,
+      "labels": [
+        "project:homelab-agenten-ausbau"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#54",
+      "state": "closed",
+      "title": "Worker-Dispatch & GPU-Scheduling",
+      "updated_at": "2026-06-30T22:11:41+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00055-modellwahl-hardware-optimierung-fur-worker.md",
+      "body_sha256": "e7248abe195d2e10642ba1308e264a942e872b58a2468bbcbbf7fe632c2a933b",
+      "is_epic": false,
+      "labels": [
+        "project:homelab-agenten-ausbau"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#55",
+      "state": "closed",
+      "title": "Modellwahl & Hardware-Optimierung für Worker",
+      "updated_at": "2026-06-30T22:11:41+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00056-homelab-agenten-ausbau-planungsentwurf.md",
+      "body_sha256": "0a02d2076b022c072a0c013d7f6e918529217f6707851fa2d2d3d54f522d2c97",
+      "is_epic": false,
+      "labels": [
+        "project:homelab-agenten-ausbau"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#56",
+      "state": "closed",
+      "title": "Homelab-Agenten-Ausbau — Planungsentwurf",
+      "updated_at": "2026-06-30T22:14:12+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00057-telegram-operator.md",
+      "body_sha256": "bc2a086a2df4920d8278a8afa5bd1c7c404a7b861494fc1b84d6c8675e59df97",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#57",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-24T13:25:41+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00058-telegram-operator.md",
+      "body_sha256": "d149dc83d946e161a44c01610785995c955da384912016f1b6c94107e1eb6e27",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#58",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-30T23:50:26+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00059-telegram-operator.md",
+      "body_sha256": "2b72c26df3d0119148d08244947bb555468ac7451cf4f699ad35d4da06aa8c59",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#59",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-30T23:50:21+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00060-telegram-operator.md",
+      "body_sha256": "1f27b696f2436e9a84e1106fcc249e11b971805d1a815af2bf4323d97c6fd272",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#60",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-30T23:50:14+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00061-telegram-operator.md",
+      "body_sha256": "d149dc83d946e161a44c01610785995c955da384912016f1b6c94107e1eb6e27",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#61",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-30T23:50:10+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00062-signal-setup-signal-sh-automatisches-register-script-generieren-llm.md",
+      "body_sha256": "290b8f67d68dcbc32396c3f2ec43c42c74f6220e2fa141427edbb61faa0218db",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#62",
+      "state": "closed",
+      "title": "[Signal] setup_signal.sh — automatisches Register-Script generieren (LLM)",
+      "updated_at": "2026-06-30T10:39:23+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00063-telegram-operator.md",
+      "body_sha256": "d04ed0d11fb4a214fa4df4720b336be59abfd2fa7223a7b0870a6aed539c8955",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#63",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-30T23:50:05+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00064-telegram-operator.md",
+      "body_sha256": "1b9661a2e214b37adb6e91c2e16b9c3a0a584a7f3664f4d5fc2fe980ce4102f6",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#64",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-30T23:49:59+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00065-telegram-operator.md",
+      "body_sha256": "c4d0f0af212fedccc5f71b76db96fa6d318167e450ce459e21bb39bc49ad91e6",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#65",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-30T23:49:50+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00066-telegram-operator.md",
+      "body_sha256": "50c80209f751aa1179b113c005c227ea8b4f94ed3e3f69a8615107a8db7c2af6",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#66",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-06-30T23:49:45+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00067-signal-contact-card-multi-channel-empfang-debuggen.md",
+      "body_sha256": "cc807b2ca97dedc46d82a4e8e1675e94f51489dc6bd13b6be55312edf3977198",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#67",
+      "state": "closed",
+      "title": "Signal: Contact-Card / Multi-Channel-Empfang debuggen",
+      "updated_at": "2026-06-30T13:07:28+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00068-benchmark-modelle-pullen-deepseek-coder-6-7b-codellama-7b-code.md",
+      "body_sha256": "b9451a55fb629aa0e8c0d30ae8d968097fec3c68c9dd353a6f9f756acf3eb178",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#68",
+      "state": "closed",
+      "title": "Benchmark-Modelle pullen (deepseek-coder:6.7b + codellama:7b-code)",
+      "updated_at": "2026-06-30T18:19:17+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00069-m2-blackbox-tests-issue-54.md",
+      "body_sha256": "8f11766f0eac77ad63df4fdc5489ec4ea5e020b52824b781e825f4a1ea415224",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#69",
+      "state": "closed",
+      "title": "M2 Blackbox Tests (Issue #54)",
+      "updated_at": "2026-06-30T22:08:17+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00070-m3-autonomer-git-rebase-conflict-resolution.md",
+      "body_sha256": "fc8c75aea431df560018ed218259ecf74fd54c630dd7ddda837cb74441fb5b38",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#70",
+      "state": "closed",
+      "title": "M3: Autonomer Git-Rebase + Conflict-Resolution",
+      "updated_at": "2026-07-01T00:29:17+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00071-repo-slarti-architecture-anlegen.md",
+      "body_sha256": "66f2e10a58f28aa2a1ba660c57f8c13b6f6a1d19bdfcd2582ca4e537b8b02e5c",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#71",
+      "state": "closed",
+      "title": "Repo: slarti/architecture anlegen",
+      "updated_at": "2026-07-01T00:22:29+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00072-telegram-operator.md",
+      "body_sha256": "a6eecb4e34a405baea20e5b5d4700c0588995238b3d2a6206e6c94dabd2d0166",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#72",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-14T00:32:52+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00073-telegram-operator.md",
+      "body_sha256": "a6eecb4e34a405baea20e5b5d4700c0588995238b3d2a6206e6c94dabd2d0166",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#73",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-01T11:34:37+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00074-telegram-operator.md",
+      "body_sha256": "a6eecb4e34a405baea20e5b5d4700c0588995238b3d2a6206e6c94dabd2d0166",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#74",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-01T11:34:37+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00075-telegram-operator.md",
+      "body_sha256": "a6eecb4e34a405baea20e5b5d4700c0588995238b3d2a6206e6c94dabd2d0166",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#75",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-01T11:34:36+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00076-telegram-operator.md",
+      "body_sha256": "a6eecb4e34a405baea20e5b5d4700c0588995238b3d2a6206e6c94dabd2d0166",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#76",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-01T11:34:36+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00077-telegram-operator.md",
+      "body_sha256": "a6eecb4e34a405baea20e5b5d4700c0588995238b3d2a6206e6c94dabd2d0166",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#77",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-01T11:34:36+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00078-telegram-operator.md",
+      "body_sha256": "a6eecb4e34a405baea20e5b5d4700c0588995238b3d2a6206e6c94dabd2d0166",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#78",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-01T11:34:37+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00079-telegram-operator.md",
+      "body_sha256": "a6eecb4e34a405baea20e5b5d4700c0588995238b3d2a6206e6c94dabd2d0166",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#79",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-01T11:34:36+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00080-telegram-operator.md",
+      "body_sha256": "a6eecb4e34a405baea20e5b5d4700c0588995238b3d2a6206e6c94dabd2d0166",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#80",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-01T11:34:36+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00081-telegram-operator.md",
+      "body_sha256": "a6eecb4e34a405baea20e5b5d4700c0588995238b3d2a6206e6c94dabd2d0166",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#81",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-01T11:34:36+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00082-telegram-operator.md",
+      "body_sha256": "a6eecb4e34a405baea20e5b5d4700c0588995238b3d2a6206e6c94dabd2d0166",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#82",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-01T11:34:36+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00083-telegram-operator.md",
+      "body_sha256": "a6eecb4e34a405baea20e5b5d4700c0588995238b3d2a6206e6c94dabd2d0166",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#83",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-01T11:34:36+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00084-telegram-operator.md",
+      "body_sha256": "a6eecb4e34a405baea20e5b5d4700c0588995238b3d2a6206e6c94dabd2d0166",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#84",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-01T11:34:36+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00085-telegram-operator.md",
+      "body_sha256": "a6eecb4e34a405baea20e5b5d4700c0588995238b3d2a6206e6c94dabd2d0166",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#85",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-01T11:34:36+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00086-telegram-operator.md",
+      "body_sha256": "a6eecb4e34a405baea20e5b5d4700c0588995238b3d2a6206e6c94dabd2d0166",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#86",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-01T11:34:36+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00087-telegram-operator.md",
+      "body_sha256": "a6eecb4e34a405baea20e5b5d4700c0588995238b3d2a6206e6c94dabd2d0166",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#87",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-01T11:34:37+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00088-telegram-operator.md",
+      "body_sha256": "a6eecb4e34a405baea20e5b5d4700c0588995238b3d2a6206e6c94dabd2d0166",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#88",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-01T11:34:36+02:00"
+    },
+    {
       "artifact": "GITEA/issues/00089-lydia-tutor-skill.md",
       "body_sha256": "ce6cb3ac21efe3a936d8fc199e9c1e7dc961e0da48b2a36bdae8bf0aaf19f93c",
+      "is_epic": true,
       "labels": [
         "Systemarchitektur",
         "epic"
@@ -41,8 +1139,618 @@
       "updated_at": "2026-07-14T00:32:50+02:00"
     },
     {
+      "artifact": "GITEA/issues/00090-ms1-core-tutor-mvp.md",
+      "body_sha256": "d219b170bd466d047ae25625f5aa4a65df5b443ffbc06347152b1c66eda5747e",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "ready"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#90",
+      "state": "closed",
+      "title": "MS1: Core Tutor MVP",
+      "updated_at": "2026-07-03T07:55:15+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00091-ms5-full-platform.md",
+      "body_sha256": "994ae6bcd2b9e1ebf81909368341285f0e2e630f2ed078815423127b9715d00b",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#91",
+      "state": "open",
+      "title": "MS5: Full Platform",
+      "updated_at": "2026-07-14T00:33:17+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00092-ms6-self-improving-ai.md",
+      "body_sha256": "acf53b6533fe1a25b02125c80527b04a45984f09356516f12027d59568ea807d",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#92",
+      "state": "open",
+      "title": "MS6: Self-Improving AI",
+      "updated_at": "2026-07-14T00:33:17+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00093-ms7-cognitive-digital-twin.md",
+      "body_sha256": "358f111f67c710d374cc0f48262a72bac7f3fecfaaee77e330dd5e87b2eb9e57",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#93",
+      "state": "open",
+      "title": "MS7: Cognitive Digital Twin",
+      "updated_at": "2026-07-14T00:33:17+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00094-ms4-dashboard-analytics.md",
+      "body_sha256": "cc9b855fc595df961d81dba20eda5480d25c214d76dacb5466f70ee545e43047",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#94",
+      "state": "open",
+      "title": "MS4: Dashboard & Analytics",
+      "updated_at": "2026-07-14T00:33:18+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00095-ms2-learning-engine.md",
+      "body_sha256": "7492d5ed3fb089c76718de74879dc7ec2abd6ca17ce1c1f30c2288c45be2601e",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#95",
+      "state": "open",
+      "title": "MS2: Learning Engine",
+      "updated_at": "2026-07-14T00:33:18+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00096-ms3-memory-strategy.md",
+      "body_sha256": "1d31c8af7cba5492e27db48fcacca811e8083c5360cb8c1888f0aff75d3a7d2f",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#96",
+      "state": "open",
+      "title": "MS3: Memory & Strategy",
+      "updated_at": "2026-07-14T00:33:18+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00097-ms2-schritt-didaktik-themen-navigation.md",
+      "body_sha256": "ad9a39622ff28df4a8062973f978c57eaee8d8256d1b1db1b6be622e196c7513",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#97",
+      "state": "closed",
+      "title": "MS2: Schritt-Didaktik + Themen-Navigation",
+      "updated_at": "2026-07-03T09:43:09+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00098-ms2-1-lernstoff-sqlite-db-mit-vekling-ingest.md",
+      "body_sha256": "6aaadda6358c1a55f3ab1dc4d220968abfa32377cbe6b940b05a21df3362f22c",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#98",
+      "state": "closed",
+      "title": "MS2.1: Lernstoff-SQLite-DB mit Vekling-Ingest",
+      "updated_at": "2026-07-03T09:43:09+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00099-ms2-2-chunked-toc-vekling-ingest-pipeline.md",
+      "body_sha256": "0e7822b0c883dfe5c7613d6371cd1a0658f33c3b2ea6fe07a5137fd6fe620330",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#99",
+      "state": "closed",
+      "title": "MS2.2: Chunked ToC-Vekling-Ingest Pipeline",
+      "updated_at": "2026-07-03T09:43:09+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00100-dispatch-slartigitealydia-ingest-handler.md",
+      "body_sha256": "111b4ea4b9fa4a965793e202d49331441dd615e30f4a676c604ed6e91eb421a8",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#100",
+      "state": "closed",
+      "title": "Dispatch: Slarti→Gitea→Lydia Ingest-Handler",
+      "updated_at": "2026-07-03T09:43:10+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00101-feat-ingest-toc-lose-pdfs-robuster-parsen.md",
+      "body_sha256": "056aa4da03ba6b5392bd73617211090560361544d415d384620d3a85d90b0ddc",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#101",
+      "state": "closed",
+      "title": "feat(ingest): ToC-lose PDFs robuster parsen",
+      "updated_at": "2026-07-03T09:37:31+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00102-tests-fur-alle-offenen-issues.md",
+      "body_sha256": "fce17f509b0994cf164ff307ca8f29e4eb346b66393df13ec6ede9811888855f",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#102",
+      "state": "closed",
+      "title": "Tests fur alle offenen Issues",
+      "updated_at": "2026-07-03T15:21:43+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00103-telegram-operator.md",
+      "body_sha256": "cd7f5915bd6ffc94930199e624bd9c2123e94bd4a24d728cec87f70560cec341",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#103",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-03T15:16:09+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00104-pi5-gitea-daten-auf-festplatte-postgresqlsqlite-migration.md",
+      "body_sha256": "74638e6559761fd550ba161d9bdd0790d9714fc4833d8e3c55e34337f5128b7a",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#104",
+      "state": "closed",
+      "title": "Pi5 Gitea: Daten auf Festplatte + PostgreSQL→SQLite Migration",
+      "updated_at": "2026-07-03T15:10:36+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00105-telegram-operator.md",
+      "body_sha256": "e1cbb1169cbd0e9c54ca3f18c4906c6521ea6210abbf001a8f5e4bdca3f534ae",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#105",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-03T15:08:49+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00106-ebooks-duplikatprufung-local-path-redacted-vs-calibre-bibliothek.md",
+      "body_sha256": "2ebea369772c2a9dfe3c8d5fcfcbc86a3789df7a39b02803b3fab38f662aeeac",
+      "is_epic": false,
+      "labels": [
+        "done"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#106",
+      "state": "closed",
+      "title": "ebooks-Duplikatprüfung: local-path-redacted vs Calibre-Bibliothek",
+      "updated_at": "2026-07-04T08:19:17+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00107-telegram-operator.md",
+      "body_sha256": "f63f8b94589690e10028cedf33773f794a7138fe073567cb4781e8f2a622d285",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#107",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-03T16:12:06+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00108-tests-12-paperless-refund-analyse.md",
+      "body_sha256": "b47e249369e36c4d99238f28b68101f19954588443daa0ad723f72e91fa45f40",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#108",
+      "state": "closed",
+      "title": "Tests: #12 Paperless Refund-Analyse",
+      "updated_at": "2026-07-14T00:31:51+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00109-tests-15-messenger-channels-policy.md",
+      "body_sha256": "2c4fc84dc0a5b140e60dac362ea21434c07a25972489076903e3bc0c37d2561c",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#109",
+      "state": "closed",
+      "title": "Tests: #15 Messenger Channels & Policy",
+      "updated_at": "2026-07-14T00:31:52+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00110-tests-5-lily-bloom-kurzfilm-agent.md",
+      "body_sha256": "d4fe5ee7b9c3aca8308c9b03f8f4a2e264bcedf4eb75da4b1f416707b664e171",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#110",
+      "state": "closed",
+      "title": "Tests: #5 Lily Bloom – Kurzfilm-Agent",
+      "updated_at": "2026-07-14T00:31:52+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00111-tests-6-pdf-formular-assistent.md",
+      "body_sha256": "5e8c0bc8dd9eb026c2c53dde2c18a3e965e52d2e71162f7e7603db1c1c1f637f",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#111",
+      "state": "closed",
+      "title": "Tests: #6 PDF-Formular-Assistent",
+      "updated_at": "2026-07-14T00:31:52+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00112-tests-7-avatarbilder-fur-alle-orgas.md",
+      "body_sha256": "48ac4558eaa6e28ca696e8a502aae89e967be776fb55e1e111c0c2b10d05acd0",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#112",
+      "state": "closed",
+      "title": "Tests: #7 Avatarbilder für alle Orgas",
+      "updated_at": "2026-07-14T00:31:53+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00113-tests-9-paperless-decrypt-fork.md",
+      "body_sha256": "aa6320111f6209bb50a15a39a43be4a735175f3cc97ea48a2e024bd13ac9ea7f",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#113",
+      "state": "closed",
+      "title": "Tests: #9 Paperless Decrypt Fork",
+      "updated_at": "2026-07-14T00:31:53+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00114-tests-89-tutor-skill.md",
+      "body_sha256": "c11878902e77663c701389d2d6b92a601429322bc645d40385e2966a179b3a69",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#114",
+      "state": "closed",
+      "title": "Tests: #89 Tutor-Skill",
+      "updated_at": "2026-07-14T00:32:50+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00115-tests-91-tutor-ms5-full-platform.md",
+      "body_sha256": "fa001ac38032e86c9178820ed9b371eacda8858936a1b7b858cef2072d99faf2",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#115",
+      "state": "closed",
+      "title": "Tests: #91 Tutor MS5: Full Platform",
+      "updated_at": "2026-07-14T00:31:53+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00116-tests-92-tutor-ms6-self-improving-ai.md",
+      "body_sha256": "acd7ae9bc0667efc7d69872bccfdd80fcb34576c9c49c2ce76274f84ddf59eba",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#116",
+      "state": "closed",
+      "title": "Tests: #92 Tutor MS6: Self-Improving AI",
+      "updated_at": "2026-07-14T00:31:54+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00117-tests-93-tutor-ms7-cognitive-digital-twin.md",
+      "body_sha256": "86b8d778fa5f96473220d1f20dbf6a383bb9aca07b00f3ad59406a962557af00",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#117",
+      "state": "closed",
+      "title": "Tests: #93 Tutor MS7: Cognitive Digital Twin",
+      "updated_at": "2026-07-14T00:31:54+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00118-tests-94-tutor-ms4-dashboard-analytics.md",
+      "body_sha256": "4a8085c2b5a93c867dbce1903a548a7c4667a1084bf871780c542d2e59967065",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#118",
+      "state": "closed",
+      "title": "Tests: #94 Tutor MS4: Dashboard & Analytics",
+      "updated_at": "2026-07-14T00:31:54+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00119-tests-95-tutor-ms2-learning-engine.md",
+      "body_sha256": "14ba994b89db741cdf59370f48be5042022d00cb3b8b261b375f1a22e6078466",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#119",
+      "state": "closed",
+      "title": "Tests: #95 Tutor MS2: Learning Engine",
+      "updated_at": "2026-07-14T00:31:54+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00120-tests-96-tutor-ms3-memory-strategy.md",
+      "body_sha256": "73e849666165c8b339dc600a8d8c2b04c9468c440b6a9dd626a6f49bcee62d23",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#120",
+      "state": "closed",
+      "title": "Tests: #96 Tutor MS3: Memory & Strategy",
+      "updated_at": "2026-07-14T00:32:50+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00121-test-dependency.md",
+      "body_sha256": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#121",
+      "state": "closed",
+      "title": "Test dependency",
+      "updated_at": "2026-07-03T15:25:39+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00122-telegram-operator.md",
+      "body_sha256": "bf160813a3205e11c3e90c73725c82139ad25bf77c773ca11a11e083e0dc4a6b",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#122",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-14T00:35:49+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00123-telegram-operator.md",
+      "body_sha256": "846fe0dc048209405a631d0c3da261619afe7fc8b245ef5c838b0ca89775d9de",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#123",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-14T00:32:51+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00124-telegram-operator.md",
+      "body_sha256": "b285097accc812c253a2803350a161c6d00c1633e7acc670ff3a7f2c468d0de1",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#124",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-14T00:32:51+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00125-telegram-operator.md",
+      "body_sha256": "1cf2f3253af37478d696ee9977dd6f03bc9e77695f7d32dc814db2bffb60e688",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#125",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-14T00:32:51+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00126-telegram-operator.md",
+      "body_sha256": "1f5a3747f0c87d4897df27371d88290a7c76c29ddce6cd2bdfabea9fddfbe41d",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#126",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-14T00:32:51+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00127-telegram-operator.md",
+      "body_sha256": "dac1c5a7a2a71bfecfc5f196d93dcfcd311d901654e5c723b0725d351bc2c9d1",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#127",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-14T00:32:52+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00128-telegram-operator.md",
+      "body_sha256": "9bc60f502ac6aed2b688116ca785db62b0df932b98e118dd80265a8bfaf47aca",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#128",
+      "state": "closed",
+      "title": "Telegram: operator",
+      "updated_at": "2026-07-14T00:35:49+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00129-qnap-nas-analyse.md",
+      "body_sha256": "e5d7b100cf0aa5873b381c8074de5c8256a0a61e46fbc0b2971acea708b1b0b2",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "ready"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#129",
+      "state": "open",
+      "title": "QNAP NAS Analyse",
+      "updated_at": "2026-07-14T00:33:17+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00130-m12-fred-api-key-besorgen-und-auf-der-rig-hinterlegen.md",
+      "body_sha256": "a9385dc6871bfa4f537ff064b5e298a2ff85c6732ad674670d943af17ed1daee",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "clarifying"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#130",
+      "state": "open",
+      "title": "M12: FRED API-Key besorgen und auf der Rig hinterlegen",
+      "updated_at": "2026-07-14T00:35:49+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00131-info-lydia-messenger-architecture-change-docker-container.md",
+      "body_sha256": "204396a8cf3f254ca2c9f0a0a5423cbfb459a1be9cf5ec63c96748fa710e7673",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#131",
+      "state": "closed",
+      "title": "INFO: Lydia Messenger Architecture Change (Docker Container)",
+      "updated_at": "2026-07-14T00:32:26+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00132-telegram-nachricht-von-operator-pipeline-test-von-slarti-07-22-30-bitte.md",
+      "body_sha256": "b43bdafa4b24a808dd4e75ec0ccd29e2ce2eb96d33dc64ba41fd7c5cc1d509fb",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#132",
+      "state": "closed",
+      "title": "Telegram: Nachricht von operator: 🔄 Pipeline-Test von Slarti 07:22:30. Bitte antworte mir mit einem beliebige",
+      "updated_at": "2026-07-14T00:32:26+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00142-ci-cd-pipeline-fur-lydias-message-handler.md",
+      "body_sha256": "9be449d7d53409bb2731926e3c861fec1b9aee0ee9e483cdddece40503bdcd2a",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#142",
+      "state": "closed",
+      "title": "CI/CD Pipeline für Lydias message handler",
+      "updated_at": "2026-07-14T00:32:26+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00143-handover-attachment-reply-routing-bugfixes-2026-07-11.md",
+      "body_sha256": "547499e1f981886ac34e24c386878876b6effa00bd880fba52e2d314cc1d8be3",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#143",
+      "state": "closed",
+      "title": "Handover: Attachment/Reply/@-Routing Bugfixes (2026-07-11)",
+      "updated_at": "2026-07-14T00:32:26+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00144-143-ci-cd-gitea-actions-runner-secrets-erster-durchlauf.md",
+      "body_sha256": "908e8eb12c5b986b8e587bfc7e14fd05c44a628abfb870173d3d6c58e2d28a17",
+      "is_epic": false,
+      "labels": [
+        "done"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#144",
+      "state": "closed",
+      "title": "143 – CI/CD: Gitea Actions Runner + Secrets + erster Durchlauf",
+      "updated_at": "2026-07-14T00:32:27+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00145-opencode-session-ci-cd-pipeline-to-continue.md",
+      "body_sha256": "18c2e35d0e9cc122c807aa1e95a403893b69419734e9c742bfd6756d53937710",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#145",
+      "state": "closed",
+      "title": "Opencode session CI/CD Pipeline to continue!",
+      "updated_at": "2026-07-11T21:01:19+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00146-architekturverbesserung.md",
+      "body_sha256": "d6fa0bbfbc1c2efeada0483ec57705c1c72335c99bb83e7e3b274f5b33cb6ea5",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#146",
+      "state": "closed",
+      "title": "Architekturverbesserung",
+      "updated_at": "2026-07-14T00:32:27+02:00"
+    },
+    {
       "artifact": "GITEA/issues/00147-ci-cd-foundation-fur-agenten-gestutzte-entwicklung.md",
       "body_sha256": "0d4c6438ec3ff3e68bd6fe88e7bb486c38f633548a444e3cc5a536d4ca7d6ffd",
+      "is_epic": true,
       "labels": [],
       "publication": "sanitized",
       "source": "slarti/backlog#147",
@@ -51,8 +1759,23 @@
       "updated_at": "2026-07-14T00:32:27+02:00"
     },
     {
+      "artifact": "GITEA/issues/00148-adr-ticket-messenger-handler-architektur-bash-vs-strukturierter-service.md",
+      "body_sha256": "07b8de3f130267ec89fd9d033c1f2a6c86cd64b53af0fd9ed3d948d347dc6e16",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "ready"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#148",
+      "state": "open",
+      "title": "ADR Ticket: Messenger Handler Architektur – Bash vs. strukturierter Service",
+      "updated_at": "2026-07-14T00:35:49+02:00"
+    },
+    {
       "artifact": "GITEA/issues/00149-lydia-always-on-operations-agent-office-automation-engine.md",
       "body_sha256": "2c9def91ef7b93854d9ada6d06dd38484a663c42b386cc5205756b71d2994391",
+      "is_epic": true,
       "labels": [
         "Systemarchitektur",
         "epic",
@@ -66,8 +1789,86 @@
       "updated_at": "2026-07-14T00:34:20+02:00"
     },
     {
+      "artifact": "GITEA/issues/00150-signal-nachricht-von-sender-redacted-slarti.md",
+      "body_sha256": "f52d711103d50a437830c6fbcd04fb4bab49a0f82f6d26d1c791c6e8488dd090",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#150",
+      "state": "closed",
+      "title": "Signal: Nachricht von sender-redacted: @slarti",
+      "updated_at": "2026-07-14T00:31:52+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00151-signal-nachricht-von-sender-redacted-slarti-lydia-home-repo-issue-278-in.md",
+      "body_sha256": "30f5b997c13ab43227786924d69f65fc7838c409e3a00ca36d1a116d7945166d",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#151",
+      "state": "closed",
+      "title": "Signal: Nachricht von sender-redacted: @slarti Lydia Home-repo issue 278 in dein backlo",
+      "updated_at": "2026-07-11T21:20:30+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00152-signal-nachricht-von-sender-redacted-slarti-big-picture-task.md",
+      "body_sha256": "afc11b52ee64d9e0b695160aba0627a1a19cb27a993b3b6185a4de806773b4b4",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#152",
+      "state": "closed",
+      "title": "Signal: Nachricht von sender-redacted: @slarti big picture task",
+      "updated_at": "2026-07-14T00:31:52+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00153-backlog-strukturierung-bereinigung-und-agenten-roadmap.md",
+      "body_sha256": "b018009228b15b3804ae40af00a23880c0dbdcc8321c7a91aea74e4649e563ef",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "done",
+        "project:homelab-agenten-ausbau"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#153",
+      "state": "closed",
+      "title": "Backlog-Strukturierung, Bereinigung und Agenten-Roadmap",
+      "updated_at": "2026-07-14T00:35:59+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00155-p0-versionierter-lydia-task-contract-und-lifecycle.md",
+      "body_sha256": "673133c6992a3c55818936e9b84302558d0c8ab191383508fe2873246f6e7b02",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "project:homelab-agenten-ausbau",
+        "ready",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#155",
+      "state": "closed",
+      "title": "P0: Versionierter Lydia Task Contract und Lifecycle",
+      "updated_at": "2026-07-14T00:32:26+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00156-p0-gitea-task-intake-und-vekling-dispatch.md",
+      "body_sha256": "73a80f24d2ccad8f467751f8b9033a6013d85619d0288b274b651c1879542afe",
+      "is_epic": false,
+      "labels": [
+        "in-progress"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#156",
+      "state": "open",
+      "title": "P0: Gitea Task Intake und Vekling-Dispatch",
+      "updated_at": "2026-07-14T09:47:04+02:00"
+    },
+    {
       "artifact": "GITEA/issues/00157-eddie-homelab-orchestration-scheduling-engine.md",
       "body_sha256": "ba828a79f37fd31c60ad14777264ed613f4d8e66a5258c71e68b3c85ec4cad56",
+      "is_epic": true,
       "labels": [
         "Systemarchitektur",
         "epic",
@@ -81,8 +1882,205 @@
       "updated_at": "2026-07-13T18:36:00+02:00"
     },
     {
+      "artifact": "GITEA/issues/00158-lydia-messenger-eddie-integration-async-tasks-status.md",
+      "body_sha256": "d2f5183b2ff58bce1690842bc5c9ae9ee86df1f2fd8faf6b23a98ed4e0a94c08",
+      "is_epic": false,
+      "labels": [
+        "ready",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#158",
+      "state": "closed",
+      "title": "Lydia Messenger: Eddie-Integration (async-Tasks + /status)",
+      "updated_at": "2026-07-13T18:29:00+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00159-m1-eddie-docker-container-http-server-health.md",
+      "body_sha256": "6bd3d500f75003e6ec60866ea58f986c1f0ea962d003ec5dd5fe7c28a1a1f015",
+      "is_epic": false,
+      "labels": [
+        "ready",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#159",
+      "state": "closed",
+      "title": "M1: Eddie Docker-Container + HTTP-Server + Health",
+      "updated_at": "2026-07-13T08:23:13+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00160-m1-eddie-sqlite-schema-job-crud.md",
+      "body_sha256": "e819857bab7bac6b57b41638990331c84273391194c91046db9a395054c4ce28",
+      "is_epic": false,
+      "labels": [
+        "ready",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#160",
+      "state": "closed",
+      "title": "M1: Eddie SQLite-Schema + Job-CRUD",
+      "updated_at": "2026-07-13T08:23:13+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00161-m2-eddie-cron-engine-one-shot-jobs.md",
+      "body_sha256": "c999d95f8cccd6a9a52c1f2773bc00c9811c1a153c462019dc810c17b7607a2e",
+      "is_epic": false,
+      "labels": [
+        "ready",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#161",
+      "state": "closed",
+      "title": "M2: Eddie Cron-Engine + One-Shot-Jobs",
+      "updated_at": "2026-07-13T08:23:13+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00162-m2-eddie-gitea-webhook-event-router.md",
+      "body_sha256": "72cce274ea4ca411d987fb7b9b323cd894656deb390e55e3dd02967475bcdfe5",
+      "is_epic": false,
+      "labels": [
+        "ready",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#162",
+      "state": "closed",
+      "title": "M2: Eddie Gitea-Webhook + Event-Router",
+      "updated_at": "2026-07-13T09:43:21+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00163-m3-eddie-priority-queue-retry-dlq.md",
+      "body_sha256": "516554e5055054ffee42993fbdc4d5c9d6c24fd6955ff40c047c8920cbf3cb96",
+      "is_epic": false,
+      "labels": [
+        "ready",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#163",
+      "state": "closed",
+      "title": "M3: Eddie Priority-Queue + Retry/DLQ",
+      "updated_at": "2026-07-13T11:43:33+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00164-m3-eddie-executor-registry-dispatcher.md",
+      "body_sha256": "9383dce4e9d73e52278a82ac215399310ea7c8d6c937bbc6e9bd478471e61ab5",
+      "is_epic": false,
+      "labels": [
+        "ready",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#164",
+      "state": "closed",
+      "title": "M3: Eddie Executor-Registry + Dispatcher",
+      "updated_at": "2026-07-13T12:03:40+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00165-m4-eddie-task-loop-sh-ablosung.md",
+      "body_sha256": "d8687ce39f74424de046b5d39c1f2935ddfc5b37ab54097162f41ee3c332602c",
+      "is_epic": false,
+      "labels": [
+        "ready",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#165",
+      "state": "closed",
+      "title": "M4: Eddie task_loop.sh-Ablösung",
+      "updated_at": "2026-07-13T18:36:00+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00166-m4-eddie-lydia-messenger-anbindung.md",
+      "body_sha256": "6a9cd6f597429ca2b1a9b635d00f72545b0a858cadbffce38497121519d50aa7",
+      "is_epic": false,
+      "labels": [
+        "ready",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#166",
+      "state": "closed",
+      "title": "M4: Eddie Lydia-Messenger-Anbindung",
+      "updated_at": "2026-07-13T18:29:00+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00167-telegram-nachricht-von-operator-slarti-testissue-hallo-welt.md",
+      "body_sha256": "7c00473269a09221dd5ab32faff374b8c6b83dcc8b29051ec2cb7b5a54348181",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#167",
+      "state": "closed",
+      "title": "Telegram: Nachricht von operator: @slarti TestIssue Hallo welt",
+      "updated_at": "2026-07-12T16:01:56+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00168-signal-nachricht-von-sender-redacted-slarti-test.md",
+      "body_sha256": "4d37dfe15b846696c4475e9b6c51274047933a99e3368a39cccda2a10c001c59",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#168",
+      "state": "closed",
+      "title": "Signal: Nachricht von sender-redacted: @slarti Test",
+      "updated_at": "2026-07-12T16:59:10+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00169-grill-me-eddie-phase-3-hauptfaehigkeit.md",
+      "body_sha256": "c0cb792805ddb91da8be64afe4fb280fba8fec3c6b8b35384476b7ec3b552a85",
+      "is_epic": false,
+      "labels": [
+        "rueckfrage"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#169",
+      "state": "closed",
+      "title": "Grill-Me: Eddie Phase 3 - Hauptfaehigkeit",
+      "updated_at": "2026-07-12T18:22:06+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00170-rueckfrage-eddie-phase-3-hauptfaehigkeit.md",
+      "body_sha256": "5441ee159865c69506ca15d9eae274a6861aca8f21d6f739a922b28a6186dda3",
+      "is_epic": false,
+      "labels": [
+        "rueckfrage"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#170",
+      "state": "closed",
+      "title": "[rueckfrage] Eddie Phase 3 - Hauptfaehigkeit",
+      "updated_at": "2026-07-12T18:27:47+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00171-signal-nachricht-von-sender-redacted-slarti-die-trader-organisation-brau.md",
+      "body_sha256": "5255d3e6f7765b1ba363ca90c4216a855e74052ae7ac04959dca9967b6898341",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#171",
+      "state": "closed",
+      "title": "Signal: Nachricht von sender-redacted: @slarti die Trader Organisation braucht CI/CD-Pi",
+      "updated_at": "2026-07-14T00:34:55+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00172-signal-nachricht-von-sender-redacted-slarti-die-trader-organisation-brau.md",
+      "body_sha256": "5255d3e6f7765b1ba363ca90c4216a855e74052ae7ac04959dca9967b6898341",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#172",
+      "state": "closed",
+      "title": "Signal: Nachricht von sender-redacted: @slarti die Trader Organisation braucht CI/CD-Pi",
+      "updated_at": "2026-07-14T00:31:52+02:00"
+    },
+    {
       "artifact": "GITEA/issues/00173-homelab-release-management-versioning.md",
       "body_sha256": "17f3d54baf9dc2382f14ed49d0b88128ecf00397a05d51e878a7f05f2623fa2d",
+      "is_epic": true,
       "labels": [
         "Systemarchitektur",
         "epic",
@@ -98,6 +2096,7 @@
     {
       "artifact": "GITEA/issues/00174-release-management-versioning.md",
       "body_sha256": "17f3d54baf9dc2382f14ed49d0b88128ecf00397a05d51e878a7f05f2623fa2d",
+      "is_epic": true,
       "labels": [],
       "publication": "sanitized",
       "source": "slarti/backlog#174",
@@ -106,8 +2105,20 @@
       "updated_at": "2026-07-14T00:31:51+02:00"
     },
     {
+      "artifact": "GITEA/issues/00175-telegram-nachricht-von-operator-slarti-issue-telegram-messages-legen-2-i.md",
+      "body_sha256": "bff8860c39a810ff34e5d10be9575208367c9bb42a7df9e358fc8ea31fe3505c",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#175",
+      "state": "closed",
+      "title": "Telegram: Nachricht von operator: @slarti Issue: telegram messages legen 2 issues im backlog an",
+      "updated_at": "2026-07-13T06:46:09+02:00"
+    },
+    {
       "artifact": "GITEA/issues/00176-disaster-recovery-backup-resilience.md",
-      "body_sha256": "a36de7d571b71e39bdc2974931a6815d82f4c6b8be57b9cd99d7f48cdfa0a05f",
+      "body_sha256": "8b1fb54d8975edf529e025968cda6204815aa88975a1657d5acdddbc5d987f2a",
+      "is_epic": true,
       "labels": [
         "Systemarchitektur",
         "epic",
@@ -121,8 +2132,279 @@
       "updated_at": "2026-07-14T00:35:49+02:00"
     },
     {
+      "artifact": "GITEA/issues/00177-verify-first-nightly-eddie-backup-run.md",
+      "body_sha256": "5734147e0c85e9686a3749a4eb653d6761b0691ff20b206d08ae57466830c975",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "project:homelab-agenten-ausbau",
+        "ready",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#177",
+      "state": "open",
+      "title": "Verify first nightly Eddie backup run",
+      "updated_at": "2026-07-14T00:35:49+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00178-p0-coding-result-gate-pr-ci-review-und-dod.md",
+      "body_sha256": "0309501611f07d030bb70c59711c0c60a0394162ecd4a0dc5d2f8571aa32af03",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "project:homelab-agenten-ausbau",
+        "ready",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#178",
+      "state": "open",
+      "title": "P0: Coding Result Gate - PR, CI, Review und DoD",
+      "updated_at": "2026-07-14T00:35:49+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00179-p1-agent-state-und-context-authority-contract.md",
+      "body_sha256": "e78e2c5d70853d93ff708ff6afa0e1c5c2e2859c936db84aed83dee64d23102a",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "project:homelab-agenten-ausbau",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#179",
+      "state": "open",
+      "title": "P1: Agent State und Context Authority Contract",
+      "updated_at": "2026-07-14T00:35:49+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00180-p1-paperless-event-to-action-workflow.md",
+      "body_sha256": "a6d4a976019751e94dc0c246b30b2a256a527ebc751b53ec00e9d9d3a2a68416",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "project:homelab-agenten-ausbau",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#180",
+      "state": "open",
+      "title": "P1: Paperless Event-to-Action Workflow",
+      "updated_at": "2026-07-14T00:35:49+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00181-frontend-capability-skill.md",
+      "body_sha256": "c548fdbef5db07d7bd10dc6737bf75457b5bc6721b0f5c4f32953de2ccb34105",
+      "is_epic": false,
+      "labels": [
+        "Werkzeuge",
+        "project:homelab-agenten-ausbau",
+        "ready"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#181",
+      "state": "open",
+      "title": "Frontend Capability Skill",
+      "updated_at": "2026-07-14T00:35:49+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00182-adr-tool-contract-registry-service-oder-versionierte-manifeste.md",
+      "body_sha256": "11465cfd85028d04160949d0e1e8df513f48a5ca15b0f0bcb1efdfdc8c105c6b",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "project:homelab-agenten-ausbau",
+        "ready"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#182",
+      "state": "open",
+      "title": "ADR: Tool Contract Registry - Service oder versionierte Manifeste",
+      "updated_at": "2026-07-14T00:35:49+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00183-frontend-best-of-n-skill.md",
+      "body_sha256": "12bedf1d4349dfdd59b6c650fba66fb939d2faa5b58ff2f85e78b27ef89cf394",
+      "is_epic": false,
+      "labels": [
+        "Werkzeuge",
+        "project:homelab-agenten-ausbau",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#183",
+      "state": "open",
+      "title": "Frontend Best-of-N Skill",
+      "updated_at": "2026-07-14T00:35:49+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00184-rel-1-adr-release-einheit-autoritaet-und-promotion-grenze.md",
+      "body_sha256": "82b0b368b54d1e6f26e6a1af31f015b0ae38c327538f18b974658d40d6a2ee19",
+      "is_epic": false,
+      "labels": [
+        "done"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#184",
+      "state": "closed",
+      "title": "REL-1: ADR Release-Einheit, Autoritaet und Promotion-Grenze",
+      "updated_at": "2026-07-14T09:32:49+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00185-rel-2-homelab-release-v1-contract-und-guideline.md",
+      "body_sha256": "b184e69c1d2a02f530ebfdf2897c278ce93a9cd77f20f8ccad26f0931a492495",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "project:homelab-agenten-ausbau",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#185",
+      "state": "open",
+      "title": "REL-2: homelab-release/v1 Contract und Guideline",
+      "updated_at": "2026-07-16T23:02:53+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00186-rel-3-eddie-build-inputs-und-versionsmetadaten-haerten.md",
+      "body_sha256": "92d9c5d33ef68a064013deae49a85d8143350dedd2d6f282fad618fcd5a04b28",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "project:homelab-agenten-ausbau",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#186",
+      "state": "open",
+      "title": "REL-3: Eddie Build-Inputs und Versionsmetadaten haerten",
+      "updated_at": "2026-07-14T00:56:21+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00187-rel-4-deterministischer-eddie-release-packager.md",
+      "body_sha256": "b365be6c6c464e7c2fb449b00910df4c8973cc2e723002df3bac45cfc1b885be",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "project:homelab-agenten-ausbau",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#187",
+      "state": "open",
+      "title": "REL-4: Deterministischer Eddie Release-Packager",
+      "updated_at": "2026-07-14T00:56:21+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00188-rel-5-release-notes-und-changelog-policy.md",
+      "body_sha256": "3665237eae16955e5152e4c7b4ab1d9e10b1ff668fca02c6a42cdb1c4d9c3fa6",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "project:homelab-agenten-ausbau",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#188",
+      "state": "open",
+      "title": "REL-5: Release Notes und Changelog Policy",
+      "updated_at": "2026-07-14T00:56:21+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00189-rel-6-tag-getriggerter-gitea-draft-release-workflow.md",
+      "body_sha256": "7cbcfe000bcc02d03c9029bff259f7e03bd5eedc2f2c33bf7b7af2c531415764",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "project:homelab-agenten-ausbau",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#189",
+      "state": "open",
+      "title": "REL-6: Tag-getriggerter Gitea Draft-Release-Workflow",
+      "updated_at": "2026-07-14T16:54:32+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00190-rel-7-eddie-pilot-release-und-unabhaengiger-consumption-test.md",
+      "body_sha256": "6fc60f0bfea456312406384997ad81f644bce0fb977a1cd0df5711b71b8a4b3b",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "project:homelab-agenten-ausbau",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#190",
+      "state": "open",
+      "title": "REL-7: Eddie Pilot-Release und unabhaengiger Consumption-Test",
+      "updated_at": "2026-07-14T00:56:21+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00191-rel-11-operational-image-pinning-und-homelab-rollout-matrix.md",
+      "body_sha256": "9919e2b7f52256cbe874e07c753a3929dff01cbb7066e3753fa0c7ab42d338af",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "project:homelab-agenten-ausbau",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#191",
+      "state": "open",
+      "title": "REL-11: Operational Image Pinning und Homelab-Rollout-Matrix",
+      "updated_at": "2026-07-14T16:54:32+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00192-rel-10-homelab-lydia-tools-release-onboarding.md",
+      "body_sha256": "05723d884443fbdad7b707eb766bf434ac841481e04bdb2596aea95046689b07",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "project:homelab-agenten-ausbau",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#192",
+      "state": "open",
+      "title": "REL-10: Homelab/lydia-tools Release-Onboarding",
+      "updated_at": "2026-07-14T00:56:21+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00193-rel-9-messenger-und-processor-release-boundary-adr.md",
+      "body_sha256": "a42fd117fb9f365c790dc52344a95999aa09aafa665c66fe2fff3b9cb9d3f7b5",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "project:homelab-agenten-ausbau",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#193",
+      "state": "open",
+      "title": "REL-9: Messenger- und Processor-Release-Boundary ADR",
+      "updated_at": "2026-07-14T00:56:21+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00194-rel-8-eddie-deployment-und-rollback-runbook.md",
+      "body_sha256": "f1096a5ee4129f05b2113f10062f784e14a1f17a6d50038a7a0bd29e47b92f66",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "project:homelab-agenten-ausbau",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#194",
+      "state": "open",
+      "title": "REL-8: Eddie Deployment- und Rollback-Runbook",
+      "updated_at": "2026-07-14T00:56:21+02:00"
+    },
+    {
       "artifact": "GITEA/issues/00195-medizinische-kosten-einreichungs-und-erstattungsverwaltung.md",
       "body_sha256": "6bcb8b2df9c19f0d470e154e431a388e346e2a447323219916f78550da0bff66",
+      "is_epic": true,
       "labels": [
         "epic"
       ],
@@ -133,8 +2415,215 @@
       "updated_at": "2026-07-14T08:48:33+02:00"
     },
     {
+      "artifact": "GITEA/issues/00196-signal-nachricht-von-sender-redacted-slarti-model-execution-policy-md-zw.md",
+      "body_sha256": "7147b61b1d348c5bda02d808752f0b7178a3c454ceaaa4c18a25329992b6e1f3",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "project:homelab-agenten-ausbau",
+        "ready"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#196",
+      "state": "closed",
+      "title": "Signal: Nachricht von sender-redacted: @slarti MODEL_EXECUTION_POLICY.md Zweck Diese",
+      "updated_at": "2026-07-14T12:28:13+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00197-pdf-pipeline-produktionsreif-machen-generisches-pdf-tooling.md",
+      "body_sha256": "e10d32797338a51297279c8a74f05486602735d45d8d02fd9453bc1b57b242e6",
+      "is_epic": false,
+      "labels": [
+        "Werkzeuge",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#197",
+      "state": "open",
+      "title": "PDF-Pipeline produktionsreif machen (generisches PDF-Tooling)",
+      "updated_at": "2026-07-14T08:48:07+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00198-adr-architektur-datenmodell-und-threat-model-fur-medizinische-kostenverw.md",
+      "body_sha256": "a0d46f2540b23ce8bd125533aa19ba96ca3eb935d540d83d338573c3b76d44b3",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#198",
+      "state": "open",
+      "title": "ADR: Architektur, Datenmodell und Threat Model für medizinische Kostenverwaltung",
+      "updated_at": "2026-07-14T08:48:07+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00199-familienmitglieder-und-patientenmodell-paperless-intake-adapter.md",
+      "body_sha256": "8d3856587ff7868797252998fa28d38429f52680d8bc5b525590bfcaa93a4e31",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#199",
+      "state": "open",
+      "title": "Familienmitglieder- und Patientenmodell + Paperless Intake Adapter",
+      "updated_at": "2026-07-14T08:48:07+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00200-medizinische-dokumentklassifikation-metadatenextraktion.md",
+      "body_sha256": "44ba727e7f2b6c4d99bbf41f04bffe767ac651e430d04e4960c7bfb6d761e2eb",
+      "is_epic": false,
+      "labels": [
+        "Werkzeuge",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#200",
+      "state": "open",
+      "title": "Medizinische Dokumentklassifikation & Metadatenextraktion",
+      "updated_at": "2026-07-14T08:48:07+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00201-medical-expense-case-service-einreichungsregister.md",
+      "body_sha256": "7b3cb0896199b765df6be9ba886cdefa197dc04745598f453d9122797e9d15e5",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#201",
+      "state": "open",
+      "title": "Medical Expense Case Service + Einreichungsregister",
+      "updated_at": "2026-07-14T08:48:07+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00202-submission-bundle-service-pdf-package-builder.md",
+      "body_sha256": "953c7c855febdb7ff25a42ccfc65a4d5c6ed31eb1382c550ab9c5011a71981d2",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#202",
+      "state": "open",
+      "title": "Submission Bundle Service + PDF Package Builder",
+      "updated_at": "2026-07-14T08:48:07+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00203-validation-engine-dublettenprufung-manifest-generator.md",
+      "body_sha256": "ba7dade630ac5216e72348d88a984f5dc8c4503829c85310a0afaddae3bbc911",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#203",
+      "state": "open",
+      "title": "Validation Engine + Dublettenprüfung + Manifest Generator",
+      "updated_at": "2026-07-14T08:48:07+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00204-approval-workflow-messenger-kommandos.md",
+      "body_sha256": "cfbcab7f9c30ec5fcb7eb5e56f81ee07057e29d55f02d728ddd9c70d4c109fc4",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#204",
+      "state": "open",
+      "title": "Approval Workflow + Messenger-Kommandos",
+      "updated_at": "2026-07-14T08:48:07+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00205-export-adapter-iphone-bereitstellung.md",
+      "body_sha256": "c1893b75838c976217344e052d120be1ef6443fae6df9290a33a7bb420fba509",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#205",
+      "state": "open",
+      "title": "Export Adapter (iPhone-Bereitstellung)",
+      "updated_at": "2026-07-14T08:48:07+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00206-erstattungszuordnung-eigenanteilsberechnung-steuerliche-jahresauswertung.md",
+      "body_sha256": "b50a892c2b11eb1f1f3f9515ded67398be43ae4543955e5ef3b518ddb59d8189",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#206",
+      "state": "open",
+      "title": "Erstattungszuordnung + Eigenanteilsberechnung + Steuerliche Jahresauswertung",
+      "updated_at": "2026-07-14T08:48:07+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00207-audit-logging-fehlerbehandlung.md",
+      "body_sha256": "fa40ef347573830720cc2f9e79c880c91d4798b1ae7e3b3f23d3e09a2070d1db",
+      "is_epic": false,
+      "labels": [
+        "Aufgaben",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#207",
+      "state": "open",
+      "title": "Audit-Logging & Fehlerbehandlung",
+      "updated_at": "2026-07-14T08:48:07+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00208-integrationstests-mit-anonymisierten-medizinischen-testdokumenten.md",
+      "body_sha256": "013ce9702605a1109b10b825053f71077e3ac42cec70acc33d5a383ce95fcc70",
+      "is_epic": false,
+      "labels": [
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#208",
+      "state": "open",
+      "title": "Integrationstests mit anonymisierten medizinischen Testdokumenten",
+      "updated_at": "2026-07-14T08:48:07+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00209-operator-runbook-betriebsdokumentation.md",
+      "body_sha256": "5cef929834f9f6122d34c93096f3d2318d135200d5639d0fc45c421b708fa9b6",
+      "is_epic": false,
+      "labels": [
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#209",
+      "state": "open",
+      "title": "Operator-Runbook & Betriebsdokumentation",
+      "updated_at": "2026-07-14T08:48:07+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00211-implement-ci-gated-branch-protection-and-automatic-merging-as-the-standa.md",
+      "body_sha256": "581a51d1772517c455df5c504ba975ce11c649a193ae5079daa17a19bc40839c",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#211",
+      "state": "closed",
+      "title": "Implement CI-gated branch protection and automatic merging as the standard behavior for all Gitea repositories that have an active CI/CD pipeline.",
+      "updated_at": "2026-07-14T12:53:51+02:00"
+    },
+    {
       "artifact": "GITEA/issues/00212-matrix-als-primarer-kommunikationskanal-fur-lydia-und-interne-homelab-ag.md",
       "body_sha256": "6b7ba54f3a501f46350624cc8f9736d7ca29e9e6faa1d4de1e3a72532d4f973d",
+      "is_epic": true,
       "labels": [
         "Systemarchitektur",
         "clarifying",
@@ -150,6 +2639,7 @@
     {
       "artifact": "GITEA/issues/00213-chatgpt-work-an-selbst-gehosteten-gitea-server-anbinden.md",
       "body_sha256": "ddd1b8c931f27f2fddd4acebe8bdccdcf39b2761431953ecb158e9d094fd5a58",
+      "is_epic": true,
       "labels": [
         "Systemarchitektur",
         "epic",
@@ -161,9 +2651,483 @@
       "state": "closed",
       "title": "ChatGPT Work an selbst gehosteten Gitea-Server anbinden",
       "updated_at": "2026-07-14T15:37:01+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00214-install-jq-in-the-eddie-runtime-image.md",
+      "body_sha256": "d210f25b48a037531c1381adb7d6a023e6d8e916cb7ecf1cdece8e856320c11a",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#214",
+      "state": "closed",
+      "title": "Install jq in the Eddie runtime image",
+      "updated_at": "2026-07-14T16:35:08+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00215-adr-synapse-keycloak-oidc-und-privater-startbetrieb.md",
+      "body_sha256": "1688ffd9fdeb0bae90d987d40a1233d7886efb1fb24f0fb5a0d8283e65f89c1b",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "in-progress",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#215",
+      "state": "closed",
+      "title": "ADR: Synapse, Keycloak-OIDC und privater Startbetrieb",
+      "updated_at": "2026-07-15T00:20:23+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00216-security-messenger-secrets-aus-git-entfernen-und-rotieren.md",
+      "body_sha256": "aa9e81853df45fa362b5adbc44f85e4208eeb13246623a28ff4294c1786d6081",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "in-progress",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#216",
+      "state": "open",
+      "title": "Security: Messenger-Secrets aus Git entfernen und rotieren",
+      "updated_at": "2026-07-15T00:15:58+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00217-synapse-arm64-proof-of-concept-auf-dem-pi-5.md",
+      "body_sha256": "ad8a5a53adabb9c2c1146db437e052fb214aa0482adfa2dca8492ad77d8e1000",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#217",
+      "state": "closed",
+      "title": "Synapse ARM64 Proof of Concept auf dem Pi 5",
+      "updated_at": "2026-07-14T21:19:36+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00218-synapse-postgresql-daten-und-volume-konzept.md",
+      "body_sha256": "da7e71757d8eeecc3861bb41bb11b14f0ae0e32ccc7c8573484243bbf60194d4",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#218",
+      "state": "closed",
+      "title": "Synapse PostgreSQL Daten- und Volume-Konzept",
+      "updated_at": "2026-07-14T23:18:09+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00219-synapse-docker-deployment-vorbereiten.md",
+      "body_sha256": "3c66e9c05eaf46f4264ed6485545e7dcb60b5c22e5fc950e14984f811f4ee4f3",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#219",
+      "state": "closed",
+      "title": "Synapse Docker-Deployment vorbereiten",
+      "updated_at": "2026-07-15T00:50:02+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00220-matrix-reverse-proxy-und-tls-bereitstellen.md",
+      "body_sha256": "6d88e0f591104e5407cfb6a76406d149c2a89fba4dc5373b1f8a7b18083ab723",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#220",
+      "state": "closed",
+      "title": "Matrix Reverse Proxy und TLS bereitstellen",
+      "updated_at": "2026-07-15T01:01:12+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00221-matrix-discovery-und-federation-modus-absichern.md",
+      "body_sha256": "527bea3c68508db583106bdc002e28bc792ba3dd79c13912752e5b548fdf1acb",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#221",
+      "state": "closed",
+      "title": "Matrix Discovery und Federation-Modus absichern",
+      "updated_at": "2026-07-15T01:13:46+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00222-keycloak-oidc-client-fuer-synapse-einrichten.md",
+      "body_sha256": "bcb39c18c0909b9d5fa4c533d8957d3757fba66502bc5fbd51ccc8cb728bbf68",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#222",
+      "state": "closed",
+      "title": "Keycloak-OIDC Client fuer Synapse einrichten",
+      "updated_at": "2026-07-15T02:01:26+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00223-matrix-identitaets-servicekonto-und-rollenmodell.md",
+      "body_sha256": "d52d63ec2c69694fe2018e6727a8379d08fbca5f1e1d94979ee0cba05b07e80d",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#223",
+      "state": "closed",
+      "title": "Matrix Identitaets-, Servicekonto- und Rollenmodell",
+      "updated_at": "2026-07-15T07:48:00+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00224-matrix-raumstruktur-und-restriktive-power-levels.md",
+      "body_sha256": "dfa9d49151900820d16d7918850b518e0a145d7f908aea9cf21c1ded5bfea6a1",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#224",
+      "state": "closed",
+      "title": "Matrix Raumstruktur und restriktive Power Levels",
+      "updated_at": "2026-07-15T11:08:03+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00225-internes-lydia-message-envelope-spezifizieren.md",
+      "body_sha256": "4013201354e42200195087a76b51bea6291f7c3678d4abe0271223bc1ca4fb55",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#225",
+      "state": "closed",
+      "title": "Internes Lydia Message Envelope spezifizieren",
+      "updated_at": "2026-07-15T00:02:50+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00226-matrix-inbound-adapter-fuer-lydia-implementieren.md",
+      "body_sha256": "b6eb2614ddc1c5069d1d75a7019ef65ac4123c144e751322c16f96b23e1709ce",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#226",
+      "state": "closed",
+      "title": "Matrix Inbound Adapter fuer Lydia implementieren",
+      "updated_at": "2026-07-15T11:58:04+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00227-sync-cursor-und-matrix-event-deduplizierung.md",
+      "body_sha256": "7b4680fd1b71be135263a38dfaa149d5bdb3d8fde08c70de4e4fe0a0ee1ca28f",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#227",
+      "state": "closed",
+      "title": "Sync-Cursor und Matrix Event-Deduplizierung",
+      "updated_at": "2026-07-15T12:43:36+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00228-matrix-outbound-adapter-fuer-lydia-implementieren.md",
+      "body_sha256": "775afb2503940d949a1f654ed410bfa9fd037e92b5b75b445de74ca0ef8c9523",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#228",
+      "state": "closed",
+      "title": "Matrix Outbound Adapter fuer Lydia implementieren",
+      "updated_at": "2026-07-15T13:11:14+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00229-matrix-chunking-und-reply-handling.md",
+      "body_sha256": "99997aa84b0377adc98b338dddcd5ab2b7971a5a66f527459da2726bb182fed7",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#229",
+      "state": "closed",
+      "title": "Matrix Chunking und Reply Handling",
+      "updated_at": "2026-07-15T13:51:50+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00230-matrix-attachment-pipeline-absichern.md",
+      "body_sha256": "34382a14531eb17a077731b12e3119f9329fba7876ee5bf4a19a27ce86f801bc",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#230",
+      "state": "closed",
+      "title": "Matrix Attachment Pipeline absichern",
+      "updated_at": "2026-07-15T14:23:00+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00231-matrix-approvals-an-lydia-execution-gate-anbinden.md",
+      "body_sha256": "5348b0955c05f4808002e351a1aa483eac9cdccb87a53fcdb37a565385f4e1f8",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#231",
+      "state": "closed",
+      "title": "Matrix Approvals an Lydia Execution Gate anbinden",
+      "updated_at": "2026-07-16T23:31:26+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00232-telegram-signal-und-matrix-adapter-vereinheitlichen.md",
+      "body_sha256": "c204da62fd9b5ac97fb681c16e11da2143d92ec6a8f977f2bd8bde4c26effce3",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#232",
+      "state": "closed",
+      "title": "Telegram-, Signal- und Matrix-Adapter vereinheitlichen",
+      "updated_at": "2026-07-16T22:45:52+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00233-bridge-loop-prevention-und-idempotenz-ueber-kanaele.md",
+      "body_sha256": "e91373932402ec73be6a9c70b746b81fcb1b721dfad72ab7859fa6121e1b62e4",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#233",
+      "state": "open",
+      "title": "Bridge-Loop-Prevention und Idempotenz ueber Kanaele",
+      "updated_at": "2026-07-15T00:16:00+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00234-matrix-monitoring-audit-logging-und-alerts.md",
+      "body_sha256": "1a0634582c094ad263772f4b410ee4d0e13ce56c3c193bb9045d582851269c9c",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#234",
+      "state": "closed",
+      "title": "Matrix Monitoring, Audit Logging und Alerts",
+      "updated_at": "2026-07-16T23:02:37+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00235-matrix-backup-und-restore-test.md",
+      "body_sha256": "c4ebe2cf5a734f799e2107b9d3d72d186867719fe7bd93833415c8c0d6cd3555",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#235",
+      "state": "closed",
+      "title": "Matrix Backup und Restore-Test",
+      "updated_at": "2026-07-15T08:25:29+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00236-matrix-security-hardening-und-datenschutzkonzept.md",
+      "body_sha256": "a3c9b7e1576bc38b53045c749f88763b3346c7144a628aed46a3500aa9e154ff",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#236",
+      "state": "closed",
+      "title": "Matrix Security Hardening und Datenschutzkonzept",
+      "updated_at": "2026-07-16T22:45:53+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00237-ci-cd-fuer-synapse-konfiguration-und-matrix-adapter.md",
+      "body_sha256": "bda2cfadf018445d71a6fc352d9c4ef922499eda2579b7d9ede43fdcd9626d69",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#237",
+      "state": "open",
+      "title": "CI/CD fuer Synapse-Konfiguration und Matrix-Adapter",
+      "updated_at": "2026-07-15T00:16:01+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00238-matrix-parallelbetrieb-mit-telegram-und-signal-testen.md",
+      "body_sha256": "b38613038482d93b57505eaa7b0724fc2a6c379b3174297c5e0527440a5b033a",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#238",
+      "state": "open",
+      "title": "Matrix Parallelbetrieb mit Telegram und Signal testen",
+      "updated_at": "2026-07-15T00:16:01+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00239-matrix-betriebs-notfall-und-rollback-handbuch.md",
+      "body_sha256": "1f40ba65d9d4a4ec8712d4be1917bf25e2ab639c75786cc5920bdf8b53619173",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#239",
+      "state": "closed",
+      "title": "Matrix Betriebs-, Notfall- und Rollback-Handbuch",
+      "updated_at": "2026-07-16T23:33:25+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00240-matrix-als-primaeren-internen-kanal-freigeben.md",
+      "body_sha256": "7e3bb1fbdfac2301f700283333ee43944ce7dce56e0720703dfeec751b20a956",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#240",
+      "state": "open",
+      "title": "Matrix als primaeren internen Kanal freigeben",
+      "updated_at": "2026-07-15T00:16:01+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00241-rel-12-matrix-release-profil-upgrade-und-restore-contract.md",
+      "body_sha256": "619e99e80fe8196601b80ad7b8240d53e3da198bd136363e85b95157e5042a2f",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#241",
+      "state": "open",
+      "title": "REL-12: Matrix Release-Profil, Upgrade- und Restore-Contract",
+      "updated_at": "2026-07-15T00:16:01+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00242-ci-architecture-pr-gates-fuer-matrix-dokumentation-und-compose.md",
+      "body_sha256": "d4717aad7da0cc8f0956863dd409f44076d730cd464bead01bc4ae5fd4d4e3ed",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "in-progress",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#242",
+      "state": "closed",
+      "title": "CI: Architecture PR-Gates fuer Matrix-Dokumentation und Compose",
+      "updated_at": "2026-07-16T22:00:38+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00243-eddie-matrix-ci-gated-auto-merge-readiness.md",
+      "body_sha256": "f824cdc2d8d7b82e0635179b8571bb0a908892dbbbc9cc57a0cf37f3a150436f",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "in-progress",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#243",
+      "state": "closed",
+      "title": "Eddie: Matrix CI-Gated Auto-Merge Readiness",
+      "updated_at": "2026-07-16T22:45:52+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00244-matrix-webclient-element-bereitstellen.md",
+      "body_sha256": "c49f0c32bba023fd8c157f0672807abdcfc84da687dfa6ceb114d82cd448d5bf",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#244",
+      "state": "closed",
+      "title": "Matrix-Webclient (Element) bereitstellen",
+      "updated_at": "2026-07-15T01:38:31+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00245-turn-fuer-matrix-bereitstellen-und-absichern.md",
+      "body_sha256": "84153a391bf0add623fd8cd368b3cfd075f9ba13d45150b9ac0587d003d17d4e",
+      "is_epic": false,
+      "labels": [
+        "FLASH_FREE",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#245",
+      "state": "closed",
+      "title": "TURN fuer Matrix bereitstellen und absichern",
+      "updated_at": "2026-07-16T23:07:15+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00246-alle-api-endpoints-fur-gitea-im-memory-zu-referenzieren.md",
+      "body_sha256": "6aae87a787332e9ef925fa7e4946575864f8c27849d116b95047bacb2341a12a",
+      "is_epic": false,
+      "labels": [],
+      "publication": "sanitized",
+      "source": "slarti/backlog#246",
+      "state": "open",
+      "title": "alle API-Endpoints für Gitea, im memory zu referenzieren",
+      "updated_at": "2026-07-16T18:40:02+02:00"
+    },
+    {
+      "artifact": "GITEA/issues/00247-execution-gate-dauerhaften-approval-speicher-bereitstellen.md",
+      "body_sha256": "72e85cb06b55e060bbdf8853d492d0e53f4298a3fdb906ad9bb49015a61b43e6",
+      "is_epic": false,
+      "labels": [
+        "Systemarchitektur",
+        "in-progress",
+        "sub-task"
+      ],
+      "publication": "sanitized",
+      "source": "slarti/backlog#247",
+      "state": "closed",
+      "title": "Execution Gate: dauerhaften Approval-Speicher bereitstellen",
+      "updated_at": "2026-07-16T22:45:53+02:00"
     }
   ],
-  "issue_count": 235,
-  "schema_version": "gitea-epic-snapshot/v1",
+  "schema_version": "gitea-backlog-snapshot/v1",
   "source": "slarti/backlog"
 }

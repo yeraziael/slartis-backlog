@@ -1,8 +1,9 @@
 ---
-snapshot_version: gitea-epic-issue/v1
+snapshot_version: gitea-backlog-issue/v1
 source: slarti/backlog#176
 state: open
 updated_at: 2026-07-14T00:35:49+02:00
+is_epic: true
 labels:
   - "Systemarchitektur"
   - "epic"
@@ -45,9 +46,9 @@ Initial targets, to be confirmed during M0:
 
 ## Current Baseline
 
-- Pi5 keeps Paperless exports and Gitea dumps on `/mnt/hardDrive`; this is local only and shares the Pi failure domain.
+- Pi5 keeps Paperless exports and Gitea dumps on `<local-path-redacted>`; this is local only and shares the Pi failure domain.
 - Current host cron backups: Paperless Francine at 01:00, Paperless NGX at 03:00, Gitea at 04:00.
-- Pi root runs from microSD; `/mnt/hardDrive` is the Pi SSD.
+- Pi root runs from microSD; `<local-path-redacted>` is the Pi SSD.
 - Eddie currently owns zero backup schedules.
 - rechenknecht has its own root and RAID0 workspace storage, but no verified offsite DR copy is established here.
 
@@ -55,8 +56,8 @@ Initial targets, to be confirmed during M0:
 
 | Tier | Location | Purpose |
 |---|---|---|
-| Local fast restore | Pi SSD `/mnt/hardDrive` | Current Pi exports, Gitea dumps, service data. |
-| LAN independent copy | rechenknecht `/mnt/raid0` | Encrypted mirror of Pi recovery set; protects against Pi, SSD, or microSD loss. |
+| Local fast restore | Pi SSD `<local-path-redacted>` | Current Pi exports, Gitea dumps, service data. |
+| LAN independent copy | rechenknecht `<local-path-redacted>` | Encrypted mirror of Pi recovery set; protects against Pi, SSD, or microSD loss. |
 | Offsite primary | Google Cloud storage via rclone/restic or equivalent | Encrypted, automated retention for recovery-critical data. |
 | Offsite secondary | Strato WebDAV/SFTP storage via rclone/restic or equivalent | Independent encrypted copy of the critical recovery set. |
 | Manual emergency archive | iCloud Drive | Small, encrypted recovery manifest, runbooks, key-location record, and periodic critical configuration export. Not an unattended primary backup target. |
@@ -125,7 +126,7 @@ M1 selects exact tooling and available capacities before bulk data is enabled. G
 4. Attach the surviving Pi SSD read-only first; otherwise retrieve the latest encrypted recovery set from rechenknecht or offsite storage.
 5. Restore Docker/Gitea/Paperless/messenger/Eddie in dependency order, then validate health endpoints and data counts.
 
-### Scenario B: Pi SSD Failure (`/mnt/hardDrive`)
+### Scenario B: Pi SSD Failure (`<local-path-redacted>`)
 
 1. Stop write-heavy affected services to avoid repeated I/O failures.
 2. Replace the SSD and create the documented filesystem/mount.
