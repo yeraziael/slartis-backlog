@@ -6,8 +6,8 @@ Stand: 2026-07-17
 
 - Quelle ist `slarti/backlog` in Gitea.
 - Der Index enthaelt 235 oeffentlich bereinigte Issue-Records bis Issue `#247`.
-- Diese Aktualisierung uebernimmt die geaenderten Records `#185`, `#186`,
-  `#187` und `#233`; alle vier sind inzwischen geschlossen.
+- Dieser Nachtrag aktualisiert die Records `#231`, `#233` und `#239` nach den
+  finalen Gitea-Abschlusskommentaren; alle drei sind geschlossen.
 - Interne URLs, Transportdaten, Attachments, lokale Pfade und Zugangsdaten sind
   nicht enthalten.
 
@@ -23,11 +23,11 @@ Stand: 2026-07-17
   umgesetzt in `lydia/home-repo#373` und Follow-up `#374`. Finale
   Merge-Commits: `c5ae96a` und `a9e6a99`.
 - `#231`: Matrix-Approvals an das Execution Gate angebunden,
-  `lydia/home-repo#370`, Merge-Commit `72318ec`.
+  `lydia/home-repo#370`, Merge-Commit `72318ec`; Main-CI `394` erfolgreich.
 - `#233`: kanal- und replay-sicherer Bridge-Loop-Guard,
-  `lydia/home-repo#371`, Merge-Commit `6b1910f`.
+  `lydia/home-repo#371`, Merge-Commit `6b1910f`; Main-CI `398` erfolgreich.
 - `#239`: Matrix Betriebs-, Notfall- und Rollback-Handbuch,
-  `Homelab/Architecture#26`.
+  `Homelab/Architecture#26`, Merge-Commit `401fdcf`; Main-CI `395` erfolgreich.
 
 ## Verifikation
 
@@ -36,6 +36,9 @@ Stand: 2026-07-17
   amd64-Runner ueber gepinnte Binfmt-Emulation.
 - Paketgenerierung, kopierte Paketverifikation, Version/Commit-Pruefung und
   isolierte Image-Smokes liefen erfolgreich.
+- Die geschlossenen Issues `#231`, `#233` und `#239` enthalten jeweils einen
+  nachgetragenen Abschlusskommentar mit Merge-Commit und erfolgreichem
+  Main-CI-Lauf.
 - Es wurde kein Release oder Image publiziert und kein Deployment, Restart,
   Credential- oder Produktionswechsel ausgefuehrt.
 
