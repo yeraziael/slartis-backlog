@@ -7,6 +7,31 @@ Seine einzige Aufgabe: Matrix-Sync-Events in kanalneutrale Lydia-Envelopes
 konvertieren. Die Authorization ist auf **vier nachgelagerte Schichten**
 verteilt, von denen jede fail-closed arbeitet:
 
+### Matrix-Spezifisch: Sender-ID als Policy-Key
+
+Für Telegram und Signal wird `target.id` (Chat-ID / Gruppen-ID) als
+Policy-Key verwendet. Für Matrix wäre dies die `room_id` — das ist
+semantisch falsch, weil die Authorization pro **Matrix-User** erfolgen
+muss, nicht pro Raum.
+
+Daher führt der Processor (`processor.sh`) eine kanalabhängige Auflösung
+durch:
+
+- **Telegram/Signal:** `policy_chat_id = target.id` (Chat-ID oder Gruppen-ID),
+  ggf. Signal-UUID → canonical chat_id aufgelöst
+- **Matrix:** `policy_chat_id = sender.id` (Matrix-User-ID wie
+  `@admin:matrix.example.org`)
+
+Damit wird die Matrix-User-ID als Policy-Key behandelt — genau wie ein
+Telegram-Chat-ID oder eine Signal-UUID. Die `room_id` (target.id) bleibt
+für das Response-Routing erhalten.
+
+**Effekt:** Ein Matrix-User wird in der Policy wie ein Telegram-User
+behandelt: `policy_get_role("@admin:matrix.example.org")` gibt dessen
+Rolle zurück. Die Auto-Registrierung legt den Matrix-User (nicht den
+Raum) als pending an. Der Admin kann den User via `/accept @admin...`
+freischalten, und der User ist dann in allen Matrix-Räumen authorisiert.
+
 ```
 Matrix-Event
   │
@@ -81,6 +106,35 @@ Doppelzustellung). Der LoopGuard (loop_guard.py) erkennt das Replay über
 message_id-Claims und lehnt ab.
 
 **Test:** loop_guard_test: test_duplicate_claim, test_repeated_trace
+
+### NT5: Matrix Unknown Sender → Auto-Registrierung mit Sender-ID
+
+Ein unbekannter Matrix-User (`@unknown:matrix.example.org`) sendet eine
+Nachricht. Der Processor setzt `policy_chat_id = @unknown:matrix.example.org`
+(statt der room_id). Da der User nicht in der Policy ist (role=unknown),
+wird er automatisch als pending registriert — mit der Matrix-User-ID als
+Key. Der Admin erhält eine Notification, die den Matrix-User (nicht den
+Raum) referenziert.
+
+**Test:** NT5 in test_processor_handlers.sh
+
+### NT6: Matrix Blocked User → Silent Drop (Catch-all)
+
+Ein bekannter Matrix-User (`@blocked:matrix.example.org`) ohne
+`routing_has_policy` sendet einen nicht-Kommando-Text. Die
+`routing_has_policy`-Prüfung verwendet `policy_chat_id` (= sender.id)
+und lehnt ab → silenter Drop. Kein Issue, keine Antwort.
+
+**Test:** NT6 in test_processor_handlers.sh
+
+### NT7: Matrix Known Sender → Command Dispatch mit Room-Response
+
+Ein bekannter Matrix-User (`@admin:matrix.example.org`) sendet `/status`.
+Der Processor dispatches das Kommando (role=authorized). Die Antwort geht
+an die `room_id` (= target.id), nicht an den Sender — der User sieht die
+Antwort im Matrix-Raum.
+
+**Test:** NT7 in test_processor_handlers.sh
 
 ## Evidenz
 
