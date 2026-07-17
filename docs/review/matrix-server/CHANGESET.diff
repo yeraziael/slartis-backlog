@@ -1,0 +1,100 @@
+# Changeset: Matrix Epic (#212)
+# Home Repo (lydia/home-repo) + Architecture Repo (Homelab/architecture)
+# Generated: 2026-07-17
+
+## Home Repo — lydia/home-repo
+
+### Merged auf main: ~4804 Zeilen in 26 Dateien
+
+```
+ ci-manifest.yaml                            | 163 ++++++-
+ docs/matrix/monitoring.md                   |  68 +++
+ runtime/matrix/README.md                    |  50 +++
+ runtime/matrix/approvals.py                 |  98 +++++
+ runtime/matrix/attachments.py               | 117 +++++
+ runtime/matrix/bootstrap_rooms.py           | 565 ++++++++++++++++++++++++
+ runtime/matrix/chunking.py                  |  90 ++++
+ runtime/matrix/client.py                    | 231 ++++++++++
+ runtime/matrix/inbound.py                   | 130 ++++++
+ runtime/matrix/observability.py             | 138 ++++++
+ runtime/matrix/outbound.py                  | 146 +++++++
+ runtime/matrix/room_policy.json             | 131 ++++++
+ runtime/matrix/state.schema.json            |  48 +++
+ runtime/matrix/state_store.py               | 172 ++++++++
+ runtime/messaging/envelope.schema.json      | 319 ++++++++++++++
+ runtime/messaging/loop_guard.py             | 130 ++++++
+ runtime/messaging/router.py                 | 142 ++++++
+ runtime/messaging/validate_envelope.py      | 120 ++++++
+ runtime/tests/test_matrix_approvals.py      | 143 ++++++
+ runtime/tests/test_matrix_attachments.py    | 356 +++++++++++++++
+ runtime/tests/test_matrix_chunking.py       |  61 +++
+ runtime/tests/test_matrix_inbound.py        | 273 ++++++++++++
+ runtime/tests/test_matrix_observability.py  |  87 ++++
+ runtime/tests/test_matrix_outbound.py       | 243 +++++++++++
+ runtime/tests/test_matrix_room_bootstrap.py | 647 ++++++++++++++++++++++++++++
+ runtime/tests/test_matrix_state_store.py    | 142 ++++++
+ 26 files changed, 4804 insertions(+), 6 deletions(-)
+```
+
+### Offene PRs (nicht gemerged)
+
+PR #376 (#216): .gitignore (+1), channels.json (removed from tracking)
+PR #377 (#237): ci-manifest.yaml (+compose-validate, +scan-secrets), test_ci_generator.py (+2 tests)
+PR #378 (#238): parallel-operation-test.md (+221), test_matrix_parallel_fixtures.py (+92)
+PR #379 (#240): primary-channel-e2e-contract.md (+86)
+
+## Architecture Repo — Homelab/architecture
+
+### Merged auf main: ~4292 Zeilen in 36 Dateien
+
+```
+ ci-manifest.yaml                                   | 225 +++++++++++++
+ docs/adr/001-matrix-synapse-keycloak.md            | 336 ++++++++++++++++++
+ docs/matrix/element.md                             | 132 ++++++++
+ docs/matrix/federation-mode.md                     |  88 +++++
+ docs/matrix/identity-and-access.md                 | 203 +++++++++++
+ docs/matrix/keycloak-oidc.md                       | 178 ++++++++++
+ docs/matrix/poc-plan.md                            | 352 +++++++++++++++++++
+ docs/matrix/proxy.md                               |  56 +++
+ docs/matrix/runbook.md                             | 369 ++++++++++++++++++++
+ docs/matrix/security-and-retention.md              | 126 +++++++
+ docs/matrix/storage-and-retention.md               | 225 +++++++++++++
+ docs/matrix/turn.md                                |  92 +++++
+ pi/backupMatrix.sh                                 | 116 +++++++
+ pi/compose/coturn.yml                              |  79 +++++
+ pi/compose/element.yml                             |  30 ++
+ pi/compose/synapse-poc.yml                         | 104 ++++++
+ pi/compose/synapse.yml                             | 140 ++++++++
+ pi/coturn/turn.env.example                         |   8 +
+ pi/coturn/turnserver.conf.example                  |  33 ++
+ pi/element/config.json.example                     |  27 ++
+ pi/keycloak/.gitignore                             |   1 +
+ pi/keycloak/README.md                              |  37 ++
+ pi/keycloak/keycloak.env.example                   |   5 +
+ pi/keycloak/matrix-client-realm-export.example.json |  36 ++
+ pi/restoreMatrix.md                                | 236 +++++++++++++
+ pi/synapse/synapse.env.example                     |   5 +
+ pi/synapse/synapse.yaml.example                    |  43 +++
+ pi/synapse/well-known/client.json.example          |   5 +
+ pi/synapse/well-known/headers.example              |   3 +
+ pi/synapse/well-known/server.json.example          |   3 +
+ pi/tests/test_matrix_backup.sh                     | 247 ++++++++++++++
+ pi/tests/test_matrix_discovery.sh                  |  79 +++++
+ pi/tests/test_matrix_hardening.sh                  | 108 ++++++
+ pi/tests/test_matrix_identity_policy.sh            | 375 +++++++++++++++++++++
+ pi/tests/test_matrix_oidc.sh                       | 113 +++++++
+ pi/tests/test_matrix_operations.sh                 |  77 +++++
+ 36 files changed, 4292 insertions(+)
+```
+
+### Offene PRs (nicht gemerged)
+
+PR #27 (#241): matrix-profile-v1.md (+NEW), matrix-release-manifest.example.json (+NEW), test_matrix_release_profile.sh (+NEW), ci-manifest.yaml (+gate)
+PR #28 (#240): primary-channel-declaration.md (+NEW), README.md (updated)
+
+## Gesamt
+
+- **62 neue Dateien** (26 home-repo + 36 architecture)
+- **~9096 Zeilen neuer Code/Konfiguration/Dokumentation**
+- **25 Subtasks** (#215-#245)
+- **2 Repositories** (lydia/home-repo, Homelab/architecture)
