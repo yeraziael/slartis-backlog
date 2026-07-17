@@ -2901,7 +2901,7 @@
       "source": "slarti/backlog#231",
       "state": "closed",
       "title": "Matrix Approvals an Lydia Execution Gate anbinden",
-      "updated_at": "2026-07-16T23:31:26+02:00"
+      "updated_at": "2026-07-17T07:19:38+02:00"
     },
     {
       "artifact": "GITEA/issues/00232-telegram-signal-und-matrix-adapter-vereinheitlichen.md",
@@ -2929,7 +2929,7 @@
       "source": "slarti/backlog#233",
       "state": "closed",
       "title": "Bridge-Loop-Prevention und Idempotenz ueber Kanaele",
-      "updated_at": "2026-07-17T00:51:38+02:00"
+      "updated_at": "2026-07-17T07:19:38+02:00"
     },
     {
       "artifact": "GITEA/issues/00234-matrix-monitoring-audit-logging-und-alerts.md",
@@ -3013,7 +3013,7 @@
       "source": "slarti/backlog#239",
       "state": "closed",
       "title": "Matrix Betriebs-, Notfall- und Rollback-Handbuch",
-      "updated_at": "2026-07-16T23:33:25+02:00"
+      "updated_at": "2026-07-17T07:19:38+02:00"
     },
     {
       "artifact": "GITEA/issues/00240-matrix-als-primaeren-internen-kanal-freigeben.md",
