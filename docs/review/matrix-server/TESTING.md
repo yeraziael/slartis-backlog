@@ -2,7 +2,7 @@
 
 ## Unit-Tests (Bash + Python)
 
-### Architecture Repo (11 Test-Skripte, ~300 Tests)
+### Architecture Repo (12 Test-Skripte, ~330 Tests)
 
 | Test | Beschreibung | Status |
 |---|---|---|
