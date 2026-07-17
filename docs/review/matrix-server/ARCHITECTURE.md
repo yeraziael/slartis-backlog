@@ -38,24 +38,41 @@ Bewertet wurden Python, Go und Rust:
 
 | Kriterium | Python | Go | Rust |
 |---|---|---|---|
-| Matrix-SDK | matrix-nio (reif) | mautrix (reif) | Kein reifes SDK |
+| Matrix-SDK | Custom stdlib (urllib) | mautrix (reif) | Kein reifes SDK |
 | Async-I/O | asyncio | Goroutines | tokio |
 | ARM64 | ✅ | ✅ | ✅ |
 | RAM (idle) | ~30MB | ~10MB | ~5MB |
 | Team-Erfahrung | Hoch | Mittel | Gering |
 
-**Entscheidung:** Python, weil matrix-nio das ausgereifteste Matrix-SDK bietet,
-asyncio native Async-Unterstützung hat und die Team-Erfahrung mit Python am
-höchsten ist.
+**Entscheidung:** Python mit **eigenem stdlib-basierten Matrix-Client**
+(`urllib` + `json`), kein externes SDK (matrix-nio). Gründe:
+
+- **Angriffsfläche minimieren:** `client.py` umfasst ~230 Zeilen ohne externe
+  Abhängigkeiten. matrix-nio hat tausende Zeilen mit asyncio-Transports,
+  Olm-Verschlüsselung, E2EE-Keys und einem komplexen Event-Loop. Unser Adapter
+  benötigt nur Sync-Endpunkt + Media-Download.
+- **Vollständige Kontrolle:** Retry-, Redirect-, Auth-, Timeout- und
+  Fehlerbehandlung sind explizit und auditierbar. Keine versteckten
+  Defaults in Bibliotheken.
+- **Deterministisches Polling:** Synchroner urllib-Request ist einfacher
+  zu debuggen und zu testen als asyncio-Loop mit Callbacks.
+- **Keine Patch-Pflicht:** Bei matrix-nio-Updates müsste die Adapter-Schnittstelle
+  stabil bleiben; bei eigenem Client ist die Wartungsfläche vorhersagbar.
+- **Nachteli:** Erhöhte Eigenentwicklung bei Retry-, Redirect- und
+  Fehlerbehandlung — durch explizite Tests und Redaktion abgesichert.
 
 # Verworfenen Alternativen
 
-1. **Continuwuity** — Vielversprechend (Rust, ressourcenschonend), aber zu neu
+1. **matrix-nio** — Das ausgereifteste Python-Matrix-SDK wurde nach
+   Prototyping verworfen: 3000+ Zeilen asyncio-Overhead für Sync + Media,
+   unerwünschte Abhängigkeiten (Olm, E2EE), erschwerte Testbarkeit und
+   größere Angriffsfläche. Ersetzt durch 230 Zeilen stdlib.
+2. **Continuwuity** — Vielversprechend (Rust, ressourcenschonend), aber zu neu
    und unzureichend dokumentiert für den Produktivbetrieb
 2. **Dendrite** — Offizieller Synapse-Nachfolger von Matrix.org, aber noch nicht
    stabil genug (experimentelles ARM64-Image)
-3. **Go als Adapter-Sprache** — Wäre ressourcenschonender, aber matrix-nio
-   (Python) ist ausgereifter als mautrix (Go)
+3. **Go als Adapter-Sprache** — Wäre ressourcenschonender, aber der
+   Custom-Client (Python/stdlib) ist wartbarer als mautrix
 4. **Signal als einzigen Messenger** — Zu wartungsintensiv (signal-cli,
    JSON-RPC-Probleme mit Attachments)
 5. **Big-Bang-Migration** — Verworfen zugunsten schrittweisem Parallelbetrieb
