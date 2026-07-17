@@ -1,8 +1,8 @@
 ---
 snapshot_version: gitea-backlog-issue/v1
 source: slarti/backlog#187
-state: open
-updated_at: 2026-07-14T00:56:21+02:00
+state: closed
+updated_at: 2026-07-17T03:16:15+02:00
 is_epic: false
 labels:
   - "Systemarchitektur"

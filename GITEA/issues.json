@@ -2262,13 +2262,13 @@
       ],
       "publication": "sanitized",
       "source": "slarti/backlog#185",
-      "state": "open",
+      "state": "closed",
       "title": "REL-2: homelab-release/v1 Contract und Guideline",
-      "updated_at": "2026-07-16T23:02:53+02:00"
+      "updated_at": "2026-07-17T01:47:32+02:00"
     },
     {
       "artifact": "GITEA/issues/00186-rel-3-eddie-build-inputs-und-versionsmetadaten-haerten.md",
-      "body_sha256": "92d9c5d33ef68a064013deae49a85d8143350dedd2d6f282fad618fcd5a04b28",
+      "body_sha256": "308e97a94b36e7e8e8f84d8a81859a68c1103ed41399f56b3f43f10a8150cfee",
       "is_epic": false,
       "labels": [
         "Systemarchitektur",
@@ -2277,9 +2277,9 @@
       ],
       "publication": "sanitized",
       "source": "slarti/backlog#186",
-      "state": "open",
+      "state": "closed",
       "title": "REL-3: Eddie Build-Inputs und Versionsmetadaten haerten",
-      "updated_at": "2026-07-14T00:56:21+02:00"
+      "updated_at": "2026-07-17T02:17:21+02:00"
     },
     {
       "artifact": "GITEA/issues/00187-rel-4-deterministischer-eddie-release-packager.md",
@@ -2292,9 +2292,9 @@
       ],
       "publication": "sanitized",
       "source": "slarti/backlog#187",
-      "state": "open",
+      "state": "closed",
       "title": "REL-4: Deterministischer Eddie Release-Packager",
-      "updated_at": "2026-07-14T00:56:21+02:00"
+      "updated_at": "2026-07-17T03:16:15+02:00"
     },
     {
       "artifact": "GITEA/issues/00188-rel-5-release-notes-und-changelog-policy.md",
@@ -2919,7 +2919,7 @@
     },
     {
       "artifact": "GITEA/issues/00233-bridge-loop-prevention-und-idempotenz-ueber-kanaele.md",
-      "body_sha256": "e91373932402ec73be6a9c70b746b81fcb1b721dfad72ab7859fa6121e1b62e4",
+      "body_sha256": "9bf33cce97685ede5afa6f70780434295e693466a669028ca4869b060948e825",
       "is_epic": false,
       "labels": [
         "FLASH_FREE",
@@ -2927,9 +2927,9 @@
       ],
       "publication": "sanitized",
       "source": "slarti/backlog#233",
-      "state": "open",
+      "state": "closed",
       "title": "Bridge-Loop-Prevention und Idempotenz ueber Kanaele",
-      "updated_at": "2026-07-15T00:16:00+02:00"
+      "updated_at": "2026-07-17T00:51:38+02:00"
     },
     {
       "artifact": "GITEA/issues/00234-matrix-monitoring-audit-logging-und-alerts.md",

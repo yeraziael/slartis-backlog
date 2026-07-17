@@ -47,6 +47,6 @@ Dieses Repository ist die gemeinsame Planungsgrundlage zwischen Operator, ChatGP
 ## Gitea-Kontext
 
 `context.md` dokumentiert die Gitea-Pfade, Issue-Typen und Slartis Konvention
-fuer Epics und ausfuehrbare Arbeitspakete. Der einmalige, oeffentlich bereinigte
-Snapshot aller Backlog-Issues liegt unter `GITEA/`; Synchronisationsskripte sind bewusst
-nicht Bestandteil dieses Stands.
+fuer Epics und ausfuehrbare Arbeitspakete. Der oeffentlich bereinigte Snapshot
+aller Backlog-Issues und sein aktuelles Summary liegen unter `GITEA/`;
+Synchronisationsskripte sind bewusst nicht Bestandteil dieses Stands.

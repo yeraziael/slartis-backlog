@@ -1,8 +1,8 @@
 ---
 snapshot_version: gitea-backlog-issue/v1
 source: slarti/backlog#186
-state: open
-updated_at: 2026-07-14T00:56:21+02:00
+state: closed
+updated_at: 2026-07-17T02:17:21+02:00
 is_epic: false
 labels:
   - "Systemarchitektur"
@@ -40,3 +40,13 @@ Parent: #173. Abhaengigkeit: REL-2.
 - Image meldet exakte Version und Commit.
 - Release-Compose ist immutable.
 - Bestehende Eddie-Tests und Smoke-Tests bleiben gruen.
+
+## Control-Plane Execution Packet
+
+- Worktree: `<local-path-redacted>`
+- Branch: `feat/eddie-build-metadata`
+- Allowed paths: `runtime/eddie/main.go`, `runtime/eddie/main_test.go`, `runtime/eddie/server/server.go`, `runtime/eddie/server/server_test.go`, `runtime/eddie/Dockerfile`, `deploy/docker/eddie-compose.yml`, `docs/releases/eddie-build-inputs.md`, `runtime/tests/run_eddie_go_tests.sh`, `runtime/tests/test_eddie_release_inputs.py`, `ci-manifest.yaml`, `runtime/tests/test_ci_generator.py`, `ci-generate.py` and generator outputs.
+- Focused tests from repository root: `bash runtime/tests/run_eddie_go_tests.sh`, `python3 runtime/tests/test_eddie_release_inputs.py`, `python3 runtime/tests/test_ci_generator.py`.
+- Full suite: `make test`; then `git diff --check main...HEAD` and `git diff --name-only main...HEAD`.
+- Delivery: commit, push and assigned PR only. No image publication, deployment, force-push, secrets or service changes.
+- New focused tests must remain in generated required PR CI.
