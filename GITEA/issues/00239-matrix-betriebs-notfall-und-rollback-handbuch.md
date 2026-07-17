@@ -2,7 +2,7 @@
 snapshot_version: gitea-backlog-issue/v1
 source: slarti/backlog#239
 state: closed
-updated_at: 2026-07-16T23:33:25+02:00
+updated_at: 2026-07-17T07:19:38+02:00
 is_epic: false
 labels:
   - "FLASH_FREE"
