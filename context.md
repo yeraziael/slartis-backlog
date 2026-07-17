@@ -13,11 +13,12 @@ Die stabilen, hostunabhaengigen Pfade sind:
 - Pull Requests werden in den jeweiligen Implementierungs-Repositories gefuehrt,
   nicht im Backlog-Repository.
 
-`GITEA/issues.json` indexiert den einmaligen, oeffentlich bereinigten Snapshot
+`GITEA/issues.json` indexiert den oeffentlich bereinigten Snapshot
 aller offenen und geschlossenen Backlog-Issues. Die einzelnen Inhalte liegen unter
 `GITEA/issues/<number>-<slug>.md`. Interne URLs, Transport-Absender,
 Attachments, lokale Pfade und Zugangsdaten sind nicht Teil dieses Snapshots.
 Das Feld `is_epic` kennzeichnet die zusaetzlich als Epic erkannten Records.
+`GITEA/summary.md` fasst den aktuellen Liefer- und Abhaengigkeitsstand zusammen.
 
 ## Issue-Typen
 
@@ -91,4 +92,4 @@ Die konkrete Aktualisierungs- und Konfliktlogik wird ausserhalb dieses
 Snapshots implementiert.
 
 Dieser Stand enthaelt absichtlich keine Synchronisationsskripte und nimmt keine
-Gitea-Aenderung vor.
+Gitea-Aenderung vor. Der Snapshot wurde zuletzt am 2026-07-17 aktualisiert.

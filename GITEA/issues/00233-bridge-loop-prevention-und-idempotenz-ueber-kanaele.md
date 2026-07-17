@@ -1,8 +1,8 @@
 ---
 snapshot_version: gitea-backlog-issue/v1
 source: slarti/backlog#233
-state: open
-updated_at: 2026-07-15T00:16:00+02:00
+state: closed
+updated_at: 2026-07-17T00:51:38+02:00
 is_epic: false
 labels:
   - "FLASH_FREE"
@@ -44,7 +44,7 @@ Dieser Abschnitt ergaenzt das fachliche Paket oben und ist fuer den naechsten Fl
 ### Worktree, Branch und Scope
 - Repository: `home-repo`. Exakte Worktree(s): `<local-path-redacted>`. Branch: `feat/bridge-loop-guard`. Vor jedem Editieren exakt `git status --short --branch` ausfuehren.
 - Unrelated working-tree changes nicht zuruecksetzen oder ueberschreiben; melden und stoppen.
-- Erlaubt sind nur die oben genannten Paketpfade sowie die folgenden fokussierten Testpfade: `runtime/messaging/loop_guard.py; runtime/tests/test_loop_guard.py`. Generierte Dateien duerfen nur ueber den vorhandenen Generator entstehen.
+- Erlaubt sind nur die oben genannten Paketpfade sowie die folgenden fokussierten Test- und CI-Pfade: `runtime/messaging/loop_guard.py; runtime/tests/test_loop_guard.py; ci-manifest.yaml; runtime/tests/test_ci_generator.py; Makefile; .gitea/workflows/ci.yaml; .pre-commit-config.yaml`. Die drei CI-Artefakte duerfen nur ueber den vorhandenen Generator entstehen. Generierte Dateien duerfen nur ueber den vorhandenen Generator entstehen.
 - Keine ungeplanten Refactorings, Adapter-Umbauten oder Aenderungen an anderen Issues.
 
 ### Verbindliche Nachweise
