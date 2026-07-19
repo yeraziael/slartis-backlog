@@ -1,0 +1,99 @@
+{
+  "schema": "vekling.invocation.evidence.v1",
+  "experiment": "E-003",
+  "date": "2026-07-19",
+  "protocol": "vekling.orchestration.v0.1",
+  "issue": "yeraziael/slartis-backlog#24",
+  "orchestrator": {
+    "model": "openai/gpt-5.6-sol",
+    "variant": "high"
+  },
+  "worker": {
+    "session_id": "ses_086bdc63cffeLD2XhNyr6qJvFz",
+    "model": "opencode/hy3-free",
+    "fresh_session": true,
+    "operator_approval_observed": true,
+    "subagents_started": 0,
+    "loaded_skills": [
+      "adr",
+      "architecture",
+      "github-cli",
+      "gitea",
+      "vekling-delegation",
+      "communication"
+    ]
+  },
+  "invocation": {
+    "method": "opencode run --model opencode/hy3-free --auto",
+    "task_agent_profile_available": false,
+    "pre_model_launch_failures": 1,
+    "pre_model_failure_reason": "--file array consumed the following positional message as another file path",
+    "prompt_words": 599,
+    "prompt_bytes": 4592,
+    "prompt_sha256": "1b6a8b4459834e4264d41ddcd1f1f3b4c7689af85c2dc8bd7e4fce6f2c996804",
+    "initial_session_wall_span_seconds": 99.657,
+    "clarification_count": 0
+  },
+  "delivery": {
+    "gate_compliance": true,
+    "branch": "docs/gh-24-facebook-bridge",
+    "commit": "d424af717727a51fb6eba678cd039b7b4e68078d",
+    "gitea_pr": 36,
+    "changed_files": [
+      "docs/adr/002-facebook-messenger-bridge.md"
+    ],
+    "unrelated_committed_change_count": 0,
+    "local_git_diff_check": "pass",
+    "local_make_lint": "pass",
+    "local_make_test": "pass",
+    "pr_ci_run": 512,
+    "pr_ci_conclusion": "success",
+    "auto_merged_before_reviewer_acceptance": true,
+    "merge_commit": "21f004e1a4e3a783034320d46ede466d980e261c",
+    "review_state": "changes_required"
+  },
+  "review": {
+    "worker_initial_unsupported_assumption_count": 0,
+    "review_confirmed_correction_items": 9,
+    "material_current_source_errors": 2,
+    "material_current_source_error_summary": [
+      "latest release was v26.07, not v26.06",
+      "v26.07 split Instagram into mautrix-instagram; same-binary claim was stale"
+    ],
+    "unsupported_claim_categories": [
+      "Meta ToS conclusion",
+      "risk equivalence across unrelated bridge platforms",
+      "no additional platform cost",
+      "resource caps presented as observed behavior",
+      "database schema instead of dedicated database",
+      "unverified bot and ghost namespace details"
+    ],
+    "transient_unrelated_mutation_count": 1,
+    "transient_unrelated_mutation": "tracked __pycache__/ci-generate.cpython-311.pyc changed by make test",
+    "transient_unrelated_mutation_cleaned": true,
+    "console_contract": "fail",
+    "captured_console_words": 4714,
+    "captured_console_bytes": 55701,
+    "observed_credential_value_matches": 0
+  },
+  "correction": {
+    "same_worker_session": true,
+    "corrective_prompt_count": 1,
+    "correction_prompt_words": 425,
+    "correction_prompt_bytes": 3087,
+    "correction_wall_span_seconds": 18.325,
+    "applied": false,
+    "blocker": "PR 36 had already been auto-merged",
+    "replacement_pr_requires_operator_approval": true
+  },
+  "isolated_session_usage": {
+    "scope": "initial execution plus one correction turn in the dedicated worker session",
+    "input_tokens": 82325,
+    "output_tokens": 8076,
+    "reasoning_tokens": 0,
+    "cache_read_tokens": 829248,
+    "cache_write_tokens": 0,
+    "reported_cost": 0
+  },
+  "result": "merged_but_rejected_repair_authorization_required"
+}
