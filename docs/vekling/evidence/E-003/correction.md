@@ -1,0 +1,15 @@
+Continue the same GH-24 worker session, branch, and Gitea PR #36. This is corrective review within the same issue; do not create a new branch, PR, issue, or subagent. Recheck that PR #36 is still open before mutation and stop if it has merged or closed.
+
+Reviewer findings requiring correction:
+
+1. `docs/adr/002-facebook-messenger-bridge.md` incorrectly calls v26.06 the latest release. Primary GitHub release evidence shows latest tag `v0.2607.0` / display release `v26.07`, published 2026-07-16, commit `ed37c9e6ce47e83dc75b9abea7b636302715b9bc`.
+2. The current release invalidates the claim that one current binary serves Facebook and Instagram. The v26.07 release added the separate `mautrix-instagram` bridge; after v26.07, `mautrix-meta` is Messenger-only. Describe the GH-25 relationship accurately and do not retain the stale two-instances/same-binary statement.
+3. The upstream authentication docs support an account-block/suspicious-activity risk. They do not support calling it a Meta Terms-of-Service conclusion or claiming it is the same risk as Signal, Telegram, and WhatsApp. Remove that comparison and state that Meta ToS compliance was not established by this research.
+4. Replace the unsupported statement that there is "no measurable additional platform cost". A new container and database add load; exact Pi 5 CPU/RSS/storage were not measured. Treat 256m and 0.5 CPU only as proposed local caps inherited from the existing compose pattern, not measured usage or upstream requirements.
+5. The official Docker guide says unrelated programs must not share a database. Use "dedicated PostgreSQL database", not merely "schema".
+6. Treat `@facebookbot...`, the ghost namespace, registration generation details, and any exact config fields as implementation proposals to be verified against config generated from the selected pinned v26.07 image. Do not present them as observed upstream facts unless a source directly establishes them.
+7. Prefer stable release/tag/commit evidence over volatile UI counts. Remove or correct the stale 966 commits / 24 releases claim.
+8. The prior PR body and GH-24 evidence comment contain stale release and Instagram claims. Update PR #36's body and post one compact correction comment on GH-24 that explicitly supersedes the prior evidence comment; do not delete history.
+9. `make test` changed tracked `__pycache__/ci-generate.cpython-311.pyc`, while the report claimed `unrelated_change_count: 0`. Restore that generated tracked file to HEAD after validation and report `transient_unrelated_mutation_count: 1`, `unrelated_committed_change_count: 0`, and `corrective_prompt_count: 1`.
+
+Keep the decision only if it remains supported after these corrections. Modify only `docs/adr/002-facebook-messenger-bridge.md`, commit and push to the existing branch, then run `git diff --check origin/main...HEAD`, `make lint`, and `make test`. Restore the generated pycache after tests, verify clean worktree, verify PR #36 changed files and CI state, and report pending CI honestly. Keep console output to phase lines, blockers, and final JSON.
