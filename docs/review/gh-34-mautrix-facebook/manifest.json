@@ -1,0 +1,32 @@
+{
+  "schema": "slarti.review-package.v1",
+  "work_item": "GH-34",
+  "review_target": "pr",
+  "source_repository": "Homelab/Architecture",
+  "source_pr": 41,
+  "source_pr_url": "https://gitea.hl.maier.wtf/Homelab/Architecture/pulls/41",
+  "base_commit": "6201662e828957b470728a4604c9d2df494211d4",
+  "pr_head_commit": "8d5d556344c3d3891eb27da785f3a4f8e09b4b32",
+  "instruction_file": "AGENTS.md",
+  "instruction_commit": "8d5d556344c3d3891eb27da785f3a4f8e09b4b32",
+  "instruction_reloaded": true,
+  "changes_diff_sha256": "7884a0a08b891ae0f82e107d7891200ce49b6905eae3a6aa1dcba2305fc6d32a",
+  "changed_files": [
+    ".gitea/workflows/ci.yaml",
+    "AGENTS.md",
+    "Makefile",
+    "ci-manifest.yaml",
+    "pi/compose/mautrix-facebook.yml",
+    "pi/mautrix-facebook/config.yaml.example",
+    "pi/synapse/BRIDGES.md",
+    "pi/synapse/synapse.yaml.example",
+    "pi/tests/test_mautrix_facebook_compose.sh"
+  ],
+  "ci_run_ids": [532, 533],
+  "ci_conclusion": "success",
+  "runtime_mutated": false,
+  "deployment_mutated": false,
+  "dns_mutated": false,
+  "secrets_mutated": false,
+  "external_systems_mutated": false
+}
