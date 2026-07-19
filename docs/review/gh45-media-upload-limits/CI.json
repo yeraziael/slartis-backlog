@@ -1,0 +1,10 @@
+{
+  "ci_run_ids": [],
+  "ci_status": "n/a",
+  "note": "This is a runtime configuration capture, not a code change. No CI pipeline executes against frontproxy vhost.d or synapse.yaml.example templates in this repo. Verification was performed live on the Pi5 and confirmed by operator.",
+  "evidence_files": [
+    "docs/review/gh45-media-upload-limits/CHANGES.diff",
+    "docs/review/gh45-media-upload-limits/NOTES.md",
+    "docs/review/gh45-media-upload-limits/TESTING.md"
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "issue": 45,
+  "title": "P1: Telegram registrieren und homogenen Drei-Bridge-Stand herstellen",
+  "epic": 44,
+  "changes": [
+    {
+      "file": "/home/michael/matrix/synapse/synapse.yaml.example",
+      "type": "template",
+      "change": "add max_upload_size: 100M after media_store_path",
+      "persistent": true,
+      "secret_touched": false
+    },
+    {
+      "file": "/home/michael/frontproxy/vhost.d/matrix.hl.maier.wtf_location",
+      "type": "proxy-vhost",
+      "change": "prepend client_max_body_size 100m",
+      "persistent": true
+    },
+    {
+      "file": "/home/michael/frontproxy/vhost.d/cwa.hl.maier.wtf_location",
+      "type": "proxy-vhost",
+      "change": "create file with client_max_body_size 100m",
+      "persistent": true
+    },
+    {
+      "file": "/home/michael/mautrix-{telegram,signal,whatsapp}/config.yaml",
+      "type": "bridge-config",
+      "change": "public_address: http://compose-synapse-1:8008",
+      "persistent": true
+    }
+  ],
+  "verification": {
+    "proxy_upload_413": "resolved",
+    "synapse_healthy": true,
+    "max_upload_size_persistent": true,
+    "bridges_ready_http200": ["telegram", "signal", "whatsapp"],
+    "operator_confirmed": ["web-app upload", "cwa upload", "telegram media", "signal media", "whatsapp media"]
+  },
+  "source_head": "runtime-mutation-on-Pi5-192.168.2.30",
+  "target_repo": "Homelab/Architecture",
+  "gate": "approval records config in versioned repo; no further production recreation required"
+}

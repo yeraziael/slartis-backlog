@@ -1,0 +1,44 @@
+# CHANGES.diff — GH-45 Media Upload Limits
+#
+# Root cause: Media uploads failed with HTTP 413 (nginx client_max_body_size
+# default) on the public frontproxy vhosts, and Synapse's default 10M
+# max_upload_size would have capped uploads below the proxy limit.
+#
+# The actual mutations were applied to runtime files on the Pi5
+# (192.168.2.30) under /home/michael. This diff captures the reviewable
+# change per file. Secrets in synapse.yaml.example are NOT reproduced here;
+# only the media_store_path context line and the added max_upload_size are shown.
+
+# ---------------------------------------------------------------------------
+# FILE 1: /home/michael/matrix/synapse/synapse.yaml.example  (versioned template)
+# ---------------------------------------------------------------------------
+@@ -28,6 +28,7 @@
+ signing_key_path: /run/secrets/synapse_signing_key
+ media_store_path: /media
++max_upload_size: 100M
+ turn_uris:
+
+# ---------------------------------------------------------------------------
+# FILE 2: /home/michael/frontproxy/vhost.d/matrix.hl.maier.wtf_location  (new leading line)
+# ---------------------------------------------------------------------------
++client_max_body_size 100m;
++
+ location = /.well-known/matrix/server {
+     root /usr/share/nginx/html;
+     try_files /matrix-server.json =404;
+
+# ---------------------------------------------------------------------------
+# FILE 3: /home/michael/frontproxy/vhost.d/cwa.hl.maier.wtf_location  (new file)
+# ---------------------------------------------------------------------------
++client_max_body_size 100m;
+
+# ---------------------------------------------------------------------------
+# FILE 4-6: bridge public_address (runtime config.yaml of each bridge)
+#          telegram/signal/whatsapp -> public_address: http://compose-synapse-1:8008
+#          (was "https://bridge.example.com" placeholder in telegram, null in others)
+# ---------------------------------------------------------------------------
+ # mautrix-telegram/config.yaml, mautrix-signal/config.yaml, mautrix-whatsapp/config.yaml
+-public_address: https://bridge.example.com   # telegram (placeholder)
+-public_address: null                          # signal
+-public_address: null                          # whatsapp
++public_address: http://compose-synapse-1:8008  # all three
