@@ -36,6 +36,9 @@ review.
 - PR CI: success; merge occurred before review acceptance.
 - Console contract: failed; captured output was 4,714 words / 55,701 bytes.
 - Observed credential-value pattern matches in captured worker output: 0.
+- A broad orchestrator process listing exposed one credential from another
+  process's command-line arguments. The value is not copied into research
+  artifacts; redaction and rotation were handed to issue #17.
 - Replacement: Gitea PR #37, draft, CI run 515 successful, not merged.
 
 ## Protocol Findings

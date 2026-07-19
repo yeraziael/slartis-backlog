@@ -74,7 +74,10 @@
     "console_contract": "fail",
     "captured_console_words": 4714,
     "captured_console_bytes": 55701,
-    "observed_credential_value_matches": 0
+    "observed_worker_output_credential_value_matches": 0,
+    "orchestrator_process_listing_credential_exposures": 1,
+    "exposed_value_persisted_in_research_artifacts": false,
+    "credential_rotation_handoff": "yeraziael/slartis-backlog#17"
   },
   "correction": {
     "same_worker_session": true,
