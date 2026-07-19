@@ -1,0 +1,31 @@
+{
+  "schema": "slarti.review-package.v1",
+  "work_item": "GH-35",
+  "review_target": "pr",
+  "source_repository": "Homelab/Architecture",
+  "source_pr": 42,
+  "source_pr_url": "https://gitea.hl.maier.wtf/Homelab/Architecture/pulls/42",
+  "base_commit": "bf820d06bd1f95f4fa112805c67cfb6dfc5f9023",
+  "pr_head_commit": "957b7d23202a5946ab29ac92639f0d63c2fad869",
+  "instruction_file": "AGENTS.md",
+  "instruction_commit": "bf820d06bd1f95f4fa112805c67cfb6dfc5f9023",
+  "instruction_reloaded": true,
+  "changes_diff_sha256": "176bc0f1c3a47897ffd116c77b4cd90cfa090e6168d7782bd5bf8c760db70160",
+  "changed_files": [
+    ".gitea/workflows/ci.yaml",
+    "Makefile",
+    "ci-manifest.yaml",
+    "pi/compose/mautrix-instagram.yml",
+    "pi/mautrix-instagram/config.yaml.example",
+    "pi/synapse/BRIDGES.md",
+    "pi/synapse/synapse.yaml.example",
+    "pi/tests/test_mautrix_instagram_compose.sh"
+  ],
+  "ci_run_ids": [535, 536],
+  "ci_conclusion": "success",
+  "runtime_mutated": false,
+  "deployment_mutated": false,
+  "dns_mutated": false,
+  "secrets_mutated": false,
+  "external_systems_mutated": false
+}
