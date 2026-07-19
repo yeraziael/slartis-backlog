@@ -1,0 +1,67 @@
+{
+  "schema": "vekling.runtime.events.v1",
+  "experiment": "E-003",
+  "session_id": "ses_086bdc63cffeLD2XhNyr6qJvFz",
+  "opencode_version": "1.17.20",
+  "events": [
+    {
+      "observation": "provider_selected",
+      "provider": "opencode",
+      "model": "hy3-free",
+      "classification": "fact",
+      "evidence": "DEBUG llm runtime selected"
+    },
+    {
+      "observation": "waiting_permission",
+      "permission": "external_directory",
+      "resource": "/home/slarti/.creds/*",
+      "action": "ask",
+      "classification": "fact",
+      "evidence": "operator DEBUG reproduction"
+    },
+    {
+      "observation": "session_workspace_retained",
+      "bound_directory": "/tmp/opencode/architecture-gh24",
+      "requested_cli_directory": "/tmp/opencode/architecture-gh24-repair",
+      "classification": "fact",
+      "evidence": "DEBUG created both instances but session tracking cwd remained the original directory"
+    },
+    {
+      "observation": "tool_access_denied",
+      "permission": "external_directory",
+      "resource": "/tmp/opencode/architecture-gh24-repair/*",
+      "action": "deny",
+      "classification": "fact",
+      "evidence": "DEBUG evaluated permission action=deny"
+    },
+    {
+      "observation": "clean_exit_without_delivery",
+      "loop_steps": 5,
+      "exit_event": "exiting loop",
+      "error_event": false,
+      "commit": false,
+      "pull_request": false,
+      "classification": "fact",
+      "evidence": "DEBUG loop and independently verified Git/Gitea state"
+    },
+    {
+      "observation": "explicit_worktree_allow_enabled_delivery",
+      "resource": "/tmp/opencode/architecture-gh24-repair/*",
+      "action": "allow",
+      "commit": "23e8f0abbe601591b74b5e9bad3857b5374398ce",
+      "pull_request": 37,
+      "classification": "fact",
+      "evidence": "DEBUG permission action=allow plus independently verified Git/Gitea state"
+    }
+  ],
+  "rejected_hypotheses": [
+    "Hy3 was stalled in model inference",
+    "the provider was unavailable",
+    "a clean loop exit meant successful delivery"
+  ],
+  "open_questions": [
+    "Why did a resumed session with --auto still wait on an ASK external_directory request?",
+    "Should --dir be rejected or warned when it cannot rebind an existing session?",
+    "Can exact credential-file allows satisfy a permission resource normalized to the parent wildcard without broadening access?"
+  ]
+}

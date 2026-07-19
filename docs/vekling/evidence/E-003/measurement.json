@@ -1,5 +1,5 @@
 {
-  "schema": "vekling.invocation.evidence.v1",
+  "schema": "vekling.invocation.evidence.v2",
   "experiment": "E-003",
   "date": "2026-07-19",
   "protocol": "vekling.orchestration.v0.1",
@@ -78,22 +78,69 @@
   },
   "correction": {
     "same_worker_session": true,
-    "corrective_prompt_count": 1,
+    "worker_user_turns_total": 8,
+    "continuation_turns_after_initial": 7,
     "correction_prompt_words": 425,
     "correction_prompt_bytes": 3087,
     "correction_wall_span_seconds": 18.325,
-    "applied": false,
-    "blocker": "PR 36 had already been auto-merged",
-    "replacement_pr_requires_operator_approval": true
+    "first_correction_applied": false,
+    "first_correction_blocker": "PR 36 had already been auto-merged",
+    "replacement_pr_operator_approval_observed": true,
+    "replacement_commit": "23e8f0abbe601591b74b5e9bad3857b5374398ce",
+    "replacement_pr": 37,
+    "replacement_pr_draft": true,
+    "replacement_pr_ci_run": 515,
+    "replacement_pr_ci_conclusion": "success",
+    "replacement_pr_merged": false
+  },
+  "runtime_protocol": {
+    "opencode_version": "1.17.20",
+    "session_bound_directory": "/tmp/opencode/architecture-gh24",
+    "requested_repair_directory": "/tmp/opencode/architecture-gh24-repair",
+    "dir_flag_rebound_existing_session": false,
+    "waiting_permission_observed": true,
+    "waiting_permission_type": "external_directory",
+    "waiting_permission_resource": "/home/slarti/.creds/*",
+    "auto_flag_present": true,
+    "documented_auto_behavior": "approve ask unless explicitly denied",
+    "observed_auto_behavior": "resume waited for external_directory decision",
+    "auto_behavior_root_cause": "unknown; implementation or resume-path mismatch requires a focused reproduction",
+    "denied_repair_worktree_run": {
+      "provider_ready": true,
+      "model": "hy3-free",
+      "loop_steps_observed": 5,
+      "permission_action": "deny",
+      "exit_event": "exiting loop",
+      "model_response": false,
+      "commit": false,
+      "pull_request": false,
+      "error_event": false
+    },
+    "allowed_repair_worktree_run": {
+      "provider_ready": true,
+      "model": "hy3-free",
+      "permission_action": "allow",
+      "commit": "23e8f0abbe601591b74b5e9bad3857b5374398ce",
+      "pull_request": 37,
+      "draft": true
+    },
+    "validated_monitor_requirement": "waiting_permission, tool_denied, and exited_without_delivery must be distinct from model_stalled"
   },
   "isolated_session_usage": {
-    "scope": "initial execution plus one correction turn in the dedicated worker session",
-    "input_tokens": 82325,
-    "output_tokens": 8076,
+    "scope": "all eight user turns in the dedicated GH-24 worker session",
+    "input_tokens": 95503,
+    "output_tokens": 16677,
     "reasoning_tokens": 0,
-    "cache_read_tokens": 829248,
+    "cache_read_tokens": 2605056,
     "cache_write_tokens": 0,
     "reported_cost": 0
   },
-  "result": "merged_but_rejected_repair_authorization_required"
+  "handoff": {
+    "gh24_state": "open",
+    "corrective_pr_state": "draft_green_unmerged",
+    "lifecycle_monitor_issue": "yeraziael/slartis-backlog#32",
+    "review_gated_automerge_issue": "yeraziael/slartis-backlog#33",
+    "credential_redaction_issue": "yeraziael/slartis-backlog#17"
+  },
+  "result": "research_complete_implementation_handed_over"
 }
