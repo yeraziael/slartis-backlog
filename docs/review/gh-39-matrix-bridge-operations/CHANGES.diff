@@ -72,10 +72,10 @@ index 553166d..ce0e8c0 100644
      clean: rm -rf reports/ logs/
 diff --git a/pi/synapse/BRIDGE-OPERATIONS.md b/pi/synapse/BRIDGE-OPERATIONS.md
 new file mode 100644
-index 0000000..0df822e
+index 0000000..4389d51
 --- /dev/null
 +++ b/pi/synapse/BRIDGE-OPERATIONS.md
-@@ -0,0 +1,213 @@
+@@ -0,0 +1,291 @@
 +# Matrix Bridge Operations
 +
 +This runbook governs the production lifecycle of the Signal, Telegram, and
@@ -110,14 +110,32 @@ index 0000000..0df822e
 +
 +## Start And Stop
 +
-+Use the versioned release checkout and operate only the selected bridge:
++Use Compose directly from the clean, detached Architecture checkout. A runtime
++copy under `/home/michael/matrix/compose` is not release evidence and must not be
++used by this procedure:
 +
 +```bash
-+git switch --detach <release-commit>
-+docker compose -f /home/michael/matrix/compose/mautrix-<bridge>.yml config -q
-+docker compose -f /home/michael/matrix/compose/mautrix-<bridge>.yml up -d
-+docker compose -f /home/michael/matrix/compose/mautrix-<bridge>.yml stop
++ARCHITECTURE_ROOT="<architecture-checkout>"
++git -C "$ARCHITECTURE_ROOT" fetch origin
++git -C "$ARCHITECTURE_ROOT" switch --detach <release-commit>
++test "$(git -C "$ARCHITECTURE_ROOT" rev-parse HEAD)" = "<release-commit>"
++git -C "$ARCHITECTURE_ROOT" diff --quiet
++git -C "$ARCHITECTURE_ROOT" diff --cached --quiet
++
++COMPOSE_FILE="$ARCHITECTURE_ROOT/pi/compose/mautrix-<bridge>.yml"
++test -f "$COMPOSE_FILE"
++git -C "$ARCHITECTURE_ROOT" diff --quiet <release-commit> -- \
++  "pi/compose/mautrix-<bridge>.yml"
++docker compose -f "$COMPOSE_FILE" config -q
++docker compose -f "$COMPOSE_FILE" up -d
++docker compose -f "$COMPOSE_FILE" stop
 +```
++
++The detached commit, clean-worktree check, repository-relative file path, and
++Compose command form one release binding. Record the commit and SHA-256 of
++`$COMPOSE_FILE` as deployment evidence. Apply the same checks to
++`pi/compose/synapse.yml`, `pi/synapse/entrypoint.sh`, and
++`pi/synapse/synapse.yaml.example` before a Synapse appservice-list change.
 +
 +Start order is PostgreSQL, Synapse, then one bridge. Stop order is the selected
 +bridge first; do not stop unrelated bridges. After changing Synapse appservice
@@ -180,21 +198,41 @@ index 0000000..0df822e
 +```bash
 +umask 077
 +BACKUP_DIR="/mnt/hardDrive/backups/matrix-bridges/<backup-timestamp>"
-+mkdir -p "$BACKUP_DIR/databases" "$BACKUP_DIR/state" "$BACKUP_DIR/appservice"
++mkdir -p "$BACKUP_DIR/databases" "$BACKUP_DIR/state" \
++  "$BACKUP_DIR/appservice" "$BACKUP_DIR/synapse"
 +chmod 700 "$BACKUP_DIR"
 +```
 +
-+Stop one bridge at a time, then dump its dedicated database and archive its
-+persistent state. Repeat for `signal`, `telegram`, and `whatsapp` when present:
++Capture the active Synapse configuration, its appservice list, and the exact
++versioned template before changing registrations. The rendered config contains
++secrets and receives the same restricted handling as registrations:
 +
 +```bash
-+docker compose -f /home/michael/matrix/compose/mautrix-<bridge>.yml stop
++docker cp compose-synapse-1:/run/synapse/homeserver.yaml \
++  "$BACKUP_DIR/synapse/homeserver.active.yaml"
++cp "$ARCHITECTURE_ROOT/pi/synapse/synapse.yaml.example" \
++  "$BACKUP_DIR/synapse/synapse.yaml.example"
++docker exec compose-synapse-1 python3 -c \
++  'import json,yaml; c=yaml.safe_load(open("/run/synapse/homeserver.yaml")); print(json.dumps(c.get("app_service_config_files", []), sort_keys=True))' \
++  > "$BACKUP_DIR/synapse/app_service_config_files.json"
++```
++
++Stop one bridge, dump its dedicated database, archive its persistent state, and
++copy its registration. Then restart it and pass its health gates before
++selecting the next bridge. Repeat for `signal`, `telegram`, and `whatsapp` when
++present:
++
++```bash
++COMPOSE_FILE="$ARCHITECTURE_ROOT/pi/compose/mautrix-<bridge>.yml"
++docker compose -f "$COMPOSE_FILE" stop
 +docker exec compose-postgres-1 pg_dump -U mautrix_<bridge> \
 +  -d mautrix_<bridge> -Fc > "$BACKUP_DIR/databases/mautrix_<bridge>.dump"
 +tar -C /home/michael -czf "$BACKUP_DIR/state/mautrix-<bridge>.tar.gz" \
 +  mautrix-<bridge>
 +cp "/mnt/hardDrive/docker/synapse/data/appservice/mautrix-<bridge>.yaml" \
 +  "$BACKUP_DIR/appservice/"
++docker compose -f "$COMPOSE_FILE" up -d
++# Require /_matrix/mau/live and /_matrix/mau/ready HTTP 200 before continuing.
 +```
 +
 +Registration copies and state archives contain secrets. Keep them local with
@@ -207,7 +245,8 @@ index 0000000..0df822e
 +(cd "$BACKUP_DIR" && sha256sum -c sha256sums.txt)
 +```
 +
-+Restart each stopped bridge and rerun all health and regression gates.
++The backup is incomplete if any selected bridge cannot restart and pass its
++health gates, if the active Synapse list cannot be parsed, or if checksums fail.
 +
 +## Restore
 +
@@ -217,7 +256,12 @@ index 0000000..0df822e
 +```bash
 +cd "/mnt/hardDrive/backups/matrix-bridges/<backup-timestamp>"
 +sha256sum -c sha256sums.txt
-+docker compose -f /home/michael/matrix/compose/mautrix-<bridge>.yml stop
++ARCHITECTURE_ROOT="<architecture-checkout>"
++git -C "$ARCHITECTURE_ROOT" switch --detach <release-commit>
++git -C "$ARCHITECTURE_ROOT" diff --quiet
++git -C "$ARCHITECTURE_ROOT" diff --cached --quiet
++COMPOSE_FILE="$ARCHITECTURE_ROOT/pi/compose/mautrix-<bridge>.yml"
++docker compose -f "$COMPOSE_FILE" stop
 +```
 +
 +Restore the persistent archive, registration, and dedicated database with their
@@ -232,8 +276,33 @@ index 0000000..0df822e
 +
 +Copy the selected registration back to the Synapse appservice directory without
 +removing existing registrations. Verify its bot and ghost namespaces locally,
-+recreate Synapse only if the registration set changed, start the target bridge,
-+then run health, regression, and operator blackbox checks.
++and verify the checked-out `pi/synapse/synapse.yaml.example` matches the backed-up
++template. Do not copy the rendered `homeserver.active.yaml` into Git or the
++container; it is restricted recovery evidence because the entrypoint regenerates
++the active tmpfs file from the versioned template and runtime secrets.
++
++```bash
++cd "$ARCHITECTURE_ROOT"
++cmp pi/synapse/synapse.yaml.example \
++  "$BACKUP_DIR/synapse/synapse.yaml.example"
++```
++
++If the registration set changed, bind `SYNAPSE_COMPOSE` to the same reviewed
++checkout and recreate Synapse:
++
++```bash
++SYNAPSE_COMPOSE="$ARCHITECTURE_ROOT/pi/compose/synapse.yml"
++git -C "$ARCHITECTURE_ROOT" diff --quiet <release-commit> -- \
++  pi/compose/synapse.yml pi/synapse/entrypoint.sh \
++  pi/synapse/synapse.yaml.example
++docker compose -f "$SYNAPSE_COMPOSE" up -d --force-recreate synapse
++```
++
++Extract the new active `app_service_config_files` list and compare it byte for
++byte with `synapse/app_service_config_files.json`. The restore passes only when
++the reverted list matches the previous release and all pre-existing
++registrations are preserved. Start the target bridge, then run health,
++regression, and operator blackbox checks.
 +
 +## Upgrade
 +
@@ -244,8 +313,9 @@ index 0000000..0df822e
 +4. Compare schema and namespace changes without displaying secret values.
 +   Verify config/registration token consistency using hashes only.
 +5. Register contract tests in `ci-manifest.yaml`; require green PR CI and review.
-+6. After merge, record `<release-commit>`, create a complete backup, and let
-+   Lydia or the operator deploy the reviewed commit.
++6. After merge, fetch and detach `<release-commit>`, prove the checkout is clean,
++   bind Compose to the repository path, create a complete backup, and let Lydia
++   or the operator deploy only those reviewed files.
 +7. Start only the upgraded bridge. Require its health gates and all existing
 +   bridge regression gates before acceptance.
 +
@@ -259,15 +329,23 @@ index 0000000..0df822e
 +return to the reviewed prior release:
 +
 +```bash
-+git switch --detach <previous-release-commit>
-+docker compose -f /home/michael/matrix/compose/mautrix-<bridge>.yml stop
++ARCHITECTURE_ROOT="<architecture-checkout>"
++git -C "$ARCHITECTURE_ROOT" switch --detach <previous-release-commit>
++test "$(git -C "$ARCHITECTURE_ROOT" rev-parse HEAD)" = \
++  "<previous-release-commit>"
++git -C "$ARCHITECTURE_ROOT" diff --quiet
++git -C "$ARCHITECTURE_ROOT" diff --cached --quiet
++COMPOSE_FILE="$ARCHITECTURE_ROOT/pi/compose/mautrix-<bridge>.yml"
++docker compose -f "$COMPOSE_FILE" stop
 +```
 +
 +Restore the pre-change database, state archive, and registration from
-+`<backup-timestamp>`, then recreate the prior bridge container. If Synapse's
-+registration list changed, restore that list before recreating Synapse. Run the
-+full health and regression gates; preserve failed-upgrade evidence without raw
-+runtime content.
++`<backup-timestamp>`, then recreate the prior bridge container directly from the
++previous checkout. If Synapse's registration list changed, use the previous
++checkout's `pi/compose/synapse.yml` and `pi/synapse/synapse.yaml.example` to
++regenerate the active config, then compare its appservice list to the backed-up
++`app_service_config_files.json`. Run the full health and regression gates;
++preserve failed-upgrade evidence without raw runtime content.
 +
 +## Operator Blackbox Test
 +
@@ -306,10 +384,10 @@ index bef90eb..5d98462 100644
  - Issue #20 abgeschlossen (bridge_internal Network + appservice Directory)
 diff --git a/pi/tests/test_matrix_bridge_operations.sh b/pi/tests/test_matrix_bridge_operations.sh
 new file mode 100755
-index 0000000..bd1ae5f
+index 0000000..e949f1b
 --- /dev/null
 +++ b/pi/tests/test_matrix_bridge_operations.sh
-@@ -0,0 +1,83 @@
+@@ -0,0 +1,100 @@
 +#!/usr/bin/env bash
 +# Static contract test for Matrix bridge operations, backup, and upgrades.
 +set -uo pipefail
@@ -334,6 +412,7 @@ index 0000000..bd1ae5f
 +
 +require(runbook_path.is_file(), "bridge operations runbook exists")
 +text = runbook_path.read_text(encoding="utf-8")
++normalized_text = " ".join(text.split())
 +require(
 +    "BRIDGE-OPERATIONS.md" in install_guide_path.read_text(encoding="utf-8"),
 +    "bridge installation guide links the operations runbook",
@@ -362,25 +441,41 @@ index 0000000..bd1ae5f
 +    )
 +
 +for command in (
-+    "docker compose -f /home/michael/matrix/compose/mautrix-<bridge>.yml",
++    'ARCHITECTURE_ROOT="<architecture-checkout>"',
++    'COMPOSE_FILE="$ARCHITECTURE_ROOT/pi/compose/mautrix-<bridge>.yml"',
++    'git -C "$ARCHITECTURE_ROOT" diff --quiet',
++    'git -C "$ARCHITECTURE_ROOT" diff --cached --quiet',
++    'docker compose -f "$COMPOSE_FILE"',
 +    "docker inspect",
 +    "/_matrix/mau/live",
 +    "/_matrix/mau/ready",
 +    "pg_dump",
 +    "pg_restore",
++    "cmp pi/synapse/synapse.yaml.example",
 +    "sha256sum -c",
-+    "git switch --detach <release-commit>",
-+    "git switch --detach <previous-release-commit>",
++    'git -C "$ARCHITECTURE_ROOT" switch --detach <release-commit>',
++    'git -C "$ARCHITECTURE_ROOT" switch --detach <previous-release-commit>',
 +):
 +    require(command in text, f"runbook contains command or contract: {command}")
 +
 +require("umask 077" in text, "backup procedure uses restrictive permissions")
 +require("existing registrations" in text, "registration changes preserve existing registrations")
++require("homeserver.active.yaml" in text, "backup captures the active Synapse configuration")
++require("app_service_config_files.json" in text, "backup captures the active appservice list")
++require("pi/synapse/synapse.yaml.example" in text, "backup and restore cover the versioned Synapse template")
++require(
++    "restart it and pass its health gates before selecting the next bridge" in normalized_text,
++    "backup sequence prevents unintended multi-bridge outage",
++)
 +require("CPU, RSS, Swap, and Storage" in text, "resource acceptance is documented")
 +require("Signal and Telegram" in text, "existing bridges are explicit regression gates")
 +require("Never paste raw logs" in text, "raw runtime logs are prohibited as evidence")
 +require("hashes only" in text, "token consistency uses hashes without values")
 +require("Action:" in text and "Expected:" in text and "Evidence:" in text, "blackbox test is executable")
++require(
++    "/home/michael/matrix/compose/mautrix-<bridge>.yml" not in text,
++    "runbook never deploys an unbound runtime Compose copy",
++)
 +
 +secret_patterns = {
 +    "Matrix access token": r"syt_[A-Za-z0-9_-]{12,}",

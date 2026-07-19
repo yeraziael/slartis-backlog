@@ -1,7 +1,7 @@
 # Architecture Agent Instructions At Review Head
 
 Source: `Homelab/Architecture/AGENTS.md` at
-`42101fe2a43ccd98633f0da48fd44fa80673931b`; the instruction file was last
+`cca3131d262ad0a48be11b3238c699e507af47f6`; the instruction file was last
 changed in commit `bf820d06bd1f95f4fa112805c67cfb6dfc5f9023`.
 
 ## Review Contract

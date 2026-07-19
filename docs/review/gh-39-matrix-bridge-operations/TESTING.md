@@ -10,7 +10,7 @@ runbook.
 ## Full Local Validation
 
 All commands passed on implementation head
-`42101fe2a43ccd98633f0da48fd44fa80673931b`:
+`cca3131d262ad0a48be11b3238c699e507af47f6`:
 
 ```bash
 make lint
@@ -23,3 +23,8 @@ The focused test verifies operations, backup, restore, upgrade, rollback,
 resource acceptance, three independent bridge boundaries, Signal/Telegram
 regression gates, executable blackbox steps, and exclusion of credential
 patterns from the runbook.
+
+After the first review requested changes, additional RED/GREEN cycles added
+release-checkout binding, staged and unstaged worktree checks, active Synapse
+configuration and appservice-list backup/restore, and per-bridge immediate
+restart gates that prevent an unintended multi-bridge outage.

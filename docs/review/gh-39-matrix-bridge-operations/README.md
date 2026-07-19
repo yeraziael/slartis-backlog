@@ -12,7 +12,7 @@ remains draft until review accepts the exact implementation head.
 - Repository: `Homelab/Architecture`
 - Gitea PR: `#43`
 - Base: `4bbd1fcf665403891becf3189d97259691c40053`
-- Head: `42101fe2a43ccd98633f0da48fd44fa80673931b`
+- Head: `cca3131d262ad0a48be11b3238c699e507af47f6`
 - Work item: `yeraziael/slartis-backlog#39`
 
 ## Files
