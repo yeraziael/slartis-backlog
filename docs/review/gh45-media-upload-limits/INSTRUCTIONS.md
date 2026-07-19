@@ -1,31 +1,34 @@
-# INSTRUCTIONS.md — GH-45 Media Upload Limits Review
+# INSTRUCTIONS.md — GH-45 Media Upload Limits Review (revised)
 
 This PR transports the exact source diff and evidence for GH-45 (Telegram
 registration + homogeneous three-bridge stand) and the follow-up media-upload
-limit fixes.
+limit fix, now bound to a real `Homelab/Architecture` source PR.
 
 Review `docs/review/gh45-media-upload-limits/CHANGES.diff` against the
 accompanying root-cause, risk, and testing evidence.
 
+## Bound source change
+
+- Gitea `Homelab/Architecture` PR #52
+  (fix/gh45-synapse-max-upload-size -> main)
+- Base SHA: 77d69f7f051f09d330b875fcf17263fc904f7443
+- Head SHA: 4db6cec13229021cc099251cd6ea872b524a1ed9
+- Diff SHA-256: fc19abc8516b3b63c6f0b2590fec4cd737ad4a6903295cf14b35b9af5628cf0d
+- Changed file: pi/synapse/synapse.yaml.example
+
 ## Scope of this PR
 
-Runtime configuration fixes on the Pi5 (192.168.2.30) that remove the
-HTTP 413 media-upload barrier:
-
-1. Synapse `max_upload_size: 100M` added to the versioned template
-   `synapse.yaml.example` so it survives container recreation.
-2. Frontproxy `client_max_body_size 100m` for `matrix.hl.maier.wtf`
-   (fixes web-app / Element uploads) and `cwa.hl.maier.wtf` (Calibre-Web).
-3. All three bridge `public_address` set to the internal Synapse URL
-   `http://compose-synapse-1:8008`.
+Only the Synapse `max_upload_size: 100M` template addition is versioned. The
+frontproxy `client_max_body_size` companions are runtime-only (applied on Pi5,
+outside Git per BRIDGE-OPERATIONS.md) and are recorded as evidence, not as
+repository files. CWA is excluded (separate scope).
 
 ## Gate
 
-Approval permits recording the configuration in the versioned
-`Homelab/Architecture` repository. It does NOT itself authorize any
-production recreation beyond what was already deployed and verified live.
-If changes are requested, a corrective source PR is required before merge
-into the Architecture repo.
+Approval records the config in the versioned `Homelab/Architecture` repository
+(via PR #52). It does not authorize any new production recreation — the changes
+are already deployed and verified live. If changes are requested, a corrective
+source PR is required before merge into Architecture.
 
-GH-45 is already operationally complete and closed; this PR only captures
-the versioned record of the config mutations.
+GH-45 is already operationally complete and closed; this PR only captures the
+versioned record.

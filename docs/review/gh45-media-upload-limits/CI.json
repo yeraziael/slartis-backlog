@@ -1,10 +1,11 @@
 {
   "ci_run_ids": [],
   "ci_status": "n/a",
-  "note": "This is a runtime configuration capture, not a code change. No CI pipeline executes against frontproxy vhost.d or synapse.yaml.example templates in this repo. Verification was performed live on the Pi5 and confirmed by operator.",
+  "note": "This is a runtime configuration capture bound to Gitea PR #52, not a code change. No CI pipeline executes against synapse.yaml.example templates in this repo. Verification was performed live on the Pi5 and confirmed by operator. The diff is SHA-256 bound to head 4db6cec13229021cc099251cd6ea872b524a1ed9.",
   "evidence_files": [
     "docs/review/gh45-media-upload-limits/CHANGES.diff",
     "docs/review/gh45-media-upload-limits/NOTES.md",
-    "docs/review/gh45-media-upload-limits/TESTING.md"
+    "docs/review/gh45-media-upload-limits/TESTING.md",
+    "docs/review/gh45-media-upload-limits/manifest.json"
   ]
 }

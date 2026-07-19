@@ -1,20 +1,23 @@
-# TESTING.md — GH-45 Media Upload Limits
+# TESTING.md — GH-45 Media Upload Limits (revised)
 
-## Operator blackbox (already passed live)
+## Authenticated blackbox (passed live)
+
+Action: As an authenticated Matrix user, upload files of increasing size to
+`https://matrix.hl.maier.wtf/_matrix/media/v3/upload` via the public proxy.
+Expected: HTTP 200 and an `mxc://` URI returned (body stored).
+
+Evidence (redacted: no token, no file content, no identifiers):
+- 2 MB upload  -> HTTP 200, mxc URI returned
+- 50 MB upload -> HTTP 200, mxc URI returned
+(Unauthenticated requests correctly return 401; that only proves auth, not
+upload success — the above uses a valid user token.)
 
 Action: In the Element web app (element.hl.maier.wtf), upload an image and a
 file to a Matrix room.
-Expected: Upload succeeds; no error toast; media renders.
-Evidence: Operator confirmed web-app upload works; 5/10/50 MB proxy uploads
-returned no 413 (verified via curl with appservice token).
+Expected: Upload succeeds; media renders.
+Evidence: Operator confirmed web-app upload works (no 413).
 
-Action: In Calibre-Web (cwa.hl.maier.wtf), upload a book/file.
-Expected: Upload succeeds.
-Evidence: Large POST returned 405 (method-specific) instead of 413; body-size
-barrier removed. Operator confirmed working.
-
-Action: Send an image/file Matrix -> Telegram, Matrix -> Signal,
-Matrix -> WhatsApp.
+Action: Send an image/file Matrix -> Telegram / Signal / WhatsApp.
 Expected: Media arrives on the remote platform.
 Evidence: Operator confirmed all three bridge uploads work.
 
@@ -22,16 +25,7 @@ Evidence: Operator confirmed all three bridge uploads work.
 
 - Synapse container healthy after recreate.
 - `max_upload_size: 100M` present in active config after recreate (persistent).
-- Telegram / Signal / WhatsApp bridge `live` and `ready` = HTTP 200.
+- Telegram / Signal / WhatsApp bridge `live` and `ready` = HTTP 200 (also after
+  the `public_address` revert to null).
 - No new host port bindings; no frontproxy exposure change.
 - Signal and WhatsApp remain healthy (unchanged).
-
-## Reproduction for a reviewer
-
-From a host with reachability to the proxy:
-```
-curl -s -o /dev/null -w "%{http_code}\n" -X POST \
-  "https://matrix.hl.maier.wtf/_matrix/media/v3/upload?filename=t.bin&access_token=<token>" \
-  --data-binary @<file> -H "Content-Type: application/octet-stream"
-```
-Expect any code other than 413 for bodies up to 100 MB.

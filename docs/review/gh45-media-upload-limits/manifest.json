@@ -2,41 +2,48 @@
   "issue": 45,
   "title": "P1: Telegram registrieren und homogenen Drei-Bridge-Stand herstellen",
   "epic": 44,
-  "changes": [
-    {
-      "file": "/home/michael/matrix/synapse/synapse.yaml.example",
-      "type": "template",
-      "change": "add max_upload_size: 100M after media_store_path",
-      "persistent": true,
-      "secret_touched": false
-    },
+  "source_pr": {
+    "repo": "Homelab/Architecture",
+    "platform": "gitea",
+    "number": 52,
+    "head_branch": "fix/gh45-synapse-max-upload-size",
+    "base_branch": "main",
+    "base_sha": "77d69f7f051f09d330b875fcf17263fc904f7443",
+    "head_sha": "4db6cec13229021cc099251cd6ea872b524a1ed9",
+    "diff_sha256": "fc19abc8516b3b63c6f0b2590fec4cd737ad4a6903295cf14b35b9af5628cf0d",
+    "changed_files": ["pi/synapse/synapse.yaml.example"],
+    "change_summary": "add max_upload_size: 100M to Synapse template"
+  },
+  "runtime_companions_outside_git": [
     {
       "file": "/home/michael/frontproxy/vhost.d/matrix.hl.maier.wtf_location",
-      "type": "proxy-vhost",
       "change": "prepend client_max_body_size 100m",
-      "persistent": true
-    },
-    {
-      "file": "/home/michael/frontproxy/vhost.d/cwa.hl.maier.wtf_location",
-      "type": "proxy-vhost",
-      "change": "create file with client_max_body_size 100m",
-      "persistent": true
-    },
-    {
-      "file": "/home/michael/mautrix-{telegram,signal,whatsapp}/config.yaml",
-      "type": "bridge-config",
-      "change": "public_address: http://compose-synapse-1:8008",
-      "persistent": true
+      "reason": "fix Element web-app upload 413"
     }
   ],
+  "excluded_from_scope": [
+    {
+      "item": "cwa.hl.maier.wtf client_max_body_size 100m",
+      "reason": "unrelated to GH-45; separate work item"
+    },
+    {
+      "item": "bridge appservice.public_address",
+      "reason": "reverted to null per review; not part of versioned change"
+    }
+  ],
+  "versions": {
+    "synapse": "1.156.0",
+    "synapse_image": "ghcr.io/element-hq/synapse@sha256:6882d26594b87171e0fe807ac6bd7f0000665cd70e73fb88c58ec9bff14c19ce",
+    "nginx_proxy": "jwilder/nginx-proxy:latest"
+  },
   "verification": {
-    "proxy_upload_413": "resolved",
+    "authenticated_upload_2mb": "HTTP 200 + mxc URI",
+    "authenticated_upload_50mb": "HTTP 200 + mxc URI",
     "synapse_healthy": true,
     "max_upload_size_persistent": true,
     "bridges_ready_http200": ["telegram", "signal", "whatsapp"],
-    "operator_confirmed": ["web-app upload", "cwa upload", "telegram media", "signal media", "whatsapp media"]
+    "operator_confirmed": ["web-app upload", "telegram media", "signal media", "whatsapp media"],
+    "secret_handover_deleted": true
   },
-  "source_head": "runtime-mutation-on-Pi5-192.168.2.30",
-  "target_repo": "Homelab/Architecture",
-  "gate": "approval records config in versioned repo; no further production recreation required"
+  "gate": "approval records config in versioned repo via Gitea PR #52; no further production recreation required"
 }

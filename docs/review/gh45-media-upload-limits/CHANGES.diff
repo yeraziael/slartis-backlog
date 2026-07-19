@@ -1,44 +1,51 @@
-# CHANGES.diff — GH-45 Media Upload Limits
-#
-# Root cause: Media uploads failed with HTTP 413 (nginx client_max_body_size
-# default) on the public frontproxy vhosts, and Synapse's default 10M
-# max_upload_size would have capped uploads below the proxy limit.
-#
-# The actual mutations were applied to runtime files on the Pi5
-# (192.168.2.30) under /home/michael. This diff captures the reviewable
-# change per file. Secrets in synapse.yaml.example are NOT reproduced here;
-# only the media_store_path context line and the added max_upload_size are shown.
+# CHANGES.diff — GH-45 Media Upload Limits (revised per review)
 
-# ---------------------------------------------------------------------------
-# FILE 1: /home/michael/matrix/synapse/synapse.yaml.example  (versioned template)
-# ---------------------------------------------------------------------------
-@@ -28,6 +28,7 @@
+This is the review package for the media-upload limit fixes that completed
+the homogeneous three-bridge stand (GH-45). It is now bound to an exact
+`Homelab/Architecture` source PR.
+
+## Bound source PR (exact)
+
+- Repository: Homelab/Architecture (Gitea)
+- PR: #52  (head fix/gh45-synapse-max-upload-size -> main)
+- Base SHA:  77d69f7f051f09d330b875fcf17263fc904f7443
+- Head SHA:  4db6cec13229021cc099251cd6ea872b524a1ed9
+- Diff SHA-256: fc19abc8516b3b63c6f0b2590fec4cd737ad4a6903295cf14b35b9af5628cf0d
+- Changed file (repository-relative): pi/synapse/synapse.yaml.example
+
+## Exact diff (full)
+
+```diff
+diff --git a/pi/synapse/synapse.yaml.example b/pi/synapse/synapse.yaml.example
+index 887c3ec..99ce034 100644
+--- a/pi/synapse/synapse.yaml.example
++++ b/pi/synapse/synapse.yaml.example
+@@ -28,6 +28,7 @@ database:
+ 
  signing_key_path: /run/secrets/synapse_signing_key
  media_store_path: /media
 +max_upload_size: 100M
+ 
  turn_uris:
+   - "turn:turn.hl.maier.wtf:3478?transport=udp"
+```
 
-# ---------------------------------------------------------------------------
-# FILE 2: /home/michael/frontproxy/vhost.d/matrix.hl.maier.wtf_location  (new leading line)
-# ---------------------------------------------------------------------------
-+client_max_body_size 100m;
-+
- location = /.well-known/matrix/server {
-     root /usr/share/nginx/html;
-     try_files /matrix-server.json =404;
+## Runtime-only companions (outside Git per BRIDGE-OPERATIONS.md)
 
-# ---------------------------------------------------------------------------
-# FILE 3: /home/michael/frontproxy/vhost.d/cwa.hl.maier.wtf_location  (new file)
-# ---------------------------------------------------------------------------
-+client_max_body_size 100m;
+These are applied on the Pi5 (192.168.2.30) and intentionally NOT versioned:
 
-# ---------------------------------------------------------------------------
-# FILE 4-6: bridge public_address (runtime config.yaml of each bridge)
-#          telegram/signal/whatsapp -> public_address: http://compose-synapse-1:8008
-#          (was "https://bridge.example.com" placeholder in telegram, null in others)
-# ---------------------------------------------------------------------------
- # mautrix-telegram/config.yaml, mautrix-signal/config.yaml, mautrix-whatsapp/config.yaml
--public_address: https://bridge.example.com   # telegram (placeholder)
--public_address: null                          # signal
--public_address: null                          # whatsapp
-+public_address: http://compose-synapse-1:8008  # all three
+- Frontproxy vhost.d `matrix.hl.maier.wtf_location`: prepended
+  `client_max_body_size 100m;` (fixes Element web-app upload that returned
+  HTTP 413).
+- Frontproxy vhost.d `cwa.hl.maier.wtf_location`: new file with
+  `client_max_body_size 100m;` — tracked separately as CWA work item, NOT part
+  of GH-45 scope (see reviewer finding 5).
+
+## Bridge public_address (CORRECTED)
+
+The earlier package incorrectly set `appservice.public_address` to the Synapse
+URL. Per review, that field is for external public-media serving of the bridge
+appservice and must stay unset while `public_media.enabled` is false. The value
+was reverted to `null` on all three bridges. No bridge config change is part of
+this package. `homeserver.address` (internal Synapse URL) was already correct
+and is unchanged.

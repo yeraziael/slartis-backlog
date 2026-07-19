@@ -1,37 +1,49 @@
-# NOTES.md — GH-45 Media Upload Limits
+# NOTES.md — GH-45 Media Upload Limits (revised)
 
-## Root cause
+## Root cause (version-corrected)
 
 - Public frontproxy vhost `matrix.hl.maier.wtf` had no `client_max_body_size`
-  directive. nginx default blocked any request body above ~64 KB with
-  HTTP 413. The Element **web app** (element.hl.maier.wtf) uploads media to
-  `matrix.hl.maier.wtf` through this proxy, so every upload failed. The
-  Element **iOS app** used a different path and was unaffected.
-- `cwa.hl.maier.wtf` (Calibre-Web) had no vhost.d override at all, so it
-  inherited the same default body-size limit → 413 on uploads.
-- Synapse had no explicit `max_upload_size`, defaulting to 10 MB. Even after
-  the proxy fix, Synapse would have capped uploads below the new 100 MB proxy
-  limit.
-- All three mautrix bridges had `public_address` pointing at a placeholder
-  (`bridge.example.com`) or `null`, which broke mxc:// media resolution for
-  outbound transfers.
+  directive. The nginx-proxy default is `1m` (1 MiB); requests above that were
+  rejected with HTTP 413. The Element **web app** uploads media to
+  `matrix.hl.maier.wtf` through this proxy, so every upload failed. The Element
+  **iOS app** used a different path and was unaffected.
+- Synapse `max_upload_size` default is `50M` (current Synapse documentation).
+  The deployed version is **Synapse 1.156.0** (image
+  `ghcr.io/element-hq/synapse@sha256:6882d265...`). With no explicit value,
+  uploads above 50M would be capped. The proxy 100m and Synapse 100M are now
+  aligned.
+- nginx-proxy image is `jwilder/nginx-proxy:latest`.
+
+## Correction vs. first package
+
+- `appservice.public_address` was wrongly set to the Synapse URL. Per review,
+  this field serves optional public-media for the bridge appservice and must
+  stay `null` while `public_media.enabled=false`. Reverted to `null` on all
+  three bridges. This is NOT part of the versioned change.
+- Calibre-Web (cwa) vhost change removed from GH-45 scope (own work item).
 
 ## Verification performed (live, on Pi5)
 
 - `nginx -t` passed; graceful `nginx -s reload` applied.
-- 5 MB and 10 MB uploads via `https://matrix.hl.maier.wtf/_matrix/media/v3/upload`
-  returned no 413 (only 401 due to test token).
-- 50 MB upload via proxy returned no 413 after Synapse `max_upload_size` applied.
-- `cwa.hl.maier.wtf` large POST returned 405 (method-specific) instead of 413.
-- Synapse healthy after recreate; `max_upload_size: 100M` persisted from template.
-- All three bridges `live`/`ready` = HTTP 200 (no regression).
+- Authenticated upload via `https://matrix.hl.maier.wtf/_matrix/media/v3/upload`
+  with a real user token: 2 MB -> HTTP 200, 50 MB -> HTTP 200 (no 413; body
+  stored, mxc URI returned).
+- Synapse healthy after recreate; `max_upload_size: 100M` persisted from
+  template (verified present post-recreate).
+- All three bridges `live`/`ready` = HTTP 200 (no regression) after the
+  `public_address` revert.
 - Operator confirmed: Telegram, Signal, WhatsApp media upload all working.
+
+## Security closure
+
+- `tg_SECRET_HANDOVER.tmp` (held the Telegram api_id/api_hash) was deleted from
+  `~/.creds/` after the credentials were written into the runtime bridge config
+  (mode 0600). No plaintext copy remains outside the intended runtime config.
+  Verified: `ls ~/.creds/ | grep -i SECRET_HANDOVER` returns nothing.
 
 ## Risk
 
-- Low. Changes are additive (body-size limits, one new Synapse media key).
-- `client_max_body_size 100m` raises the max request body; acceptable for a
-  private homelab. No new exposure (no host ports, no frontproxy change beyond
-  body size).
-- Secrets in `synapse.yaml.example` were NOT touched or reproduced; only the
-  `max_upload_size` line was added below the existing `media_store_path`.
+- Low. Additive Synapse media key; frontproxy body-size increase to 100m on a
+  private homelab. No new host ports, no frontproxy exposure change.
+- No secrets in `synapse.yaml.example` were touched; only `max_upload_size` was
+  added below the existing `media_store_path`.
