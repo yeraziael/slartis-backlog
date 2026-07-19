@@ -1,0 +1,29 @@
+diff --git a/pi/synapse/synapse.yaml.example b/pi/synapse/synapse.yaml.example
+index 1509cb0..cb200e1 100644
+--- a/pi/synapse/synapse.yaml.example
++++ b/pi/synapse/synapse.yaml.example
+@@ -45,6 +45,7 @@ allow_public_rooms_over_federation: false
+ app_service_config_files:
+   - /data/appservice/mautrix-signal.yaml
+   - /data/appservice/mautrix-telegram.yaml
++  - /data/appservice/mautrix-whatsapp.yaml
+ 
+ oidc_providers:
+   - idp_id: keycloak
+diff --git a/pi/tests/test_synapse_active_appservices.sh b/pi/tests/test_synapse_active_appservices.sh
+index ee6b5c4..58c839e 100755
+--- a/pi/tests/test_synapse_active_appservices.sh
++++ b/pi/tests/test_synapse_active_appservices.sh
+@@ -16,10 +16,11 @@ actual = set(config.get("app_service_config_files", []))
+ expected = {
+     "/data/appservice/mautrix-signal.yaml",
+     "/data/appservice/mautrix-telegram.yaml",
++    "/data/appservice/mautrix-whatsapp.yaml",
+ }
+ 
+ if actual != expected:
+     raise SystemExit(f"FAIL: active appservices differ from deployed set: {sorted(actual)}")
+ 
+-print("PASS: production Synapse activates only deployed Signal and Telegram appservices")
++print("PASS: production Synapse activates only deployed Signal, Telegram, and WhatsApp appservices")
+ PY
