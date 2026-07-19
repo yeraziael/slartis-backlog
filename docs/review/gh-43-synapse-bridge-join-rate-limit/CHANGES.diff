@@ -1,0 +1,77 @@
+diff --git a/docs/matrix/security-and-retention.md b/docs/matrix/security-and-retention.md
+index edbf19d..433660b 100644
+--- a/docs/matrix/security-and-retention.md
++++ b/docs/matrix/security-and-retention.md
+@@ -38,8 +38,11 @@ and operator approval change that boundary.
+ - The adapter rejects attachments above its configured size before downstream
+   processing and validates MIME type and SHA-256 after download.
+ - Login, message, media, and room-creation rate limits use Synapse defaults until
+-  measured private-room traffic justifies a stricter versioned override. Any
+-  override must be tested against `/status`, attachment, and reconnect flows.
++  measured private-room traffic justifies a stricter versioned override. The
++  per-room join limiter retains its default sustained rate of one join per second,
++  but allows a burst of 2048 joins so a large bridge portal can import its remote
++  members before the local user joins. Any override must be tested against
++  `/status`, attachment, reconnect, and bridge-portal join flows.
+ - Disk alarms apply at 80 percent used or less than 20 GiB free; 90 percent or
+   less than 10 GiB free is critical and stops nonessential ingestion.
+ - Docker logs are bounded to seven 10 MiB files per Matrix container.
+@@ -122,5 +125,6 @@ bash pi/tests/test_matrix_hardening.sh
+ make ci
+ ```
+ 
+-The static test also mutates safe inputs and proves that open registration,
+-floating images, PostgreSQL host ports, and insecure secret paths are rejected.
++The static test also mutates safe inputs and proves that open registration, an
++insufficient bridge-portal join burst, floating images, PostgreSQL host ports,
++and insecure secret paths are rejected.
+diff --git a/pi/synapse/synapse.yaml.example b/pi/synapse/synapse.yaml.example
+index cb200e1..887c3ec 100644
+--- a/pi/synapse/synapse.yaml.example
++++ b/pi/synapse/synapse.yaml.example
+@@ -42,6 +42,11 @@ enable_registration_without_verification: false
+ allow_public_rooms_without_auth: false
+ allow_public_rooms_over_federation: false
+ 
++# Large bridge portals add their remote members before the local user joins.
++rc_joins_per_room:
++  per_second: 1.0
++  burst_count: 2048
++
+ app_service_config_files:
+   - /data/appservice/mautrix-signal.yaml
+   - /data/appservice/mautrix-telegram.yaml
+diff --git a/pi/tests/test_matrix_hardening.sh b/pi/tests/test_matrix_hardening.sh
+index cedd5f0..c9cb2ea 100644
+--- a/pi/tests/test_matrix_hardening.sh
++++ b/pi/tests/test_matrix_hardening.sh
+@@ -39,6 +39,11 @@ def violations(compose, config):
+         found.append("synapse:open_registration")
+     if config.get("enable_registration_without_verification") is not False:
+         found.append("synapse:unverified_registration")
++    if config.get("rc_joins_per_room") != {
++        "per_second": 1.0,
++        "burst_count": 2048,
++    }:
++        found.append("synapse:bridge_portal_join_capacity")
+     if "password" in config.get("database", {}).get("args", {}):
+         found.append("synapse:versioned_database_password")
+     for name, secret in compose.get("secrets", {}).items():
+@@ -60,6 +65,17 @@ candidate = copy.deepcopy(config)
+ candidate["enable_registration"] = True
+ mutations.append(("open registration", compose, candidate, "synapse:open_registration"))
+ 
++candidate = copy.deepcopy(config)
++candidate["rc_joins_per_room"] = {"per_second": 1.0, "burst_count": 10}
++mutations.append(
++    (
++        "default per-room join burst",
++        compose,
++        candidate,
++        "synapse:bridge_portal_join_capacity",
++    )
++)
++
+ candidate = copy.deepcopy(compose)
+ candidate["services"]["synapse"]["image"] = "ghcr.io/element-hq/synapse:latest"
+ mutations.append(("floating image", candidate, config, "synapse:floating_image"))
