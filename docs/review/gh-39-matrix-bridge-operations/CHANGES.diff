@@ -1,0 +1,395 @@
+diff --git a/.gitea/workflows/ci.yaml b/.gitea/workflows/ci.yaml
+index a13277b..aa0e5d2 100644
+--- a/.gitea/workflows/ci.yaml
++++ b/.gitea/workflows/ci.yaml
+@@ -46,6 +46,8 @@ jobs:
+         run: bash pi/tests/test_mautrix_facebook_compose.sh
+       - name: mautrix-instagram
+         run: bash pi/tests/test_mautrix_instagram_compose.sh
++      - name: matrix-bridge-operations
++        run: bash pi/tests/test_matrix_bridge_operations.sh
+ 
+   report:
+     name: Reporting
+diff --git a/Makefile b/Makefile
+index 56f2b36..43675e0 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,6 +1,6 @@
+ # Homelab Architecture – CI Checks (auto-generated from ci-manifest.yaml)
+ # shellcheck disable=all
+-.PHONY: check-compose check-git-diff check-links ci clean lint scan-secrets test test-all test-checks test-ci-generator test-matrix-coturn test-matrix-hardening test-matrix-operations test-matrix-release-profile test-mautrix-facebook test-mautrix-instagram
++.PHONY: check-compose check-git-diff check-links ci clean lint scan-secrets test test-all test-checks test-ci-generator test-matrix-bridge-operations test-matrix-coturn test-matrix-hardening test-matrix-operations test-matrix-release-profile test-mautrix-facebook test-mautrix-instagram
+ 
+ check-compose:
+ 	bash scripts/check-compose.sh
+@@ -24,7 +24,7 @@ scan-secrets:
+ 	bash scripts/scan-secrets.sh
+ 
+ test:
+-	make test-checks test-ci-generator test-matrix-hardening test-matrix-coturn test-matrix-operations test-matrix-release-profile test-mautrix-facebook test-mautrix-instagram
++	make test-checks test-ci-generator test-matrix-hardening test-matrix-coturn test-matrix-operations test-matrix-release-profile test-mautrix-facebook test-mautrix-instagram test-matrix-bridge-operations
+ 
+ test-all:
+ 	make lint test
+@@ -35,6 +35,9 @@ test-checks:
+ test-ci-generator:
+ 	python3 tests/test_ci_generator.py
+ 
++test-matrix-bridge-operations:
++	bash pi/tests/test_matrix_bridge_operations.sh
++
+ test-matrix-coturn:
+ 	bash pi/tests/test_coturn_compose.sh
+ 
+diff --git a/ci-manifest.yaml b/ci-manifest.yaml
+index 553166d..ce0e8c0 100644
+--- a/ci-manifest.yaml
++++ b/ci-manifest.yaml
+@@ -132,6 +132,13 @@ stages:
+         timeout: 30s
+         tags: [matrix, bridge, compose, instagram]
+ 
++      - id: matrix-bridge-operations
++        tool: bash
++        target: pi/tests/test_matrix_bridge_operations.sh
++        quality_gate: exit_zero
++        timeout: 30s
++        tags: [matrix, bridge, operations, backup]
++
+   - id: report
+     label: Reporting
+     order: 50
+@@ -235,7 +242,8 @@ local_dev:
+     test-matrix-release-profile: bash pi/tests/test_matrix_release_profile.sh
+     test-mautrix-facebook: bash pi/tests/test_mautrix_facebook_compose.sh
+     test-mautrix-instagram: bash pi/tests/test_mautrix_instagram_compose.sh
+-    test: make test-checks test-ci-generator test-matrix-hardening test-matrix-coturn test-matrix-operations test-matrix-release-profile test-mautrix-facebook test-mautrix-instagram
++    test-matrix-bridge-operations: bash pi/tests/test_matrix_bridge_operations.sh
++    test: make test-checks test-ci-generator test-matrix-hardening test-matrix-coturn test-matrix-operations test-matrix-release-profile test-mautrix-facebook test-mautrix-instagram test-matrix-bridge-operations
+     test-all: make lint test
+     ci: make lint test
+     clean: rm -rf reports/ logs/
+diff --git a/pi/synapse/BRIDGE-OPERATIONS.md b/pi/synapse/BRIDGE-OPERATIONS.md
+new file mode 100644
+index 0000000..0df822e
+--- /dev/null
++++ b/pi/synapse/BRIDGE-OPERATIONS.md
+@@ -0,0 +1,213 @@
++# Matrix Bridge Operations
++
++This runbook governs the production lifecycle of the Signal, Telegram, and
++WhatsApp Matrix bridges. Repository preparation and live operations remain
++separate: changes are reviewed and merged first; Lydia or the operator performs
++deployment afterward.
++
++## Preconditions And Safety
++
++- Record `<release-commit>`, `<previous-release-commit>`, and `<backup-timestamp>`
++  before any mutation.
++- Obtain explicit operator authorization for deployment, account linking,
++  credential rotation, restore, or rollback.
++- Run one bridge change at a time. Signal and Telegram are mandatory regression
++  gates while WhatsApp is changed.
++- Keep config files, registrations, database dumps, and persistent state outside
++  Git with mode `0600` inside directories with mode `0700`.
++- Never paste raw logs, config files, registrations, database output, cookies,
++  tokens, QR codes, or session data into issues, pull requests, or chat.
++- Compare generated appservice token consistency locally using SHA-256 hashes
++  only. Record that hashes match, never the values.
++
++| Bridge | Persistent state | Database | Synapse registration |
++|---|---|---|---|
++| mautrix-signal | `/home/michael/mautrix-signal` | `mautrix_signal` | `/data/appservice/mautrix-signal.yaml` |
++| mautrix-telegram | `/home/michael/mautrix-telegram` | `mautrix_telegram` | `/data/appservice/mautrix-telegram.yaml` |
++| mautrix-whatsapp | `/home/michael/mautrix-whatsapp` | `mautrix_whatsapp` | `/data/appservice/mautrix-whatsapp.yaml` |
++
++Before deployment, confirm the versioned Compose file renders, the image is
++digest-pinned for `linux/arm64`, the service joins only `bridge_internal`, and
++resolved host port bindings are empty.
++
++## Start And Stop
++
++Use the versioned release checkout and operate only the selected bridge:
++
++```bash
++git switch --detach <release-commit>
++docker compose -f /home/michael/matrix/compose/mautrix-<bridge>.yml config -q
++docker compose -f /home/michael/matrix/compose/mautrix-<bridge>.yml up -d
++docker compose -f /home/michael/matrix/compose/mautrix-<bridge>.yml stop
++```
++
++Start order is PostgreSQL, Synapse, then one bridge. Stop order is the selected
++bridge first; do not stop unrelated bridges. After changing Synapse appservice
++configuration, verify that existing registrations remain listed before
++recreating Synapse.
++
++## Health And Regression Gates
++
++For the selected container, verify both bridge endpoints from a container on
++`bridge_internal`:
++
++```text
++http://mautrix-<bridge>:<port>/_matrix/mau/live
++http://mautrix-<bridge>:<port>/_matrix/mau/ready
++```
++
++Both `/_matrix/mau/live` and `/_matrix/mau/ready` must return HTTP 200. Then
++verify container state, isolation, database connectivity, and active Synapse
++registrations:
++
++```bash
++docker inspect <container> --format '{{json .State}}'
++docker inspect <container> --format '{{json .HostConfig.PortBindings}}'
++docker inspect <container> --format '{{json .NetworkSettings.Networks}}'
++docker stats --no-stream <container>
++```
++
++The port-binding result must be empty and only `bridge_internal` is allowed.
++Record CPU, RSS, Swap, and Storage before and after a new bridge is introduced.
++The active Synapse config must retain every deployed path:
++
++```text
++/data/appservice/mautrix-signal.yaml
++/data/appservice/mautrix-telegram.yaml
++/data/appservice/mautrix-whatsapp.yaml
++```
++
++Signal and Telegram liveness, readiness, bot response, and Synapse client/SSO
++behavior must remain unchanged after a WhatsApp deployment.
++
++## Safe Log Diagnosis
++
++Inspect logs locally and report only bounded counts and time ranges. This
++example emits a count, not matching lines:
++
++```bash
++docker logs --since 10m <container> 2>&1 \
++  | grep -ciE 'appservice|database|network|fatal|panic|permission denied'
++```
++
++Never paste raw logs as evidence. If diagnosis requires content, redact it on
++the host before sharing and exclude authorization headers, Matrix IDs, phone
++numbers, cookies, QR data, tokens, connection strings, and message content.
++
++## Backup
++
++Create a restricted backup before every deployment, upgrade, registration
++change, restore test, or credential rotation:
++
++```bash
++umask 077
++BACKUP_DIR="/mnt/hardDrive/backups/matrix-bridges/<backup-timestamp>"
++mkdir -p "$BACKUP_DIR/databases" "$BACKUP_DIR/state" "$BACKUP_DIR/appservice"
++chmod 700 "$BACKUP_DIR"
++```
++
++Stop one bridge at a time, then dump its dedicated database and archive its
++persistent state. Repeat for `signal`, `telegram`, and `whatsapp` when present:
++
++```bash
++docker compose -f /home/michael/matrix/compose/mautrix-<bridge>.yml stop
++docker exec compose-postgres-1 pg_dump -U mautrix_<bridge> \
++  -d mautrix_<bridge> -Fc > "$BACKUP_DIR/databases/mautrix_<bridge>.dump"
++tar -C /home/michael -czf "$BACKUP_DIR/state/mautrix-<bridge>.tar.gz" \
++  mautrix-<bridge>
++cp "/mnt/hardDrive/docker/synapse/data/appservice/mautrix-<bridge>.yaml" \
++  "$BACKUP_DIR/appservice/"
++```
++
++Registration copies and state archives contain secrets. Keep them local with
++restricted permissions. Add a manifest containing only release commits, image
++digests, bridge names, database names, and timestamps. Generate and verify
++checksums without printing file contents:
++
++```bash
++(cd "$BACKUP_DIR" && find . -type f ! -name sha256sums.txt -exec sha256sum {} \; > sha256sums.txt)
++(cd "$BACKUP_DIR" && sha256sum -c sha256sums.txt)
++```
++
++Restart each stopped bridge and rerun all health and regression gates.
++
++## Restore
++
++Restore into an isolated maintenance window. Verify checksums, stop the target
++bridge, and retain the failed state until recovery is accepted:
++
++```bash
++cd "/mnt/hardDrive/backups/matrix-bridges/<backup-timestamp>"
++sha256sum -c sha256sums.txt
++docker compose -f /home/michael/matrix/compose/mautrix-<bridge>.yml stop
++```
++
++Restore the persistent archive, registration, and dedicated database with their
++original ownership and restrictive permissions. The database restore contract
++is:
++
++```bash
++docker exec -i compose-postgres-1 pg_restore --clean --if-exists \
++  -U mautrix_<bridge> -d mautrix_<bridge> \
++  < "databases/mautrix_<bridge>.dump"
++```
++
++Copy the selected registration back to the Synapse appservice directory without
++removing existing registrations. Verify its bot and ghost namespaces locally,
++recreate Synapse only if the registration set changed, start the target bridge,
++then run health, regression, and operator blackbox checks.
++
++## Upgrade
++
++1. Create one Architecture branch and PR for one bridge image/config upgrade.
++2. Pin the new multi-arch manifest digest and verify its ARM64 descriptor.
++3. Generate a candidate config and registration from that exact image in an
++   isolated staging directory. Never overwrite production during generation.
++4. Compare schema and namespace changes without displaying secret values.
++   Verify config/registration token consistency using hashes only.
++5. Register contract tests in `ci-manifest.yaml`; require green PR CI and review.
++6. After merge, record `<release-commit>`, create a complete backup, and let
++   Lydia or the operator deploy the reviewed commit.
++7. Start only the upgraded bridge. Require its health gates and all existing
++   bridge regression gates before acceptance.
++
++Do not use floating tags. A generated registration must preserve unique bot and
++ghost namespaces and must not replace unrelated appservices.
++
++## Rollback
++
++Abort on failed health, namespace collision, database migration failure, rising
++Swap, or regression in Synapse or another bridge. Stop the changed bridge and
++return to the reviewed prior release:
++
++```bash
++git switch --detach <previous-release-commit>
++docker compose -f /home/michael/matrix/compose/mautrix-<bridge>.yml stop
++```
++
++Restore the pre-change database, state archive, and registration from
++`<backup-timestamp>`, then recreate the prior bridge container. If Synapse's
++registration list changed, restore that list before recreating Synapse. Run the
++full health and regression gates; preserve failed-upgrade evidence without raw
++runtime content.
++
++## Operator Blackbox Test
++
++Action: Open a private Matrix room with the selected bridge bot and request its
++help or status command.
++
++Expected: The bot responds without appservice, database, or network errors.
++
++Evidence: Record timestamp, bridge name, pass/fail, and redacted response type;
++do not record message content, IDs, QR data, or credentials.
++
++Action: For Signal use `login` and scan the QR in Signal Linked Devices. For
++WhatsApp use `login` and scan the QR in WhatsApp Linked Devices. For Telegram,
++use the documented interactive login only after runtime API credentials exist.
++
++Expected: The account is linked as the intended device/session and one test
++message crosses the bridge in each direction.
++
++Evidence: Record only pass/fail and timestamps. Abort on account-registration
++prompts, unexpected phone-number takeover, checkpoint loops, or another bridge
++failing its regression gate.
+diff --git a/pi/synapse/BRIDGES.md b/pi/synapse/BRIDGES.md
+index bef90eb..5d98462 100644
+--- a/pi/synapse/BRIDGES.md
++++ b/pi/synapse/BRIDGES.md
+@@ -3,6 +3,10 @@
+ Dieses Dokument beschreibt den Workflow zur Installation einer neuen mautrix-Bridge
+ auf dem Matrix-Homeserver (`matrix.hl.maier.wtf`).
+ 
++Der laufende Betrieb einschließlich Health-Gates, Backup, Restore, Upgrade,
++Rollback und Blackbox-Abnahme ist in [BRIDGE-OPERATIONS.md](BRIDGE-OPERATIONS.md)
++verbindlich beschrieben.
++
+ ## Voraussetzungen
+ 
+ - Issue #20 abgeschlossen (bridge_internal Network + appservice Directory)
+diff --git a/pi/tests/test_matrix_bridge_operations.sh b/pi/tests/test_matrix_bridge_operations.sh
+new file mode 100755
+index 0000000..bd1ae5f
+--- /dev/null
++++ b/pi/tests/test_matrix_bridge_operations.sh
+@@ -0,0 +1,83 @@
++#!/usr/bin/env bash
++# Static contract test for Matrix bridge operations, backup, and upgrades.
++set -uo pipefail
++
++REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
++
++python3 - "$REPO_ROOT" <<'PY'
++from pathlib import Path
++import re
++import sys
++
++root = Path(sys.argv[1])
++runbook_path = root / "pi/synapse/BRIDGE-OPERATIONS.md"
++install_guide_path = root / "pi/synapse/BRIDGES.md"
++
++
++def require(condition, message):
++    if not condition:
++        raise SystemExit(f"FAIL: {message}")
++    print(f"PASS: {message}")
++
++
++require(runbook_path.is_file(), "bridge operations runbook exists")
++text = runbook_path.read_text(encoding="utf-8")
++require(
++    "BRIDGE-OPERATIONS.md" in install_guide_path.read_text(encoding="utf-8"),
++    "bridge installation guide links the operations runbook",
++)
++
++for heading in (
++    "## Preconditions And Safety",
++    "## Start And Stop",
++    "## Health And Regression Gates",
++    "## Safe Log Diagnosis",
++    "## Backup",
++    "## Restore",
++    "## Upgrade",
++    "## Rollback",
++    "## Operator Blackbox Test",
++):
++    require(heading in text, f"runbook contains {heading}")
++
++for bridge in ("signal", "telegram", "whatsapp"):
++    require(f"mautrix-{bridge}" in text, f"runbook covers mautrix-{bridge}")
++    require(f"/home/michael/mautrix-{bridge}" in text, f"runbook covers {bridge} persistent state")
++    require(f"mautrix_{bridge}" in text, f"runbook covers {bridge} database")
++    require(
++        f"/data/appservice/mautrix-{bridge}.yaml" in text,
++        f"runbook covers {bridge} registration",
++    )
++
++for command in (
++    "docker compose -f /home/michael/matrix/compose/mautrix-<bridge>.yml",
++    "docker inspect",
++    "/_matrix/mau/live",
++    "/_matrix/mau/ready",
++    "pg_dump",
++    "pg_restore",
++    "sha256sum -c",
++    "git switch --detach <release-commit>",
++    "git switch --detach <previous-release-commit>",
++):
++    require(command in text, f"runbook contains command or contract: {command}")
++
++require("umask 077" in text, "backup procedure uses restrictive permissions")
++require("existing registrations" in text, "registration changes preserve existing registrations")
++require("CPU, RSS, Swap, and Storage" in text, "resource acceptance is documented")
++require("Signal and Telegram" in text, "existing bridges are explicit regression gates")
++require("Never paste raw logs" in text, "raw runtime logs are prohibited as evidence")
++require("hashes only" in text, "token consistency uses hashes without values")
++require("Action:" in text and "Expected:" in text and "Evidence:" in text, "blackbox test is executable")
++
++secret_patterns = {
++    "Matrix access token": r"syt_[A-Za-z0-9_-]{12,}",
++    "Telegram bot token": r"\b[0-9]{8,10}:[A-Za-z0-9_-]{20,}\b",
++    "Meta cookie assignment": r"(?im)(?:sessionid|csrftoken|ig_did|ds_user_id|c_user|xs)\s*[:=]\s*[^<\s]",
++    "literal appservice token": r"(?im)(?:as_token|hs_token)\s*:\s*[A-Za-z0-9_-]{20,}",
++}
++for label, pattern in secret_patterns.items():
++    require(re.search(pattern, text) is None, f"runbook excludes {label}")
++
++print("PASS: Matrix bridge operations contract satisfied")
++PY

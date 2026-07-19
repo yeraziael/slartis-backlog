@@ -1,0 +1,19 @@
+{
+  "schema": "slarti.ci-evidence.v1",
+  "source_repository": "Homelab/Architecture",
+  "head_commit": "42101fe2a43ccd98633f0da48fd44fa80673931b",
+  "runs": [
+    {
+      "id": 538,
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 539,
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ]
+}
