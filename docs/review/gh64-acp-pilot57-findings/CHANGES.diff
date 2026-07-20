@@ -43,10 +43,10 @@ index 0000000..a985abc
 +| — | — | — | — | — |
 diff --git a/FINDINGS/PILOT-57.md b/FINDINGS/PILOT-57.md
 new file mode 100644
-index 0000000..f11a5ea
+index 0000000..f5520b8
 --- /dev/null
 +++ b/FINDINGS/PILOT-57.md
-@@ -0,0 +1,106 @@
+@@ -0,0 +1,99 @@
 +# ACP Pilot 57 — Protocol Findings
 +
 +## Metadata
@@ -75,7 +75,6 @@ index 0000000..f11a5ea
 +| Field | Value |
 +|---|---|
 +| **Finding** | A mandatory transport validation step before `review_ready` was missing |
-+| **Severity** | `high` |
 +| **Candidate for ACP revision** | **Yes** |
 +
 +### F-57-002 — ACP
@@ -83,7 +82,6 @@ index 0000000..f11a5ea
 +| Field | Value |
 +|---|---|
 +| **Finding** | Reviews require a deterministic review package structure instead of freely organized artifacts |
-+| **Severity** | `high` |
 +| **Candidate for ACP revision** | **Yes** |
 +
 +### F-57-003 — ACP
@@ -91,7 +89,6 @@ index 0000000..f11a5ea
 +| Field | Value |
 +|---|---|
 +| **Finding** | Evidence should be explicitly mapped to Acceptance Criteria |
-+| **Severity** | `high` |
 +| **Candidate for ACP revision** | **Yes** |
 +
 +### F-57-004 — Prompt
@@ -99,7 +96,6 @@ index 0000000..f11a5ea
 +| Field | Value |
 +|---|---|
 +| **Finding** | The implementation prompt did not sufficiently specify the review package |
-+| **Severity** | `medium` |
 +| **Candidate for ACP revision** | **No** |
 +
 +### F-57-005 — Reviewer
@@ -107,7 +103,6 @@ index 0000000..f11a5ea
 +| Field | Value |
 +|---|---|
 +| **Finding** | Multiple review iterations were required to separate transport defects from implementation defects |
-+| **Severity** | `medium` |
 +| **Candidate for ACP revision** | **No** |
 +
 +### F-57-006 — ACP
@@ -115,7 +110,6 @@ index 0000000..f11a5ea
 +| Field | Value |
 +|---|---|
 +| **Finding** | A dedicated review state for missing review artifacts would improve the protocol |
-+| **Severity** | `medium` |
 +| **Candidate for ACP revision** | **Yes** |
 +
 +### F-57-007 — Process
@@ -123,7 +117,6 @@ index 0000000..f11a5ea
 +| Field | Value |
 +|---|---|
 +| **Finding** | SHA-bound approvals proved effective and should be retained |
-+| **Severity** | `low` |
 +| **Candidate for ACP revision** | **No** (retain as best practice) |
 +
 +## Summary
@@ -196,10 +189,10 @@ index 0000000..3d41ffc
 +the naming convention `PILOT-<NUMBER>.md`.
 diff --git a/FINDINGS/TEMPLATE.md b/FINDINGS/TEMPLATE.md
 new file mode 100644
-index 0000000..a806c42
+index 0000000..c30183c
 --- /dev/null
 +++ b/FINDINGS/TEMPLATE.md
-@@ -0,0 +1,55 @@
+@@ -0,0 +1,39 @@
 +# ACP Pilot <NUMBER> — <SHORT TITLE>
 +
 +## Metadata
@@ -217,32 +210,16 @@ index 0000000..a806c42
 +
 +One paragraph describing what was reviewed and the key outcomes.
 +
-+## Observations
++## Canonical Findings
 +
-+### Implementation
++### F-<NUMBER>-<ID> — <CATEGORY>
 +
-+| # | Observation | Severity | Affects ACP |
-+|---|---|---|---|
-+| 1 | … | `high` / `medium` / `low` / `info` | `§<reference>` |
-+| 2 | … | | |
++| Field | Value |
++|---|---|
++| **Finding** | … |
++| **Candidate for ACP revision** | **Yes** / **No** |
 +
-+### Prompt
-+
-+| # | Observation | Severity | Affects ACP |
-+|---|---|---|---|
-+| 1 | … | | |
-+
-+### Reviewer
-+
-+| # | Observation | Severity | Affects ACP |
-+|---|---|---|---|
-+| 1 | … | | |
-+
-+### ACP
-+
-+| # | Observation | Severity | Affects ACP |
-+|---|---|---|---|
-+| 1 | … | | |
++Repeat for each finding.
 +
 +## Recommendation
 +

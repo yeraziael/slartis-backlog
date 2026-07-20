@@ -15,7 +15,7 @@ Record approval or requested changes on this GitHub pull request.
 - Repository: `Homelab/ACP`
 - Gitea PR: `#1`
 - Base: `d7933eb9564b55105bd61946f867496d2dc66f53`
-- Head: `cdc40074389430b81582095b57911ae70b42935b`
+- Head: `6b5e8ec58cde1e193b9310c01fc68b6885de8df5`
 - Work item: `yeraziael/slartis-backlog#64`
 
 ## Files
