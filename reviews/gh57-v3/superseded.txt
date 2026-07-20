@@ -1,0 +1,6 @@
+Superseded PRs:
+- PR #56 (docs: Audiobookshelf architecture baseline) — merged as 80c814d
+- PR #58 (fix: align NAS mount) — merged as 1269b4f
+- PR #60 (docs: add podcasts) — merged as bd7a68d
+
+Current review PR: #61 (feat/gh57-consolidation) — this is the authoritative source HEAD.
