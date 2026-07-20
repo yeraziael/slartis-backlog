@@ -1,3 +1,5 @@
-CI Run: success (SHA: e864f152...)
-Pipeline: Architecture CI
+CI Pipeline: Homelab/Architecture — Architecture CI
+Source Head SHA: e864f152356ee80d63b988d869ff8acc4ebe62aa
+CI Run: 578
+Conclusion: success
 All jobs passed.
