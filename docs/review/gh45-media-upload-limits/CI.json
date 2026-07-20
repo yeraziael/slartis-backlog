@@ -1,0 +1,11 @@
+{
+  "ci_run_ids": [560, 561, 563, 564],
+  "ci_status": "success",
+  "note": "Source changes are validated by the Homelab/Architecture Gitea Actions CI. PR #52 (max_upload_size) ran green: run #560 (push) and #561 (pull_request) with Linting & Validation, Unit Tests, and Reporting all successful. PR #55 (frontproxy body-size override + contract tests) ran green: run #563/#564 with the same checks plus the new test_synapse_max_upload_size.sh and test_frontproxy_matrix_body_size.sh contract tests. Diff is SHA-256 bound to head 4db6cec13229021cc099251cd6ea872b524a1ed9.",
+  "evidence_files": [
+    "docs/review/gh45-media-upload-limits/CHANGES.diff",
+    "docs/review/gh45-media-upload-limits/NOTES.md",
+    "docs/review/gh45-media-upload-limits/TESTING.md",
+    "docs/review/gh45-media-upload-limits/manifest.json"
+  ]
+}

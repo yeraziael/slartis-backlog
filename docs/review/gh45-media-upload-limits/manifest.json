@@ -1,0 +1,65 @@
+{
+  "issue": 45,
+  "title": "P1: Telegram registrieren und homogenen Drei-Bridge-Stand herstellen",
+  "epic": 44,
+  "source_prs": [
+    {
+      "repo": "Homelab/Architecture",
+      "platform": "gitea",
+      "number": 52,
+      "head_branch": "fix/gh45-synapse-max-upload-size",
+      "base_branch": "main",
+      "base_sha": "77d69f7f051f09d330b875fcf17263fc904f7443",
+      "head_sha": "4db6cec13229021cc099251cd6ea872b524a1ed9",
+      "merged_commit": "4d0c7a2",
+      "diff_sha256": "fc19abc8516b3b63c6f0b2590fec4cd737ad4a6903295cf14b35b9af5628cf0d",
+      "changed_files": ["pi/synapse/synapse.yaml.example"],
+      "change_summary": "add max_upload_size: 100M to Synapse template"
+    },
+    {
+      "repo": "Homelab/Architecture",
+      "platform": "gitea",
+      "number": 55,
+      "head_branch": "fix/gh45-frontproxy-max-upload",
+      "base_branch": "main",
+      "base_sha": "b208e7e5811f887ffc01d9b9ed7e73a8b42bfbd0",
+      "head_sha": "3126dce842fc03b194490dfd97963191fa8ef019",
+      "merged_commit": "0143129144abd3b60593ef759cc164c2d096baad",
+      "diff_sha256": "1759663132ac1981c46d7199497be0334e43453f3149886ad34cc36a29816daa",
+      "changed_files": [
+        "pi/compose/frontproxy.yml",
+        "pi/compose/vhost.d/matrix.hl.maier.wtf_location"
+      ],
+      "change_summary": "version frontproxy client_max_body_size 100m override + pin image digest"
+    }
+  ],
+  "excluded_from_scope": [
+    {
+      "item": "cwa.hl.maier.wtf client_max_body_size 100m",
+      "reason": "unrelated to GH-45; separate work item"
+    },
+    {
+      "item": "bridge appservice.public_address",
+      "reason": "reverted to null per review; not part of versioned change"
+    }
+  ],
+  "versions": {
+    "synapse": "1.156.0",
+    "synapse_image": "ghcr.io/element-hq/synapse@sha256:6882d26594b87171e0fe807ac6bd7f0000665cd70e73fb88c58ec9bff14c19ce",
+    "nginx_proxy": "jwilder/nginx-proxy:latest@sha256:75387adbd9f18e76618d9502326c5bdafebbe0c8d00dcef486bed0d8582ff49b"
+  },
+  "verification": {
+    "authenticated_upload_2mb": "HTTP 200 + mxc URI",
+    "authenticated_upload_50mb": "HTTP 200 + mxc URI",
+    "synapse_healthy": true,
+    "max_upload_size_persistent": true,
+    "bridges_ready_http200": ["telegram", "signal", "whatsapp"],
+    "operator_confirmed_webapp_upload": true,
+    "secret_handover_deleted": true
+  },
+  "bridge_media_status": {
+    "note": "operator observed telegram/signal/whatsapp media working in live ops; contextual only, does NOT close #46/#47",
+    "issues_open": [46, 47]
+  },
+  "gate": "approval records config in versioned repo via Gitea PR #52 and PR #55; no further production recreation required"
+}
