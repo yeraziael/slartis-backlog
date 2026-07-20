@@ -1,4 +1,4 @@
-# TESTING.md — GH-45 Media Upload Limits (revised)
+# TESTING.md — GH-45 Media Upload Limits (revised, two-source-PR)
 
 ## Authenticated blackbox (passed live)
 
@@ -17,9 +17,12 @@ file to a Matrix room.
 Expected: Upload succeeds; media renders.
 Evidence: Operator confirmed web-app upload works (no 413).
 
-Action: Send an image/file Matrix -> Telegram / Signal / WhatsApp.
-Expected: Media arrives on the remote platform.
-Evidence: Operator confirmed all three bridge uploads work.
+## Bridge-media observations (contextual, do NOT satisfy #46/#47)
+
+Operator reported Telegram, Signal and WhatsApp media uploads working in live
+operation. These are contextual observations for this package's upload-path
+limit fix and are tracked separately in #46 and #47, which remain open for
+their full acceptance criteria.
 
 ## Regression gates (all green)
 
