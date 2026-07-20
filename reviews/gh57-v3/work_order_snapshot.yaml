@@ -1,0 +1,204 @@
+[ChatGPT]
+
+```yaml
+acp:
+  version: v0.1.0-draft
+  source_system: gitea
+  source_repository: Homelab/ACP
+  source_commit: d7933eb9564b55105bd61946f867496d2dc66f53
+  transport_release: https://github.com/yeraziael/slartis-backlog/releases/tag/v0.1.0-draft
+work_order:
+  id: GH-57
+  state: ready
+  autonomy: manual_start
+  planner: ChatGPT
+  implementer: Slarti
+  reviewer: ChatGPT
+  runtime_executor: Lydia
+  merge_authority: Eddie
+  planned_model: deepseek-v4-flash-free
+  security_critical: false
+  operator_approval_required: false
+  runtime_mutation_authorized: false
+  review_requires_ci_pass: true
+  review_requires_operator_blackbox: false
+  exact_sha_binding_required: true
+```
+
+## Objective
+Create a repository-only architecture baseline for Audiobookshelf in the existing Homelab. Record the current infrastructure, define the target component boundaries and produce the ordered child-issue plan. Do not deploy or mutate runtime state.
+
+## Inputs
+
+```yaml
+platform:
+  runtime_host: Raspberry Pi 5
+  deployment_standard: docker_compose
+  compose_authority: Homelab/Architecture
+  reverse_proxy: existing_frontproxy
+  identity_provider: existing_keycloak
+storage:
+  nas_address: 192.168.2.141
+  protocol: NFS
+  export_path: unresolved
+  credentials_or_access_model: unresolved
+constraints:
+  reviewer_has_gitea_access: false
+  github_is_review_transport: true
+  all_services_run_in_docker: true
+  nas_mount_is_separate_issue: true
+```
+
+## Required output
+Create one focused architecture PR in the authoritative Gitea architecture repository. The PR must contain a versioned Audiobookshelf architecture document covering:
+
+1. service boundary and Docker placement on the Pi5;
+2. proposed Compose file location and persistent container paths;
+3. internal Docker networks and reverse-proxy attachment;
+4. authentication boundary through Keycloak;
+5. authorization boundary and reference to the central Keycloak authorization work in #55;
+6. local Break-Glass boundary without generating credentials;
+7. logical NAS storage boundary using NFS to `192.168.2.141` without mounting it;
+8. separation of source/drop-zone, quarantine/review, normalized library and Audiobookshelf-visible library;
+9. separation between Slarti, Lydia, Eddie, Operator and Reviewer;
+10. ordered child-issue dependency graph for deployment, SSO, authorization, NFS, import, metadata, scheduling, monitoring and backup.
+
+## Required architecture decisions
+
+```yaml
+decisions:
+  deployment:
+    mechanism: docker_compose
+    compose_versioned_in: Homelab/Architecture
+  identity:
+    authoritative_source: Keycloak
+    local_standard_accounts_allowed: false
+  break_glass:
+    username: admin
+    account_count: 1
+    password_generation: Lydia_versioned_script
+    password_transport: existing_Telegram_runtime_channel
+    password_must_not_enter_github_gitea_logs_or_repository: true
+    execution_in_this_issue: forbidden
+  storage:
+    nas_protocol: NFS
+    nas_address: 192.168.2.141
+    mount_implementation: separate_child_issue
+    initial_access_preference: read_only
+  import_pipeline:
+    destructive_source_changes: forbidden_until_separately_authorized
+    uncertain_matches: quarantine
+    idempotency_required: true
+```
+
+## Out of scope
+
+```yaml
+forbidden_actions:
+  - create_or_start_container
+  - modify_reverse_proxy
+  - configure_keycloak
+  - create_break_glass_account
+  - generate_or_transport_password
+  - mount_nfs
+  - inspect_or_modify_media_files
+  - create_runtime_secrets
+  - deploy_to_pi5
+```
+
+## Acceptance criteria
+
+```yaml
+acceptance:
+  - architecture_document_exists_in_gitea_pr
+  - docker_compose_is_declared_as_only_deployment_mechanism
+  - compose_authority_is_Homelab_Architecture
+  - no_runtime_mutation_occurred
+  - no_secret_or_password_value_is_present
+  - nas_192_168_2_141_is_recorded_without_assumed_export_path
+  - service_identity_authorization_storage_and_import_are_separate_boundaries
+  - ordered_child_issue_graph_is_complete
+  - local_tests_pass
+  - ci_run_passes
+  - review_package_is_bound_to_exact_source_head_sha
+  - github_review_transport_contains_full_diff_and_required_evidence
+```
+
+## Required local evidence
+Before opening the review handoff, Slarti must provide machine-readable or directly reproducible results for:
+
+```yaml
+local_evidence:
+  - markdown_lint_or_repository_equivalent
+  - link_and_reference_check
+  - secret_scan
+  - changed_file_list
+  - source_head_sha
+```
+
+## CI gate
+No review may start unless the authoritative Gitea PR CI/CD run has status `success`. The GitHub handoff must contain a concise CI summary and reference the exact run.
+
+## Review package
+Because the Reviewer cannot access Gitea, Slarti must publish a transportable review package through GitHub containing or referencing immutable artifacts:
+
+```yaml
+review_package:
+  required:
+    - manifest
+    - work_order_snapshot
+    - full_diff
+    - changed_file_list
+    - local_test_results
+    - ci_summary
+    - source_repository
+    - source_pr_reference
+    - source_head_sha
+    - artifact_checksums
+  issue_comments: short_references_only
+```
+
+The review package must be sufficient for review without access to Gitea. Missing evidence sets the ACP state to `evidence_incomplete`.
+
+## State transitions
+
+```text
+ready
+-> implementing
+-> review_ready
+-> approved | changes_requested | evidence_incomplete | blocked
+-> merged | closed
+```
+
+- This work order is `ready`, not `autonomy_ready`; implementation begins only after a manual Operator trigger.
+- `changes_requested` returns to `implementing`.
+- Any commit after a verdict invalidates that verdict.
+- Slarti self-checks are allowed but never constitute authoritative approval.
+- The Reviewer may set or clear `blocked` and may request changes directly.
+
+## Completion response in GitHub
+Keep the issue comment short and provide only:
+
+```yaml
+handoff:
+  source_pr: required
+  source_head_sha: required
+  ci_status: required
+  ci_run: required
+  review_package: required
+  review_package_sha256: required
+  acp_state: review_ready
+```
+
+## Dependencies
+
+```yaml
+depends_on:
+  - GH-61
+related:
+  - GH-37
+  - GH-55
+blocks:
+  - GH-58
+```
+
