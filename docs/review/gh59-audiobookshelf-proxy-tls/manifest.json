@@ -29,8 +29,10 @@
       "number": 70,
       "head_branch": "fix/gh59-audiobookshelf-proxy-port",
       "base_branch": "main",
-      "base_sha": "5ffba32de55b59a7f7c9e0ed969ea50a86fe8c8d",
-      "head_sha": "3ad3a55217270e9e72f79ad005e68e583c5db207",
+      "base_sha": "43610581f9ae69a9fd2541620fae7c2ada41f6cf",
+      "head_sha": "3ad3a55bed521b9058a789fdfd0734cc26603926",
+      "merged_at": "2026-07-20T18:12:28+02:00",
+      "merge_base": "5ffba322320810f8a9e0541e927d2044c6bcae14",
       "diff_sha256": "042cbc3ef0a9a980e7026634433d2c43e93de3eaef818626d8e4f1a0b63397e8",
       "changed_files": [
         "pi/compose/audiobookshelf.yml",
@@ -69,5 +71,5 @@
     "http_redirect": "via nginx-proxy (automatic ACME redirect)",
     "websocket_headers": "configured in vhost.d"
   },
-  "gate": "approval records the reverse proxy and TLS configuration in versioned Homelab/Architecture. PR #70 must be merged to main before the effective config is complete."
+  "gate": "approval records the reverse proxy and TLS configuration in versioned Homelab/Architecture. Both source PRs (#68, #70) are merged. Effective config is complete."
 }

@@ -14,14 +14,15 @@ to the Audiobookshelf Docker service on Pi5.
 - Diff SHA-256: `4e729ccb2da9e76251d8f8dfd8a470c3b235139f0a1a835b8d667be386aeb69d`
 - Changes: proxy env vars, frontproxy_default network, vhost.d, tests, docs
 
-### Gitea PR #70 (fix, open — must be merged for complete state)
+### Gitea PR #70 (fix, merged 2026-07-20)
 - Repo: `Homelab/Architecture`
-- Head: `3ad3a55217270e9e72f79ad005e68e583c5db207`
-- Base: `5ffba32de55b59a7f7c9e0ed969ea50a86fe8c8d`
+- Head: `3ad3a55bed521b9058a789fdfd0734cc26603926`
+- Base: `43610581f9ae69a9fd2541620fae7c2ada41f6cf`
+- Merge base: `5ffba322320810f8a9e0541e927d2044c6bcae14`
 - Diff SHA-256: `042cbc3ef0a9a980e7026634433d2c43e93de3eaef818626d8e4f1a0b63397e8`
 - Changes: VIRTUAL_PORT "13378" → "80" (port correction)
 
-## Effective configuration (only approvable state)
+## Effective configuration
 
 | Setting | Value |
 |---------|-------|
@@ -33,12 +34,9 @@ to the Audiobookshelf Docker service on Pi5.
 | networks | `audiobookshelf_internal`, `frontproxy_default` |
 | vhost.d | `client_max_body_size 0`, WebSocket headers |
 
-**PR #68 alone has VIRTUAL_PORT: "13378" (superseded).** The only complete
-and correct state is when both PRs are applied. PR #70 must merge before this
-review is complete.
+Both source PRs (#68 and #70) are now merged. The effective configuration is complete.
 
 ## Gate
 
 Approval records the proxy and TLS configuration as versioned infrastructure.
-After approval, merge Gitea PR #70 to complete the versioned record.
 Deployment to Pi5 is a separate operator action.
