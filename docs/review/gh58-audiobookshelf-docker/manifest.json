@@ -1,0 +1,129 @@
+{
+  "issue": 58,
+  "title": "Audiobookshelf: Docker-Service auf dem Pi5 bereitstellen",
+  "epic": "GH-57",
+  "source_repository": "Homelab/Architecture",
+  "source_platform": "gitea",
+  "source_base_sha": "92f1ed4d1ee4a79e75b1621d4e53aa4ed25b18c0",
+  "source_head_sha": "6862deb0856474a4358443a1951581bd70a9631e7",
+  "source_head_sha_short": "6862deb",
+  "source_prs": [
+    {
+      "number": 63,
+      "head_sha": "fd0477f1b3ea78b486bbd7460bce3debd742ee67",
+      "changed_files": ["pi/compose/audiobookshelf.yml"],
+      "change_summary": "Initial Docker Compose service definition (GH-58)"
+    },
+    {
+      "number": 65,
+      "head_sha": "c44871bd5ae3a19430e2f5e8f79b537ed8ff8b0e",
+      "changed_files": ["pi/compose/audiobookshelf.yml"],
+      "change_summary": "Fix healthcheck port/path + expose port (GH-58)"
+    },
+    {
+      "number": 66,
+      "head_sha": "74e7c1b8aac40b2ea9b7dcf233481e8ba3ef1542",
+      "changed_files": ["docs/gh58-deployment-evidence.md"],
+      "change_summary": "Deployment evidence document (GH-58)"
+    },
+    {
+      "number": 69,
+      "head_sha": "5ffba322320810f8a9e0541e927d2044c6bcae14",
+      "changed_files": ["docs/AUDIOBOOKSHELF.md"],
+      "change_summary": "Cross-reference deployment evidence from AUDIOBOOKSHELF.md (GH-58)"
+    },
+    {
+      "number": 70,
+      "head_sha": "3ad3a55bed521b9058a789fdfd0734cc26603926",
+      "changed_files": ["pi/compose/audiobookshelf.yml", "pi/tests/test_audiobookshelf_proxy.sh"],
+      "change_summary": "Fix VIRTUAL_PORT 13378 -> 80 to match container expose port"
+    },
+    {
+      "number": 72,
+      "head_sha": "43610581f9ae69a9fd2541620fae7c2ada41f6cf",
+      "changed_files": ["pi/compose/audiobookshelf.yml", "pi/tests/test_audiobookshelf_proxy.sh"],
+      "change_summary": "Add explicit cache path bind-mount and empty local test library"
+    },
+    {
+      "number": 73,
+      "head_sha": "ea4c560bb441f0e96e0030456957525a330d3a09",
+      "merged_sha": "6862deb0856474a4358443a1951581bd70a9631e7",
+      "changed_files": ["docs/PI_SERVICES.md"],
+      "change_summary": "Update PI_SERVICES.md: port 13378→80, :latest→digest, Planned→Healthy"
+    }
+  ],
+  "image_digest": "ghcr.io/advplyr/audiobookshelf@sha256:1eef6716183c52abafe5405e7d6be8390248ecd59c7488c44af871757ac8fc4d",
+  "image_registry": "ghcr.io",
+  "image_repository": "advplyr/audiobookshelf",
+  "image_platform": "linux/arm64",
+  "changed_files": [
+    "docs/AUDIOBOOKSHELF.md",
+    "docs/PI_SERVICES.md",
+    "docs/gh58-deployment-evidence.md",
+    "pi/compose/audiobookshelf.yml",
+    "pi/tests/test_audiobookshelf_proxy.sh",
+    "pi/compose/vhost.d/audiobookshelf.hl.maier.wtf_location"
+  ],
+  "diff_sha256": "5d2063fb1247ceb5f33cc589c673b9c8a535f70e8753c9e3fb9dc01d8546cb9a",
+  "diff_note": "Combined diff from pre-GH-58 base to current main. Includes GH-59 proxy/TLS elements (VIRTUAL_HOST, LETSENCRYPT, frontproxy_default, vhost.d, proxy contract test) which are already merged and deployed on main. These are not part of GH-58 scope but are correctly present in the source.",
+  "effective_config": {
+    "image": "ghcr.io/advplyr/audiobookshelf@sha256:1eef6716183c52abafe5405e7d6be8390248ecd59c7488c44af871757ac8fc4d",
+    "platform": "linux/arm64",
+    "restart": "unless-stopped",
+    "mem_limit": "512m",
+    "cpus": "1.0",
+    "expose": ["80"],
+    "VIRTUAL_HOST": "audiobookshelf.hl.maier.wtf",
+    "VIRTUAL_PORT": "80",
+    "LETSENCRYPT_HOST": "audiobookshelf.hl.maier.wtf",
+    "LETSENCRYPT_EMAIL": "webmaster@maier.wtf",
+    "volumes": {
+      "audiobookshelf_config": "/mnt/hardDrive/docker/audiobookshelf/config -> /config",
+      "audiobookshelf_metadata": "/mnt/hardDrive/docker/audiobookshelf/metadata -> /metadata",
+      "cache_bind": "/mnt/hardDrive/docker/audiobookshelf/cache -> /metadata/cache",
+      "library_bind": "/mnt/hardDrive/docker/audiobookshelf/library -> /audiobooks"
+    },
+    "networks": ["audiobookshelf_internal", "frontproxy_default"],
+    "no_host_ports": true,
+    "security_opt": ["no-new-privileges:true"],
+    "logging": {"max-size": "10m", "max-file": "7"},
+    "healthcheck": "node HTTP GET localhost:80/",
+    "vhost.d": ["client_max_body_size 0", "WebSocket Upgrade/Connection headers"]
+  },
+  "runtime_evidence": {
+    "container_status": "Up (healthy)",
+    "healthcheck_endpoint": "GET / -> HTTP 200",
+    "healthcheck_status": "healthy, FailingStreak: 0",
+    "first_start_to_healthy": "8s",
+    "restart_to_healthy": "8s",
+    "database_preserved": true,
+    "database_size": "364KB",
+    "host_ports_bound": false,
+    "persistence_paths": {
+      "config": "/mnt/hardDrive/docker/audiobookshelf/config/absdatabase.sqlite",
+      "metadata": "/mnt/hardDrive/docker/audiobookshelf/metadata/cache/{covers,images,items}",
+      "cache": "/mnt/hardDrive/docker/audiobookshelf/cache/",
+      "library": "/mnt/hardDrive/docker/audiobookshelf/library/ (empty)"
+    }
+  },
+  "verification": {
+    "ci_pass": true,
+    "compose_config_valid": true,
+    "contract_test_pass": true,
+    "no_host_ports": true,
+    "no_secrets_in_repo": true,
+    "container_healthy": true,
+    "persistence_verified": true,
+    "restart_survives": true
+  },
+  "scope_clarification": {
+    "gh58_core": "Docker Compose service, healthcheck, resource limits, config/metadata/cache/testlibrary persistence, internal network, no host ports, no secrets",
+    "gh59_integrated": "VIRTUAL_HOST, LETSENCRYPT_*, frontproxy_default network, vhost.d config, proxy contract test — merged on main, not part of GH-58 scope but correctly present in source diff",
+    "excluded_from_scope": [
+      "OIDC / Keycloak (GH-60)",
+      "NAS-Medienimport (separates Issue)",
+      "Rollen / Authorization (separates Issue)"
+    ]
+  },
+  "gate": "GH-58 is fully implemented. All source PRs merged into Homelab/Architecture main (latest: #73). Container deployed and healthy on Pi5. Source diff includes GH-59 proxy/TLS elements already on main — see scope_clarification."
+}

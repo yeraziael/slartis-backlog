@@ -1,0 +1,308 @@
+diff --git a/docs/AUDIOBOOKSHELF.md b/docs/AUDIOBOOKSHELF.md
+index 7509de1..95b930a 100644
+--- a/docs/AUDIOBOOKSHELF.md
++++ b/docs/AUDIOBOOKSHELF.md
+@@ -27,6 +27,8 @@ via `docker-compose.yml` im Architecture-Repository.
+ 
+ ## 2. Compose-Datei und Container-Pfade
+ 
++> **Deployment-Evidenz (GH-58):** siehe [docs/gh58-deployment-evidence.md](gh58-deployment-evidence.md) — Container `healthy`, keine Host-Ports, Persistenz verifiziert.
++
+ ### Compose-Datei
+ 
+ ```yaml
+diff --git a/docs/PI_SERVICES.md b/docs/PI_SERVICES.md
+index d2ae3d8..dbe4148 100644
+--- a/docs/PI_SERVICES.md
++++ b/docs/PI_SERVICES.md
+@@ -58,6 +58,7 @@ pprls.hl.maier.wtf    → Paperless-NGX
+ pprlsf.hl.maier.wtf   → PaperlessFrancine
+ cwa.hl.maier.wtf      → Calibre-Web
+ auth.hl.maier.wtf     → Keycloak OAuth/OIDC
++audiobookshelf.hl.maier.wtf → Audiobookshelf
+ ```
+ 
+ ## Docker Architecture
+@@ -73,11 +74,11 @@ All services run via Docker. No systemd services for applications.
+ │         Routes by VIRTUAL_HOST → internal containers     │
+ └────────┬──────────┬──────────┬──────────┬───────────────┘
+          │          │          │          │
+-    ┌────┴────┐ ┌──┴──────┐ ┌┴──────┐ ┌┴─────────────┐
+-    │  Gitea  │ │Paperless│ │Paperl.│ │  Calibre-Web  │
+-    │  :3000  │ │  :8000  │ │Francine│ │    :8083      │
+-    │  :2222  │ │         │ │ :8000  │ │               │
+-    └────┬────┘ └──┬──────┘ └──┬─────┘ └───────────────┘
++    ┌────┴────┐ ┌──┴──────┐ ┌┴──────┐ ┌┴─────────────┐ ┌───────────────┐
++     │  Gitea  │ │Paperless│ │Paperl.│ │  Calibre-Web  │ │Audiobookshelf │
++    │  :3000  │ │  :8000  │ │Francine│ │    :8083      │ │    :80        │
++    │  :2222  │ │         │ │ :8000  │ │               │ │               │
++    └────┬────┘ └──┬──────┘ └──┬─────┘ └───────────────┘ └──────────────────┘
+          │         │           │
+     ┌────┴────┐   ┌┴──────────┐┌┴──────────────┐
+     │postgres │   │postgres:18││postgres:18     │
+@@ -92,7 +93,7 @@ All services run via Docker. No systemd services for applications.
+ | Container | Image | Ports | Status |
+ |-----------|-------|-------|--------|
+ | `gitea` | docker.gitea.com/gitea:latest | 3000, 2222 (exposed) | Up (SQLite) |
+-| `audiobookshelf` | ghcr.io/advplyr/audiobookshelf:latest | — (internal) | Planned — siehe `docs/AUDIOBOOKSHELF.md` |
++| `audiobookshelf` | ghcr.io/advplyr/audiobookshelf@sha256:1eef6716183c52abafe5405e7d6be8390248ecd59c7488c44af871757ac8fc4d | 80 (internal, via frontproxy) | Healthy |
+ | `paperless-webserver-1` | ghcr.io/paperless-ngx/paperless-ngx:latest | 8000 (internal) | Healthy |
+ | `paperless-db-1` | postgres:18 | 5432 (internal) | Up 4 weeks |
+ | `paperless-broker-1` | redis:8 | 6379 (internal) | Up 4 weeks |
+@@ -116,7 +117,7 @@ All in `/home/michael/`:
+ | `gitea/` | Gitea (SQLite) | gitea.hl.maier.wtf |
+ | `paperless-ngx/` | Paperless-NGX + Redis + PostgreSQL + Gotenberg + Tika | pprls.hl.maier.wtf |
+ | `paperlessFrancine/` | PaperlessFrancine (separate instance) + Redis + PostgreSQL + Gotenberg + Tika | pprlsf.hl.maier.wtf |
+-| `audiobookshelf/` | Audiobookshelf | audiobookshelf.hl.maier.wtf (planned — `docs/AUDIOBOOKSHELF.md`) |
++| `audiobookshelf/` | Audiobookshelf | audiobookshelf.hl.maier.wtf (`pi/compose/audiobookshelf.yml`) |
+ | `frontproxy/` | nginx-proxy + ACME companion | — (router) |
+ | `keycloak/` | Keycloak + dedicated PostgreSQL | auth.hl.maier.wtf |
+ 
+@@ -175,6 +176,15 @@ See `pi/README.md` for deployment instructions.
+ # lscr.io/linuxserver/calibre-web:latest
+ ```
+ 
++### Audiobookshelf Compose (`pi/compose/audiobookshelf.yml`)
++```yaml
++# VIRTUAL_HOST: audiobookshelf.hl.maier.wtf
++# VIRTUAL_PORT: 80
++# ghcr.io/advplyr/audiobookshelf@sha256:1eef6716183c52abafe5405e7d6be8390248ecd59c7488c44af871757ac8fc4d (arm64)
++# frontproxy_default + audiobookshelf_internal networks
++# vhost.d/audiobookshelf.hl.maier.wtf_location: client_max_body_size 0 + WebSocket
++```
++
+ ## Backup System
+ 
+ ### Paperless-NGX Backup (`/home/michael/backup.sh`)
+@@ -289,6 +299,7 @@ NetworkManager       — Network
+ ```
+ /mnt/hardDrive/                  # External 458 GB SSD
+   ├── docker/                    # Docker data
++  │   └── audiobookshelf/        # Audiobookshelf config + metadata
+   ├── gitea-data/                # Gitea data (SQLite DB + repos, 2.7 GB)
+   ├── gitea-backup/              # Gitea daily dumps (7-day retention)
+    ├── gitea-pre-migration/       # Pre-migration snapshot (2026-07-03)
+@@ -340,6 +351,7 @@ NetworkManager       — Network
+ | PaperlessFrancine | ✅ Healthy | 4 weeks |
+ | Gitea | ✅ Running | 4 weeks |
+ | Calibre-Web | ✅ Healthy | 2 weeks |
++| Audiobookshelf | ✅ Healthy | seit 2026-07-20 |
+ | nginx-proxy | ✅ Running | 4 weeks |
+ 
+ **Note about port 80 503**: When accessing `http://192.168.2.30` directly (without Host header), nginx-proxy has no default backend and returns 503. Use domain names:
+diff --git a/docs/gh58-deployment-evidence.md b/docs/gh58-deployment-evidence.md
+new file mode 100644
+index 0000000..92d093e
+--- /dev/null
++++ b/docs/gh58-deployment-evidence.md
+@@ -0,0 +1,40 @@
++# GH-58 Deployment Evidence — Audiobookshelf on Pi5
++
++**Date:** 2026-07-20
++**Service:** Audiobookshelf (container `audiobookshelf`, host Pi5)
++**Scope:** GH-58 — reproducible Docker service, empty local test library.
++Excludes NFS, reverse proxy/TLS, Keycloak, production media.
++
++## Source of Truth
++- Compose: `pi/compose/audiobookshelf.yml` (merged via PR #63, healthcheck fix PR #65)
++- Architecture doc: `docs/AUDIOBOOKSHELF.md`
++
++## Deployment
++- Deployed on Pi5 at `/home/michael/audiobookshelf/docker-compose.yml`
++- Persistent bind mounts:
++  - `/mnt/hardDrive/docker/audiobookshelf/config` -> `/config`
++  - `/mnt/hardDrive/docker/audiobookshelf/metadata` -> `/metadata`
++- Image: `ghcr.io/advplyr/audiobookshelf@sha256:1eef6716183c52abafe5405e7d6be8390248ecd59c7488c44af871757ac8fc4d` (arm64, pinned)
++
++## Acceptance Criteria — Verified
++| Criterion | Result |
++|-----------|--------|
++| Container starts & reaches `healthy` | OK `Up ... (healthy)`, healthcheck `http://localhost:80/` returns 200 |
++| No host port exposed (internal-only) | OK `PortBindings: {}`, only `80/tcp` on internal bridge network |
++| Data persists across restart | OK `absdatabase.sqlite` + `migrations/` survive `docker restart` |
++| Resource limits enforced | OK MemLimit=512MB, NanoCpus=1.0, `no-new-privileges:true` |
++| Reproducible (pinned image, versioned compose) | OK Compose committed to Architecture repo |
++| GH-58 scope respected (no NFS/proxy/keycloak) | OK no NFS mounts, no proxy labels, no OIDC |
++
++## Fixes Applied During Deployment
++- **PR #63** deployed the initial compose but had a broken healthcheck:
++  probed `http://localhost:13378/health` — wrong port (app listens on `:80`)
++  and wrong path (`/health` returns 404; `/` returns 200). Container stuck `unhealthy`.
++- **PR #65** corrected healthcheck to `http://localhost:80/` and `expose: "80"`.
++  After redeploy, container reached `healthy`.
++- Local bind target dirs (`/mnt/hardDrive/docker/audiobookshelf/{config,metadata}`)
++  were created on the Pi (missing initially -> mount error).
++
++## Status
++GH-58 deployment complete and verified. Ready for GH-60 (OIDC) and a
++later child issue for `/audiobooks` NFS bind (section 7 of AUDIOBOOKSHELF.md).
+diff --git a/pi/compose/audiobookshelf.yml b/pi/compose/audiobookshelf.yml
+new file mode 100644
+index 0000000..f6489a7
+--- /dev/null
++++ b/pi/compose/audiobookshelf.yml
+@@ -0,0 +1,55 @@
++services:
++  audiobookshelf:
++    image: ghcr.io/advplyr/audiobookshelf@sha256:1eef6716183c52abafe5405e7d6be8390248ecd59c7488c44af871757ac8fc4d
++    platform: linux/arm64
++    container_name: audiobookshelf
++    restart: unless-stopped
++    healthcheck:
++      test: ["CMD", "node", "-e", "try { require('http').get('http://localhost:80/', r => { process.exit(r.statusCode === 200 ? 0 : 1) }) } catch(e) { process.exit(1) }"]
++      interval: 15s
++      timeout: 10s
++      retries: 5
++      start_period: 60s
++    mem_limit: 512m
++    cpus: "1.0"
++    security_opt:
++      - no-new-privileges:true
++    logging:
++      driver: json-file
++      options:
++        max-size: "10m"
++        max-file: "7"
++    environment:
++      VIRTUAL_HOST: audiobookshelf.hl.maier.wtf
++      VIRTUAL_PORT: "80"
++      LETSENCRYPT_HOST: audiobookshelf.hl.maier.wtf
++      LETSENCRYPT_EMAIL: webmaster@maier.wtf
++    expose:
++      - "80"
++    # GH-58 Blocker-1 fix: explicit cache path + empty local test library
++    volumes:
++      - audiobookshelf_config:/config
++      - audiobookshelf_metadata:/metadata
++      - /mnt/hardDrive/docker/audiobookshelf/cache:/metadata/cache
++      - /mnt/hardDrive/docker/audiobookshelf/library:/audiobooks
++    networks:
++      - audiobookshelf_internal
++      - frontproxy_default
++
++volumes:
++  audiobookshelf_config:
++    driver_opts:
++      type: none
++      device: /mnt/hardDrive/docker/audiobookshelf/config
++      o: bind
++  audiobookshelf_metadata:
++    driver_opts:
++      type: none
++      device: /mnt/hardDrive/docker/audiobookshelf/metadata
++      o: bind
++
++networks:
++  audiobookshelf_internal:
++    internal: true
++  frontproxy_default:
++    external: true
+diff --git a/pi/compose/vhost.d/audiobookshelf.hl.maier.wtf_location b/pi/compose/vhost.d/audiobookshelf.hl.maier.wtf_location
+new file mode 100644
+index 0000000..02be3f7
+--- /dev/null
++++ b/pi/compose/vhost.d/audiobookshelf.hl.maier.wtf_location
+@@ -0,0 +1,5 @@
++client_max_body_size 0;
++
++# WebSocket support for audiobookshelf player and live sync
++proxy_set_header Upgrade $http_upgrade;
++proxy_set_header Connection $connection_upgrade;
+diff --git a/pi/tests/test_audiobookshelf_proxy.sh b/pi/tests/test_audiobookshelf_proxy.sh
+new file mode 100755
+index 0000000..ede6484
+--- /dev/null
++++ b/pi/tests/test_audiobookshelf_proxy.sh
+@@ -0,0 +1,92 @@
++#!/usr/bin/env bash
++# Static contract tests for Audiobookshelf reverse proxy and TLS.
++set -euo pipefail
++
++REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
++
++python3 - \
++  "$REPO_ROOT/pi/compose/audiobookshelf.yml" \
++  "$REPO_ROOT/pi/compose/vhost.d/audiobookshelf.hl.maier.wtf_location" \
++  "$REPO_ROOT/docs/AUDIOBOOKSHELF.md" <<'PY'
++from pathlib import Path
++import re
++import sys
++
++import yaml
++
++
++def require(condition, message):
++    if not condition:
++        raise SystemExit(f"FAIL: {message}")
++    print(f"PASS: {message}")
++
++
++compose_path, vhost_path, docs_path = (Path(value) for value in sys.argv[1:])
++for path in (compose_path, vhost_path, docs_path):
++    require(path.is_file(), f"required input exists: {path}")
++
++compose = yaml.safe_load(compose_path.read_text(encoding="utf-8"))
++require(set(compose.get("services", {})) == {"audiobookshelf"}, "stack defines only Audiobookshelf")
++abs = compose["services"]["audiobookshelf"]
++
++# Image pinning
++require(
++    abs.get("image") ==
++    "ghcr.io/advplyr/audiobookshelf@sha256:1eef6716183c52abafe5405e7d6be8390248ecd59c7488c44af871757ac8fc4d",
++    "Audiobookshelf image is pinned by immutable digest",
++)
++require(abs.get("platform") == "linux/arm64", "Audiobookshelf explicitly selects ARM64")
++require(abs.get("restart") == "unless-stopped", "Audiobookshelf has a restart policy")
++
++# No host ports (only internal + frontproxy)
++require("ports" not in abs, "Audiobookshelf publishes no host port")
++require(set(abs.get("expose", [])) == {"80"}, "Audiobookshelf exposes only internal port 80")
++
++# Proxy environment
++expected_proxy_env = {
++    "VIRTUAL_HOST": "audiobookshelf.hl.maier.wtf",
++    "VIRTUAL_PORT": "80",
++    "LETSENCRYPT_HOST": "audiobookshelf.hl.maier.wtf",
++    "LETSENCRYPT_EMAIL": "webmaster@maier.wtf",
++}
++env = abs.get("environment", {})
++for key, val in expected_proxy_env.items():
++    require(env.get(key) == val, f"Audiobookshelf proxy env: {key}={val}")
++
++# Networks
++networks = set(abs.get("networks", []))
++require("frontproxy_default" in networks, "Audiobookshelf joins frontproxy_default network")
++require("audiobookshelf_internal" in networks, "Audiobookshelf joins audiobookshelf_internal network")
++
++expected_networks = {
++    "audiobookshelf_internal": {"internal": True},
++    "frontproxy_default": {"external": True},
++}
++require(compose.get("networks") == expected_networks, "network declarations are exact")
++
++# Security and resources
++require("no-new-privileges:true" in abs.get("security_opt", []), "Audiobookshelf blocks privilege escalation")
++require("mem_limit" in abs and "cpus" in abs, "Audiobookshelf has CPU and memory limits")
++logging = abs.get("logging", {}).get("options", {})
++require(logging == {"max-size": "10m", "max-file": "7"}, "Audiobookshelf logs are bounded")
++require(abs.get("healthcheck") is not None, "Audiobookshelf has a healthcheck")
++
++# Secrets / configs
++require("secrets" not in abs and "configs" not in abs, "Audiobookshelf declares no secrets or extra configs")
++
++# vhost.d config
++vhost = vhost_path.read_text(encoding="utf-8")
++require("client_max_body_size" in vhost, "vhost.d sets client_max_body_size for large uploads")
++require("proxy_set_header Upgrade" in vhost, "vhost.d forwards WebSocket Upgrade header")
++require("proxy_set_header Connection" in vhost, "vhost.d forwards WebSocket Connection header")
++
++# Documentation
++docs = docs_path.read_text(encoding="utf-8")
++for required in (
++    "audiobookshelf.hl.maier.wtf",
++    "frontproxy",
++    "nginx-proxy",
++    "VIRTUAL_HOST",
++):
++    require(required in docs, f"Audiobookshelf architecture docs contain: {required}")
++PY
