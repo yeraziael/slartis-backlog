@@ -1,0 +1,4 @@
+ACP Pilot 1: GH-57 Konsolidierung
+Repository: Homelab/Architecture
+PR: #61
+Head SHA: e864f152356ee80d63b988d869ff8acc4ebe62aa
