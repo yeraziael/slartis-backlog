@@ -1,0 +1,247 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index a325dc2..42f55f5 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -3,3 +3,6 @@
+ ## v0.1.0-draft
+ 
+ - Initial repository setup
++- Added `FINDINGS/` directory with Pilot 57 findings and reusable template
++- Added `DECISIONS/` directory for architectural decision records
++- Updated repository structure documentation in `README.md`
+diff --git a/DECISIONS/README.md b/DECISIONS/README.md
+new file mode 100644
+index 0000000..a985abc
+--- /dev/null
++++ b/DECISIONS/README.md
+@@ -0,0 +1,26 @@
++# Decisions
++
++This directory captures architectural and procedural decisions arising from ACP
++Pilots and ACP revision proposals.
++
++## Purpose
++
++- Record the rationale behind ACP changes
++- Link findings from `FINDINGS/` to concrete decisions
++- Provide a changelog-adjacent view of why the protocol evolved
++
++## Format
++
++Each decision follows a lightweight ADR (Architecture Decision Record) format:
++
++- **Title:** What was decided
++- **Context:** What triggered the decision (findings, pilot, external requirement)
++- **Decision:** The chosen approach
++- **Consequences:** What becomes easier or harder
++- **Status:** `Proposed` / `Accepted` / `Superseded` / `Deprecated`
++
++## Register
++
++| # | Date | Title | Status | Related Findings |
++|---|---|---|---|---|
++| — | — | — | — | — |
+diff --git a/FINDINGS/PILOT-57.md b/FINDINGS/PILOT-57.md
+new file mode 100644
+index 0000000..f5520b8
+--- /dev/null
++++ b/FINDINGS/PILOT-57.md
+@@ -0,0 +1,99 @@
++# ACP Pilot 57 — Protocol Findings
++
++## Metadata
++
++| Field | Value |
++|---|---|
++| **Pilot identifier** | `ACP-PILOT-57` |
++| **Date** | `2026-07-20` |
++| **Reviewed work** | `GH-57` — Audiobookshelf architecture review |
++| **ACP version used** | `0.1.0-draft` |
++| **Reviewer** | ChatGPT |
++| **Review result** | `PASS_WITH_FINDINGS` |
++
++## Summary
++
++Pilot 57 applied ACP `0.1.0-draft` to the Audiobookshelf architecture review
++(GH-57). The protocol specification was effectively empty (no normative
++content), so the review was conducted against the intent of ACP rather than
++its letter. The pilot produced 7 canonical findings about the protocol itself,
++directly informing which sections of ACP need to be drafted first.
++
++## Canonical Findings
++
++### F-57-001 — ACP
++
++| Field | Value |
++|---|---|
++| **Finding** | A mandatory transport validation step before `review_ready` was missing |
++| **Candidate for ACP revision** | **Yes** |
++
++### F-57-002 — ACP
++
++| Field | Value |
++|---|---|
++| **Finding** | Reviews require a deterministic review package structure instead of freely organized artifacts |
++| **Candidate for ACP revision** | **Yes** |
++
++### F-57-003 — ACP
++
++| Field | Value |
++|---|---|
++| **Finding** | Evidence should be explicitly mapped to Acceptance Criteria |
++| **Candidate for ACP revision** | **Yes** |
++
++### F-57-004 — Prompt
++
++| Field | Value |
++|---|---|
++| **Finding** | The implementation prompt did not sufficiently specify the review package |
++| **Candidate for ACP revision** | **No** |
++
++### F-57-005 — Reviewer
++
++| Field | Value |
++|---|---|
++| **Finding** | Multiple review iterations were required to separate transport defects from implementation defects |
++| **Candidate for ACP revision** | **No** |
++
++### F-57-006 — ACP
++
++| Field | Value |
++|---|---|
++| **Finding** | A dedicated review state for missing review artifacts would improve the protocol |
++| **Candidate for ACP revision** | **Yes** |
++
++### F-57-007 — Process
++
++| Field | Value |
++|---|---|
++| **Finding** | SHA-bound approvals proved effective and should be retained |
++| **Candidate for ACP revision** | **No** (retain as best practice) |
++
++## Summary
++
++Pilot 57 produced 7 canonical findings: 4 target the ACP specification itself
++(F-57-001, F-57-002, F-57-003, F-57-006), 1 targets the prompt engineering
++process (F-57-004), 1 targets the review workflow (F-57-005), and 1 confirms
++an existing practice (F-57-007). The findings with "Yes" for ACP revision
++directly inform which sections of the protocol need to be drafted first.
++
++## Recommendation
++
++**Candidate for future ACP revision?** `Yes`
++
++**Rationale:** Four of seven findings directly demand ACP changes:
++deterministic review package structure (F-57-002), evidence-to-AC mapping
++(F-57-003), mandatory transport validation (F-57-001), and a dedicated review
++state for missing artifacts (F-57-006). These should be addressed in the first
++normative ACP release.
++
++## References
++
++- ACP specification: `SPEC/.gitkeep` (normative content not yet written)
++- Related decisions: `DECISIONS/` (none yet)
++- Reviewed work: `yeraziael/slartis-backlog#57` — ACP Pilot 1: Audiobookshelf
++- Canonical findings source: `yeraziael/slartis-backlog#64`
++- Review package: `yeraziael/slartis-backlog#65`
++- Findings workflow: `FINDINGS/README.md`
++- Template for future pilots: `FINDINGS/TEMPLATE.md`
+diff --git a/FINDINGS/README.md b/FINDINGS/README.md
+new file mode 100644
+index 0000000..3d41ffc
+--- /dev/null
++++ b/FINDINGS/README.md
+@@ -0,0 +1,35 @@
++# Findings
++
++This directory accumulates observations from ACP Pilots — structured reviews that
++apply the Agent Coordination Protocol to real PRs and issues.
++
++## Purpose
++
++Every ACP Pilot produces findings that fall into four categories:
++
++| Category | Scope |
++|---|---|
++| **ACP** | Deficiencies or gaps in the ACP specification itself |
++| **Prompt** | How well LLM prompts express ACP concepts |
++| **Reviewer** | How effective the reviewer applies ACP |
++| **Process** | Operational practices that should be retained or codified |
++
++These findings drive ACP revisions. Without findings, the protocol stagnates.
++
++## Workflow
++
++1. A Pilot is defined (issue, PR, scope, ACP version)
++2. The reviewer applies ACP and documents observations
++3. Findings are classified, prioritised, and merged via PR into this directory
++4. After review, findings may trigger ACP revision proposals in `DECISIONS/`
++
++## Register
++
++| Pilot | Date | Reviewed | ACP Version | Result | Document |
++|---|---|---|---|---|---|---|
++| 57 | 2026-07-20 | GH-57 (Audiobookshelf) | 0.1.0-draft | PASS_WITH_FINDINGS | PILOT-57.md |
++
++## Template
++
++Use `FINDINGS/TEMPLATE.md` when documenting a new Pilot. Each findings file uses
++the naming convention `PILOT-<NUMBER>.md`.
+diff --git a/FINDINGS/TEMPLATE.md b/FINDINGS/TEMPLATE.md
+new file mode 100644
+index 0000000..c30183c
+--- /dev/null
++++ b/FINDINGS/TEMPLATE.md
+@@ -0,0 +1,39 @@
++# ACP Pilot <NUMBER> — <SHORT TITLE>
++
++## Metadata
++
++| Field | Value |
++|---|---|
++| **Pilot identifier** | `ACP-PILOT-<NUMBER>` |
++| **Date** | `YYYY-MM-DD` |
++| **Reviewed issue / PR** | `<owner>/<repo>#<number>` |
++| **ACP version used** | `<semver>` |
++| **Reviewer** | `<name>` |
++| **Review result** | `PASS` / `PASS_WITH_FINDINGS` / `FAIL` |
++
++## Summary
++
++One paragraph describing what was reviewed and the key outcomes.
++
++## Canonical Findings
++
++### F-<NUMBER>-<ID> — <CATEGORY>
++
++| Field | Value |
++|---|---|
++| **Finding** | … |
++| **Candidate for ACP revision** | **Yes** / **No** |
++
++Repeat for each finding.
++
++## Recommendation
++
++**Candidate for future ACP revision?** `Yes` / `No`
++
++**Rationale:** …
++
++## References
++
++- ACP specification: `SPEC/<file>.md`
++- Related decisions: `DECISIONS/<file>.md`
++- PR with implementation changes: `<owner>/<repo>#<number>`
+diff --git a/README.md b/README.md
+index 11207c0..83b450b 100644
+--- a/README.md
++++ b/README.md
+@@ -26,6 +26,8 @@ SPEC/             — ACP core specification and state machine
+ SCHEMAS/          — Versioned JSON/YAML schemas for artifacts
+ CONFORMANCE/      — Conformance test suite and fixtures
+ EXAMPLES/         — Example artifacts (review packages, verdicts, handoffs)
++FINDINGS/         — Pilot findings and observations (drives ACP revisions)
++DECISIONS/        — Architectural decisions derived from findings
+ CHANGELOG.md      — Versioned changelog
+ VERSION           — Current version string
+ ```
