@@ -1,0 +1,3 @@
+Container restart: PASS
+Time to healthy: 8s
+Database preserved: OK
