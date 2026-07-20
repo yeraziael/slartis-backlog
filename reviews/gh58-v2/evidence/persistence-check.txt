@@ -1,0 +1,3 @@
+Database: /mnt/hardDrive/audiobookshelf/config/absdatabase.sqlite (364KB)
+Metadata cache: /mnt/hardDrive/audiobookshelf/metadata/cache/{covers,images,items}
+Testlibrary: /mnt/hardDrive/audiobookshelf/testlibrary (leer)
