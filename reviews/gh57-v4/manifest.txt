@@ -1,0 +1,6 @@
+ACP Pilot 1: GH-57
+Repository: Homelab/Architecture
+Gitea PR: #62
+Head SHA: da678bae3678fdd9a57a3083c16e2045ebad2cc2
+State: review_ready
+Supersedes: rp-gh57-v3
