@@ -1,0 +1,60 @@
+{
+  "experiment": "E-001",
+  "protocol": "vekling.execution.v0.4",
+  "purpose": "Observed skills",
+  "observation_method": {
+    "classification": "observed",
+    "sources": [
+      "filesystem enumeration of ~/.opencode/skills and ~/.config/opencode/skills",
+      "SKILL.md frontmatter (name, description)",
+      "runtime system-prompt available_skills block"
+    ],
+    "note": "All entries below were read directly from disk except where source is marked runtime_only."
+  },
+  "skill_sources": {
+    "config_paths": [
+      "~/.config/opencode/skills",
+      "~/.opencode/skills"
+    ],
+    "classification": "observed",
+    "evidence": "opencode.jsonc skills.paths"
+  },
+  "skills": [
+    {"id": "adr", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/adr/SKILL.md", "classification": "observed"},
+    {"id": "aegir", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/aegir/SKILL.md", "classification": "observed"},
+    {"id": "api-design", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/api-design/SKILL.md", "classification": "observed"},
+    {"id": "architecture", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/architecture/SKILL.md", "classification": "observed"},
+    {"id": "branching", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/branching/SKILL.md", "classification": "observed"},
+    {"id": "communication", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/communication/SKILL.md", "classification": "observed"},
+    {"id": "deployment", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/deployment/SKILL.md", "classification": "observed"},
+    {"id": "diagnose", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/diagnose/SKILL.md", "classification": "observed"},
+    {"id": "gitea", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/gitea/SKILL.md", "classification": "observed"},
+    {"id": "gitea-dashboard-report", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/gitea-dashboard-report/SKILL.md", "classification": "observed"},
+    {"id": "github-cli", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/github-cli/SKILL.md", "classification": "observed"},
+    {"id": "grill-with-docs", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/grill-with-docs/SKILL.md", "classification": "observed"},
+    {"id": "grow-dream", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/grow-dream/SKILL.md", "classification": "observed"},
+    {"id": "handoff", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/handoff/SKILL.md", "classification": "observed"},
+    {"id": "identity", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/identity/SKILL.md", "classification": "observed"},
+    {"id": "infrastructure", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/infrastructure/SKILL.md", "classification": "observed"},
+    {"id": "lore", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/lore/SKILL.md", "classification": "observed"},
+    {"id": "pi-docker", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/pi-docker/SKILL.md", "classification": "observed"},
+    {"id": "project-clarification-loop", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/project-clarification-loop.md", "classification": "observed", "note": "Present on disk as a bare .md file; not present in runtime available_skills block."},
+    {"id": "prototype", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/prototype/SKILL.md", "classification": "observed"},
+    {"id": "tdd", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/tdd/SKILL.md", "classification": "observed"},
+    {"id": "testing", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/testing/SKILL.md", "classification": "observed"},
+    {"id": "triage", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/triage/SKILL.md", "classification": "observed"},
+    {"id": "workflow", "source": "~/.opencode/skills", "type": "custom", "location": "~/.opencode/skills/workflow/SKILL.md", "classification": "observed"},
+    {"id": "eldir-debug", "source": "~/.config/opencode/skills", "type": "project", "location": "~/.config/opencode/skills/eldir-debug/SKILL.md", "classification": "observed"},
+    {"id": "eldir-setup", "source": "~/.config/opencode/skills", "type": "project", "location": "~/.config/opencode/skills/eldir-setup/SKILL.md", "classification": "observed"},
+    {"id": "vekling-delegation", "source": "~/.config/opencode/skills", "type": "project", "location": "~/.config/opencode/skills/vekling-delegation/SKILL.md", "classification": "observed"},
+    {"id": "customize-opencode", "source": "builtin", "type": "builtin", "location": "<built-in>", "classification": "observed", "note": "Exposed in runtime available_skills block; no on-disk SKILL.md in user skill paths."}
+  ],
+  "counts": {
+    "on_disk_skill_files": 27,
+    "runtime_exposed_skills": 27,
+    "builtin_skills": 1,
+    "custom_skills": 24,
+    "project_skills": 3,
+    "classification": "observed"
+  }
+}

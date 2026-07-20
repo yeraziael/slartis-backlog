@@ -1,0 +1,83 @@
+{
+  "experiment": "E-001",
+  "protocol": "vekling.execution.v0.4",
+  "title": "Execution Capability Baseline",
+  "purpose": "Canonical experimental data",
+  "objective": "Observe and model the worker's current execution capabilities without changing them.",
+  "research_rules_applied": [
+    "Observe before interpreting.",
+    "Interpret before canonicalizing.",
+    "Unknown is preferred over guessed.",
+    "Evidence has priority over completeness.",
+    "Every assertion classified as observed, inferred or assumed.",
+    "Do not optimize / redesign / improve."
+  ],
+  "constraints_respected": {
+    "documentation_only": true,
+    "no_runtime_changes": true,
+    "no_configuration_changes": true,
+    "no_environment_changes": true,
+    "single_commit": true,
+    "single_pr": true
+  },
+  "phase_1_observation": {
+    "record_only": true,
+    "discovered": {
+      "builtin_skills": {"value": ["customize-opencode"], "classification": "observed", "evidence": "runtime available_skills block, location <built-in>"},
+      "installed_skills": {"value": "3 project skills under ~/.config/opencode/skills", "classification": "observed", "evidence": "filesystem enumeration"},
+      "custom_skills": {"value": "24 skills under ~/.opencode/skills", "classification": "observed", "evidence": "filesystem enumeration"},
+      "project_skills": {"value": ["eldir-debug", "eldir-setup", "vekling-delegation"], "classification": "observed", "evidence": "~/.config/opencode/skills enumeration"},
+      "extensions": {"value": "6 subagent policy profiles under ~/.config/opencode/agent; @opencode-ai/plugin dependency present; no plugin/ directory", "classification": "observed", "evidence": "~/.config/opencode/agent, package.json"},
+      "tool_entrypoints": {"value": ["bash", "edit", "glob", "grep", "question", "read", "skill", "task", "todowrite", "webfetch", "websearch", "write"], "classification": "observed", "evidence": "runtime tool interface"}
+    }
+  },
+  "phase_2_model_extraction": {
+    "execution_model": {
+      "classification": "inferred",
+      "justification": "Derived from workflow, branching, deployment and vekling-delegation skills.",
+      "summary": "A control-plane orchestrator (Slarti) plans and delegates; execution follows a 7-phase workflow with a branch-first model (PATCH/REFACTOR/LANDSLIDE) under a Git-workflow deployment mandate. Subagent delegation is gated by explicit operator approval."
+    },
+    "capability_model_ref": "capabilities.json",
+    "dependency_graph_ref": "dependency_graph.json",
+    "skill_relationships": {
+      "classification": "inferred",
+      "notable_edges": [
+        "grill-with-docs -> workflow, adr",
+        "triage -> gitea, workflow",
+        "gitea-dashboard-report -> gitea",
+        "tdd -> testing",
+        "diagnose -> infrastructure",
+        "pi-docker -> deployment",
+        "workflow -> branching, subagent-orchestration",
+        "vekling-delegation -> subagent-orchestration"
+      ]
+    },
+    "implicit_capabilities": {
+      "classification": "inferred",
+      "value": ["subagent-orchestration", "custom-command", "local-model-inference", "reference-access"]
+    },
+    "do_not_modify_model": true
+  },
+  "phase_3_canonicalization": {
+    "canonical_skill_id_scheme": {"pattern": "skill.<name>", "classification": "assumed", "justification": "No canonical id scheme is declared in metadata; the skill directory name is adopted as the canonical id. Marked assumed because it is a chosen convention, not an observed declaration."},
+    "canonical_capability_id_scheme": {"pattern": "cap.tool.<entrypoint> | cap.skill.<name> | cap.implicit.<name>", "classification": "assumed", "justification": "Chosen naming convention for this baseline; not observed from any declaration."},
+    "capability_mapping_note": "Each skill maps 1:1 to a cap.skill.<name> capability; each tool entrypoint maps 1:1 to a cap.tool.<entrypoint> capability. See capabilities.json for the full mapping."
+  },
+  "metrics": {
+    "skills_discovered": {"value": 27, "classification": "observed", "note": "On-disk skill units. Runtime available_skills also lists 27 (swaps disk-only project-clarification-loop for builtin customize-opencode)."},
+    "capabilities_discovered": {"value": 44, "classification": "observed", "note": "12 tool entrypoints (observed) + 28 skill capabilities (inferred) + 4 implicit capabilities (inferred)."},
+    "observed_ratio": {"value": 0.2727, "classification": "observed", "formula": "12 observed / 44 total"},
+    "inferred_ratio": {"value": 0.7273, "classification": "observed", "formula": "32 inferred / 44 total"},
+    "assumed_ratio": {"value": 0.0, "classification": "observed", "formula": "0 assumed capabilities / 44 total", "note": "Assumptions exist only in the phase-3 id schemes, which are not counted as capabilities."},
+    "duplicate_capabilities": {"value": 0, "classification": "observed", "note": "All capability ids unique."},
+    "orphan_capabilities": {"value": 0, "classification": "inferred", "note": "No capability is referenced by an edge without being defined; all edge endpoints exist in capabilities.json. Leaf/standalone nodes (e.g. cap.tool.glob) are not treated as orphans."},
+    "dependency_cycles": {"value": 0, "classification": "inferred", "note": "No directed cycles in the inferred edge set."},
+    "average_dependencies_per_skill": {"value": 1.3704, "classification": "inferred", "formula": "37 dependency edges / 27 skills_discovered"},
+    "capability_to_skill_ratio": {"value": 1.6296, "classification": "observed", "formula": "44 capabilities / 27 skills"}
+  },
+  "unknowns": [
+    {"item": "Runtime availability of Ollama local models", "classification": "assumed", "note": "Configured in opencode.jsonc but not exercised (documentation_only)."},
+    {"item": "Full transitive dependency set per skill", "classification": "assumed", "note": "Only dependencies described in SKILL.md text were captured; undescribed dependencies are unknown by omission."},
+    {"item": "Whether project-clarification-loop.md is loadable at runtime", "classification": "assumed", "note": "Present on disk as a bare .md but absent from the runtime available_skills block."}
+  ]
+}

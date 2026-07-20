@@ -1,0 +1,63 @@
+{
+  "experiment": "E-001",
+  "protocol": "vekling.execution.v0.4",
+  "purpose": "Observed capability model",
+  "model_note": "Capabilities are the discrete execution primitives (tool entrypoints) exposed to the worker at runtime, plus higher-order capabilities inferred from skills. Tool entrypoints are classified 'observed' (directly exposed in the runtime tool interface). Skill-derived capabilities are classified 'inferred' from SKILL.md descriptions.",
+  "tool_entrypoints": [
+    {"id": "cap.tool.bash", "entrypoint": "bash", "description": "Execute shell commands in a persistent session.", "classification": "observed"},
+    {"id": "cap.tool.edit", "entrypoint": "edit", "description": "Exact string replacement in files.", "classification": "observed"},
+    {"id": "cap.tool.glob", "entrypoint": "glob", "description": "File pattern matching / discovery.", "classification": "observed"},
+    {"id": "cap.tool.grep", "entrypoint": "grep", "description": "Regex content search across files.", "classification": "observed"},
+    {"id": "cap.tool.question", "entrypoint": "question", "description": "Ask the operator structured questions.", "classification": "observed"},
+    {"id": "cap.tool.read", "entrypoint": "read", "description": "Read files and directories.", "classification": "observed"},
+    {"id": "cap.tool.skill", "entrypoint": "skill", "description": "Load a specialized skill into context.", "classification": "observed"},
+    {"id": "cap.tool.task", "entrypoint": "task", "description": "Launch a subagent for autonomous multi-step work. Runtime permission = ask.", "classification": "observed"},
+    {"id": "cap.tool.todowrite", "entrypoint": "todowrite", "description": "Maintain a structured task list.", "classification": "observed"},
+    {"id": "cap.tool.webfetch", "entrypoint": "webfetch", "description": "Fetch and convert web content.", "classification": "observed"},
+    {"id": "cap.tool.websearch", "entrypoint": "websearch", "description": "Perform real-time web search.", "classification": "observed"},
+    {"id": "cap.tool.write", "entrypoint": "write", "description": "Write / overwrite files on the local filesystem.", "classification": "observed"}
+  ],
+  "skill_capabilities": [
+    {"id": "cap.skill.adr", "skill": "adr", "capability": "Author Architecture Decision Records.", "classification": "inferred", "justification": "Derived from adr SKILL.md description (ADR format and process)."},
+    {"id": "cap.skill.aegir", "skill": "aegir", "capability": "Reference knowledge of the Aegir counterpart agent.", "classification": "inferred", "justification": "Derived from aegir SKILL.md description."},
+    {"id": "cap.skill.api-design", "skill": "api-design", "capability": "Design and review REST APIs.", "classification": "inferred", "justification": "Derived from api-design SKILL.md description."},
+    {"id": "cap.skill.architecture", "skill": "architecture", "capability": "Reason about system topology and node distribution.", "classification": "inferred", "justification": "Derived from architecture SKILL.md description."},
+    {"id": "cap.skill.branching", "skill": "branching", "capability": "Select branch-first execution mode (PATCH/REFACTOR/LANDSLIDE).", "classification": "inferred", "justification": "Derived from branching SKILL.md description."},
+    {"id": "cap.skill.communication", "skill": "communication", "capability": "Apply interaction style and Telegram notification rule.", "classification": "inferred", "justification": "Derived from communication SKILL.md description."},
+    {"id": "cap.skill.deployment", "skill": "deployment", "capability": "Apply Git-workflow deployment mandate and Slarti/Lydia boundary.", "classification": "inferred", "justification": "Derived from deployment SKILL.md description."},
+    {"id": "cap.skill.diagnose", "skill": "diagnose", "capability": "Run 6-phase debugging methodology.", "classification": "inferred", "justification": "Derived from diagnose SKILL.md description."},
+    {"id": "cap.skill.gitea", "skill": "gitea", "capability": "Operate Gitea via tea-cli, API, admin, SSH patterns.", "classification": "inferred", "justification": "Derived from gitea SKILL.md description."},
+    {"id": "cap.skill.gitea-dashboard-report", "skill": "gitea-dashboard-report", "capability": "Produce read-only Gitea instance dashboard snapshot.", "classification": "inferred", "justification": "Derived from gitea-dashboard-report SKILL.md description."},
+    {"id": "cap.skill.github-cli", "skill": "github-cli", "capability": "Operate github.com via gh CLI.", "classification": "inferred", "justification": "Derived from github-cli SKILL.md description."},
+    {"id": "cap.skill.grill-with-docs", "skill": "grill-with-docs", "capability": "Interrogate proposals and emit ADR documentation.", "classification": "inferred", "justification": "Derived from grill-with-docs SKILL.md description."},
+    {"id": "cap.skill.grow-dream", "skill": "grow-dream", "capability": "Retrospect a session and crystallize reusable patterns.", "classification": "inferred", "justification": "Derived from grow-dream SKILL.md description."},
+    {"id": "cap.skill.handoff", "skill": "handoff", "capability": "Compress a session into a handoff document.", "classification": "inferred", "justification": "Derived from handoff SKILL.md description."},
+    {"id": "cap.skill.identity", "skill": "identity", "capability": "Assert agent identity and authority boundaries.", "classification": "inferred", "justification": "Derived from identity SKILL.md description."},
+    {"id": "cap.skill.infrastructure", "skill": "infrastructure", "capability": "Apply known homelab gotchas during diagnosis.", "classification": "inferred", "justification": "Derived from infrastructure SKILL.md description."},
+    {"id": "cap.skill.lore", "skill": "lore", "capability": "Provide canon/narrative context.", "classification": "inferred", "justification": "Derived from lore SKILL.md description."},
+    {"id": "cap.skill.pi-docker", "skill": "pi-docker", "capability": "Manage Docker services on the Pi5.", "classification": "inferred", "justification": "Derived from pi-docker SKILL.md description."},
+    {"id": "cap.skill.project-clarification-loop", "skill": "project-clarification-loop", "capability": "Eliminate requirement ambiguity via structured questions.", "classification": "inferred", "justification": "Derived from project-clarification-loop.md description."},
+    {"id": "cap.skill.prototype", "skill": "prototype", "capability": "Build throwaway prototypes to validate design.", "classification": "inferred", "justification": "Derived from prototype SKILL.md description."},
+    {"id": "cap.skill.tdd", "skill": "tdd", "capability": "Drive development test-first (red-green-refactor).", "classification": "inferred", "justification": "Derived from tdd SKILL.md description."},
+    {"id": "cap.skill.testing", "skill": "testing", "capability": "Apply test-first and blackbox testing before merge.", "classification": "inferred", "justification": "Derived from testing SKILL.md description."},
+    {"id": "cap.skill.triage", "skill": "triage", "capability": "Move issues/PRs through a triage state machine.", "classification": "inferred", "justification": "Derived from triage SKILL.md description."},
+    {"id": "cap.skill.workflow", "skill": "workflow", "capability": "Run 7-phase execution model and delegation tree.", "classification": "inferred", "justification": "Derived from workflow SKILL.md description."},
+    {"id": "cap.skill.eldir-debug", "skill": "eldir-debug", "capability": "Debug Eldir microservices systematically.", "classification": "inferred", "justification": "Derived from eldir-debug SKILL.md description."},
+    {"id": "cap.skill.eldir-setup", "skill": "eldir-setup", "capability": "Set up Eldir services and features.", "classification": "inferred", "justification": "Derived from eldir-setup SKILL.md description."},
+    {"id": "cap.skill.vekling-delegation", "skill": "vekling-delegation", "capability": "Delegate backlog tasks to Vekling subagents.", "classification": "inferred", "justification": "Derived from vekling-delegation SKILL.md description."},
+    {"id": "cap.skill.customize-opencode", "skill": "customize-opencode", "capability": "Configure opencode itself (config, agents, skills, plugins).", "classification": "inferred", "justification": "Derived from builtin customize-opencode skill description."}
+  ],
+  "implicit_capabilities": [
+    {"id": "cap.implicit.subagent-orchestration", "capability": "Orchestrate subagents through defined policy profiles (flash-free, local-fast, luna, sol, terra).", "classification": "inferred", "justification": "Inferred from presence of ~/.config/opencode/agent/*.md subagent profiles combined with cap.tool.task.", "constraint_observed": "Each subagent start requires explicit operator approval (AGENTS.md); permission.task=ask in opencode.jsonc."},
+    {"id": "cap.implicit.custom-command", "capability": "Invoke custom slash-commands (status, gs).", "classification": "inferred", "justification": "Inferred from command block in opencode.jsonc."},
+    {"id": "cap.implicit.local-model-inference", "capability": "Route inference to local Ollama models.", "classification": "inferred", "justification": "Inferred from provider.ollama block in opencode.jsonc; runtime availability not verified in this study (documentation_only)."},
+    {"id": "cap.implicit.reference-access", "capability": "Access project reference directories (memory, backlog, context, workspace, tools).", "classification": "inferred", "justification": "Inferred from references block in opencode.jsonc and runtime available_references."}
+  ],
+  "counts": {
+    "tool_entrypoints": 12,
+    "skill_capabilities": 28,
+    "implicit_capabilities": 4,
+    "total_capabilities": 44,
+    "classification": "observed"
+  }
+}
