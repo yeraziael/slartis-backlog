@@ -1,0 +1,14 @@
+Node: Pi5 (paperless-ngx, 192.168.2.30)
+Docker: 29.3.1
+Compose: docker compose plugin v2
+Image: ghcr.io/advplyr/audiobookshelf@sha256:1eef6716183c52abafe5405e7d6be8390248ecd59c7488c44af871757ac8fc4d
+
+1. docker compose config: PASS (Exit 0)
+2. Container health: healthy (8s after start, 8s after restart)
+3. docker ps: audiobookshelf Up (healthy) 80/tcp
+4. Healthcheck endpoint: GET /status -> 200
+5. Database persisted: /mnt/hardDrive/audiobookshelf/config/absdatabase.sqlite (364KB)
+6. Metadata persisted: /mnt/hardDrive/audiobookshelf/metadata/cache/{covers,images,items}
+7. Cache: unter /metadata/cache durch metadata-Volume abgedeckt
+8. Testlibrary: /mnt/hardDrive/audiobookshelf/testlibrary (empty, bind-mounted)
+9. Restart test: container restarted, came back healthy, database intact
