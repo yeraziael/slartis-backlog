@@ -1,0 +1,73 @@
+diff --git a/docs/AUDIOBOOKSHELF.md b/docs/AUDIOBOOKSHELF.md
+index 7509de1..da6627f 100644
+--- a/docs/AUDIOBOOKSHELF.md
++++ b/docs/AUDIOBOOKSHELF.md
+@@ -63,8 +63,9 @@ networks:
+ 
+ | Container | Host (Pi5) | Zweck | Zugriff |
+ |-----------|-----------|-------|---------|
+-| `/config` | `/mnt/hardDrive/docker/audiobookshelf/config` | Konfiguration | read-write |
+-| `/metadata` | `/mnt/hardDrive/docker/audiobookshelf/metadata` | Metadaten-Cache | read-write |
++| `/config` | `/mnt/hardDrive/audiobookshelf/config` | Konfiguration (SQLite-DB) | read-write |
++| `/metadata` | `/mnt/hardDrive/audiobookshelf/metadata` | Metadaten-Cache (Covers, Cache) | read-write |
++| `/media/testlibrary` | `/mnt/hardDrive/audiobookshelf/testlibrary` | Leere lokale Testbibliothek | read-write |
+ | `/audiobooks` | `/mnt/ro/nas_audiobooks` (NFS, siehe Abschnitt 7) | Hörbuch-Quelle | **read-only** |
+ | `/podcasts` | `/mnt/ro/nas_podcasts` (NFS, siehe Abschnitt 7) | Podcast-Quelle | **read-only** |
+ 
+diff --git a/pi/compose/audiobookshelf.yml b/pi/compose/audiobookshelf.yml
+new file mode 100644
+index 0000000..737173c
+--- /dev/null
++++ b/pi/compose/audiobookshelf.yml
+@@ -0,0 +1,51 @@
++services:
++  audiobookshelf:
++    image: ghcr.io/advplyr/audiobookshelf@sha256:1eef6716183c52abafe5405e7d6be8390248ecd59c7488c44af871757ac8fc4d
++    platform: linux/arm64
++    container_name: audiobookshelf
++    restart: unless-stopped
++    healthcheck:
++      test: ["CMD", "node", "-e", "try { require('http').get('http://localhost:80/status', r => { process.exit(r.statusCode === 200 ? 0 : 1) }) } catch(e) { process.exit(1) }"]
++      interval: 15s
++      timeout: 10s
++      retries: 5
++      start_period: 60s
++    mem_limit: 512m
++    cpus: "1.0"
++    security_opt:
++      - no-new-privileges:true
++    logging:
++      driver: json-file
++      options:
++        max-size: "10m"
++        max-file: "7"
++    expose:
++      - "80"
++    volumes:
++      - audiobookshelf_config:/config
++      # Cache lebt unter /metadata/cache — wird durch metadata-Volume mit abgedeckt
++      - audiobookshelf_metadata:/metadata
++      - audiobookshelf_testlibrary:/media/testlibrary
++    networks:
++      - audiobookshelf_internal
++
++volumes:
++  audiobookshelf_config:
++    driver_opts:
++      type: none
++      device: /mnt/hardDrive/audiobookshelf/config
++      o: bind
++  audiobookshelf_metadata:
++    driver_opts:
++      type: none
++      device: /mnt/hardDrive/audiobookshelf/metadata
++      o: bind
++  audiobookshelf_testlibrary:
++    driver_opts:
++      type: none
++      device: /mnt/hardDrive/audiobookshelf/testlibrary
++      o: bind
++
++networks:
++  audiobookshelf_internal:
++    internal: true
