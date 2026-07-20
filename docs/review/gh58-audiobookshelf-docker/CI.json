@@ -1,0 +1,52 @@
+{
+  "ci_system": "Gitea Actions",
+  "repository": "Homelab/Architecture",
+  "runner": "rechenknecht (v0.6.1 amd64)",
+  "ci_manifest": "ci-manifest.yaml",
+  "workflow_file": ".gitea/workflows/ci.yaml",
+  "relevant_stages": [
+    {
+      "id": "audiobookshelf-proxy",
+      "tool": "bash",
+      "target": "pi/tests/test_audiobookshelf_proxy.sh",
+      "quality_gate": "exit_zero",
+      "tags": ["audiobookshelf", "compose", "proxy", "tls"],
+      "last_run_status": "success"
+    }
+  ],
+  "last_run": {
+    "id": 603,
+    "head_sha": "43610581f9ae69a9fd2541620fae7c2ada41f6cf",
+    "status": "success",
+    "conclusion": "success",
+    "branch": "fix/gh58-blockers"
+  },
+  "pr_ci_results": [
+    {
+      "pr": 63,
+      "head_sha": "fd0477f1b3ea78b486bbd7460bce3debd742ee67",
+      "status": "success"
+    },
+    {
+      "pr": 65,
+      "head_sha": "c44871bd5ae3a19430e2f5e8f79b537ed8ff8b0e",
+      "status": "success"
+    },
+    {
+      "pr": 70,
+      "head_sha": "3ad3a55bed521b9058a789fdfd0734cc26603926",
+      "status": "success"
+    },
+    {
+      "pr": 72,
+      "head_sha": "43610581f9ae69a9fd2541620fae7c2ada41f6cf",
+      "status": "success"
+    }
+  ],
+  "test_results": {
+    "test_audiobookshelf_proxy_sh": "pass",
+    "all_15_assertions": "green",
+    "secret_scan": "pass",
+    "compose_config": "pass"
+  }
+}
