@@ -1,0 +1,43 @@
+diff --git a/docs/AUDIOBOOKSHELF.md b/docs/AUDIOBOOKSHELF.md
+index 2cef100..7509de1 100644
+--- a/docs/AUDIOBOOKSHELF.md
++++ b/docs/AUDIOBOOKSHELF.md
+@@ -356,25 +356,29 @@ GH-57 (Architektur – dieses Issue)
+  │     │
+  │     └── 11. [Library-Publishing]           ← neues Issue
+  │
+- ├── 12. [Replacement + Upgrade-Workflow]     ← neues Issue
++ ├── 12. [Metadaten-Anreicherung + -Pflege]    ← neues Issue
+  │
+- ├── 13. [Retention + Cleanup]                ← neues Issue
++ ├── 13. [Replacement + Upgrade-Workflow]      ← neues Issue
+  │
+- ├── 14. [Audiobookshelf-Rescan + Integrationstests] ← neues Issue
++ ├── 14. [Retention + Cleanup]                 ← neues Issue
+  │
+- ├── 15. [Fortschrittserhalt bei Medienersatz] ← neues Issue
++ ├── 15. [Audiobookshelf-Rescan + Integrationstests] ← neues Issue
+  │
+- ├── 16. [Monitoring]                         ← neues Issue
++ ├── 16. [Fortschrittserhalt bei Medienersatz]  ← neues Issue
+  │
+- ├── 17. [Backup + Restore]                   ← neues Issue
++ ├── 17. [Scheduling: regelmäßiger Import + Cleanup] ← neues Issue
+  │
+- └── 18. [Desaster-Recovery-Test]             ← neues Issue
++ ├── 18. [Monitoring]                          ← neues Issue
++ │
++ ├── 19. [Backup + Restore]                    ← neues Issue
++ │
++ └── 20. [Desaster-Recovery-Test]              ← neues Issue
+ ```
+ 
+ ### Reihenfolge-Regel
+ 
+ Keine Runtime-Umsetzung beginnt vor Architektur-, Storage- und
+ Berechtigungsfreigabe. Die Deployment-Issues (1–5) setzen die abgeschlossene
+-Architektur (dieses Issue) voraus. Die Pipeline-Issues (6–15) setzen die
++Architektur (dieses Issue) voraus. Die Pipeline-Issues (6–16) setzen die
+ erfolgreiche Bereitstellung des Dienstes und der NFS-Mounts voraus.
+-Betriebs-Issues (16–18) sind die letzten in der Kette.
++Betriebs-Issues (17–20) sind die letzten in der Kette.
