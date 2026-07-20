@@ -6,11 +6,11 @@
   "source_pr": 1,
   "source_pr_url": "https://gitea.hl.maier.wtf/Homelab/ACP/pulls/1",
   "base_commit": "d7933eb9564b55105bd61946f867496d2dc66f53",
-  "pr_head_commit": "8dd0f5c18378c9f37e7bdd3acdaf8fff97387336",
+  "pr_head_commit": "cdc40074389430b81582095b57911ae70b42935b",
   "instruction_file": "SPEC/",
   "instruction_commit": "d7933eb9564b55105bd61946f867496d2dc66f53",
   "instruction_reloaded": true,
-  "changes_diff_sha256": "65bf17717eaec92af43059ebbebfc92c5842adbffebf5f13d2ed852b923edb68",
+  "changes_diff_sha256": "f09af0bee4e7248eff0b0425afb33e6e4dd5f9791bc0ba1e60f7b6fdf6df849c",
   "changed_files": [
     "CHANGELOG.md",
     "DECISIONS/README.md",
@@ -19,7 +19,7 @@
     "FINDINGS/TEMPLATE.md",
     "README.md"
   ],
-  "ci_run_ids": [619],
+  "ci_run_ids": [629, 628],
   "ci_conclusion": "success",
   "runtime_mutated": false,
   "deployment_mutated": false,

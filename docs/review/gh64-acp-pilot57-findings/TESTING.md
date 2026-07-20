@@ -2,8 +2,8 @@
 
 ## CI Results
 
-Gitea Actions run #619 (pull_request event) completed successfully on
-head commit `8dd0f5c18378c9f37e7bdd3acdaf8fff97387336`.
+Gitea Actions runs #629 (push) and #628 (pull_request) completed
+successfully on head commit `cdc40074389430b81582095b57911ae70b42935b`.
 
 CI steps executed:
 1. `version-consistency` — VERSION file exists with valid semver format
