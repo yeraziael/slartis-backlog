@@ -1,0 +1,29 @@
+{
+  "schema": "slarti.review-package.v1",
+  "work_item": "GH-64",
+  "review_target": "pr",
+  "source_repository": "Homelab/ACP",
+  "source_pr": 1,
+  "source_pr_url": "https://gitea.hl.maier.wtf/Homelab/ACP/pulls/1",
+  "base_commit": "d7933eb9564b55105bd61946f867496d2dc66f53",
+  "pr_head_commit": "8dd0f5c18378c9f37e7bdd3acdaf8fff97387336",
+  "instruction_file": "SPEC/",
+  "instruction_commit": "d7933eb9564b55105bd61946f867496d2dc66f53",
+  "instruction_reloaded": true,
+  "changes_diff_sha256": "65bf17717eaec92af43059ebbebfc92c5842adbffebf5f13d2ed852b923edb68",
+  "changed_files": [
+    "CHANGELOG.md",
+    "DECISIONS/README.md",
+    "FINDINGS/PILOT-57.md",
+    "FINDINGS/README.md",
+    "FINDINGS/TEMPLATE.md",
+    "README.md"
+  ],
+  "ci_run_ids": [619],
+  "ci_conclusion": "success",
+  "runtime_mutated": false,
+  "deployment_mutated": false,
+  "dns_mutated": false,
+  "secrets_mutated": false,
+  "external_systems_mutated": false
+}

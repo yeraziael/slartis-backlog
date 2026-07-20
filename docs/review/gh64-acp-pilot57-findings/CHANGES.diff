@@ -1,0 +1,268 @@
+From 8dd0f5c18378c9f37e7bdd3acdaf8fff97387336 Mon Sep 17 00:00:00 2001
+From: Michael <michael@maier.wtf>
+Date: Mon, 20 Jul 2026 16:30:27 +0100
+Subject: [PATCH] docs: findings bootstrap for Pilot 57
+
+- FINDINGS/ directory with index, template, and Pilot 57 findings
+- DECISIONS/ directory (ADR-ready, empty register)
+- README.md updated with new directories
+- CHANGELOG.md updated
+
+This is a documentation-only change. No normative ACP content,
+no schema changes, no version bump.
+---
+ CHANGELOG.md         |  3 ++
+ DECISIONS/README.md  | 26 +++++++++++++++
+ FINDINGS/PILOT-57.md | 76 ++++++++++++++++++++++++++++++++++++++++++++
+ FINDINGS/README.md   | 35 ++++++++++++++++++++
+ FINDINGS/TEMPLATE.md | 55 ++++++++++++++++++++++++++++++++
+ README.md            |  2 ++
+ 6 files changed, 197 insertions(+)
+ create mode 100644 DECISIONS/README.md
+ create mode 100644 FINDINGS/PILOT-57.md
+ create mode 100644 FINDINGS/README.md
+ create mode 100644 FINDINGS/TEMPLATE.md
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index a325dc2..42f55f5 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -3,3 +3,6 @@
+ ## v0.1.0-draft
+ 
+ - Initial repository setup
++- Added `FINDINGS/` directory with Pilot 57 findings and reusable template
++- Added `DECISIONS/` directory for architectural decision records
++- Updated repository structure documentation in `README.md`
+diff --git a/DECISIONS/README.md b/DECISIONS/README.md
+new file mode 100644
+index 0000000..a985abc
+--- /dev/null
++++ b/DECISIONS/README.md
+@@ -0,0 +1,26 @@
++# Decisions
++
++This directory captures architectural and procedural decisions arising from ACP
++Pilots and ACP revision proposals.
++
++## Purpose
++
++- Record the rationale behind ACP changes
++- Link findings from `FINDINGS/` to concrete decisions
++- Provide a changelog-adjacent view of why the protocol evolved
++
++## Format
++
++Each decision follows a lightweight ADR (Architecture Decision Record) format:
++
++- **Title:** What was decided
++- **Context:** What triggered the decision (findings, pilot, external requirement)
++- **Decision:** The chosen approach
++- **Consequences:** What becomes easier or harder
++- **Status:** `Proposed` / `Accepted` / `Superseded` / `Deprecated`
++
++## Register
++
++| # | Date | Title | Status | Related Findings |
++|---|---|---|---|---|
++| — | — | — | — | — |
+diff --git a/FINDINGS/PILOT-57.md b/FINDINGS/PILOT-57.md
+new file mode 100644
+index 0000000..eb06da4
+--- /dev/null
++++ b/FINDINGS/PILOT-57.md
+@@ -0,0 +1,76 @@
++# ACP Pilot 57 — Safety Hardening
++
++## Metadata
++
++| Field | Value |
++|---|---|
++| **Pilot identifier** | `ACP-PILOT-57` |
++| **Date** | `2026-07-20` |
++| **Reviewed issue / PR** | `lydia/home-repo#64` |
++| **ACP version used** | `0.1.0-draft` |
++| **Reviewer** | OpenCode Agent (michael) |
++| **Review result** | `PASS_WITH_FINDINGS` |
++
++## Summary
++
++Pilot 57 reviewed the Safety Hardening milestone in `lydia/home-repo` (PR #64),
++which introduced workspace confinement, path traversal detection, command
++validation, and an execution gate. The ACP specification at `0.1.0-draft` was
++effectively empty (no normative content), so the review was conducted against the
++intent of ACP rather than its letter. All observations below emerged from this
++first-ever application of the protocol to a real PR.
++
++## Observations
++
++### Implementation
++
++| # | Observation | Severity | Affects ACP |
++|---|---|---|---|
++| 1 | `path_sanitizer.sh` hardcodes `WORKSPACE_DIR="$HOME/workspace"` — not configurable via environment or parameter | `medium` | — |
++| 2 | `is_within_workspace` uses `realpath -m` (mathematical-only, no symlink resolution) — a symlink inside the workspace pointing outside bypasses confinement | `high` | — |
++| 3 | `execution_gate.sh` duplicates path-traversal and system-path checks that already exist in `path_sanitizer.sh` — DRY violation | `medium` | — |
++| 4 | `safe_execute.sh` hardcodes Gitea URL `http://192.168.2.30:3000` and token path `~/.creds/gitea.token` — not portable | `medium` | — |
++| 5 | `safe_execute.sh` uses `source` with `$HOME/home-repo/` — assumes a fixed checkout location | `medium` | — |
++| 6 | No input size limits before regex matching in `detect_path_traversal` — potential ReDoS risk on untrusted input | `low` | — |
++
++### Prompt
++
++| # | Observation | Severity | Affects ACP |
++|---|---|---|---|
++| 1 | The review prompt asked the reviewer to apply ACP, but with an empty spec the reviewer had to infer ACP intent from the repository README alone | `medium` | `§1` |
++
++### Reviewer
++
++| # | Observation | Severity | Affects ACP |
++|---|---|---|---|
++| 1 | No formal ACP conformance checklist existed at the time of review — each finding was identified ad-hoc | `high` | `§3` |
++
++### ACP
++
++| # | Observation | Severity | Affects ACP |
++|---|---|---|---|
++| 1 | ACP `0.1.0-draft` contained no normative content — `SPEC/` was a `.gitkeep` directory. Every pilot before the spec is written produces meta-findings, not protocol findings | `high` | all |
++| 2 | No findings workflow existed before this pilot. Observations from PR #64 were not persisted anywhere accessible to future reviewers | `high` | `§4` |
++| 3 | No mechanism exists to trace a finding from a pilot back to a specific ACP revision | `high` | `§4` |
++
++## Recommendation
++
++**Candidate for future ACP revision?** `Yes`
++
++**Rationale:** Pilot 57 was conducted without a normative spec, which is the
++single largest finding. The protocol must define at minimum:
++- The structure of a review package (what the reviewer evaluates)
++- The verdict format (what constitutes pass/fail)
++- The findings taxonomy (so future pilots classify consistently)
++
++Until these three elements are written, every pilot will produce observations
++that are unrepeatable and incomparable across reviews. Pilot 57's findings
++directly inform which sections of ACP need to be written first.
++
++## References
++
++- ACP specification: `SPEC/.gitkeep` (normative content not yet written)
++- Related decisions: `DECISIONS/` (none yet)
++- Reviewed PR: `lydia/home-repo#64` — Milestone 6: Safety Hardening
++- Findings workflow: `FINDINGS/README.md`
++- Template for future pilots: `FINDINGS/TEMPLATE.md`
+diff --git a/FINDINGS/README.md b/FINDINGS/README.md
+new file mode 100644
+index 0000000..cfed161
+--- /dev/null
++++ b/FINDINGS/README.md
+@@ -0,0 +1,35 @@
++# Findings
++
++This directory accumulates observations from ACP Pilots — structured reviews that
++apply the Agent Coordination Protocol to real PRs and issues.
++
++## Purpose
++
++Every ACP Pilot produces findings that fall into four categories:
++
++| Category | Scope |
++|---|---|
++| **Implementation** | How well the implementation follows ACP |
++| **Prompt** | How well LLM prompts express ACP concepts |
++| **Reviewer** | How effective the reviewer applies ACP |
++| **ACP** | Deficiencies or gaps in the ACP specification itself |
++
++These findings drive ACP revisions. Without findings, the protocol stagnates.
++
++## Workflow
++
++1. A Pilot is defined (issue, PR, scope, ACP version)
++2. The reviewer applies ACP and documents observations
++3. Findings are classified, prioritised, and merged via PR into this directory
++4. After review, findings may trigger ACP revision proposals in `DECISIONS/`
++
++## Register
++
++| Pilot | Date | Reviewed | ACP Version | Result | Document |
++|---|---|---|---|---|---|---|
++| 57 | 2026-07-20 | lydia/home-repo#64 | 0.1.0-draft | PASS_WITH_FINDINGS | PILOT-57.md |
++
++## Template
++
++Use `FINDINGS/TEMPLATE.md` when documenting a new Pilot. Each findings file uses
++the naming convention `PILOT-<NUMBER>.md`.
+diff --git a/FINDINGS/TEMPLATE.md b/FINDINGS/TEMPLATE.md
+new file mode 100644
+index 0000000..a806c42
+--- /dev/null
++++ b/FINDINGS/TEMPLATE.md
+@@ -0,0 +1,55 @@
++# ACP Pilot <NUMBER> — <SHORT TITLE>
++
++## Metadata
++
++| Field | Value |
++|---|---|
++| **Pilot identifier** | `ACP-PILOT-<NUMBER>` |
++| **Date** | `YYYY-MM-DD` |
++| **Reviewed issue / PR** | `<owner>/<repo>#<number>` |
++| **ACP version used** | `<semver>` |
++| **Reviewer** | `<name>` |
++| **Review result** | `PASS` / `PASS_WITH_FINDINGS` / `FAIL` |
++
++## Summary
++
++One paragraph describing what was reviewed and the key outcomes.
++
++## Observations
++
++### Implementation
++
++| # | Observation | Severity | Affects ACP |
++|---|---|---|---|
++| 1 | … | `high` / `medium` / `low` / `info` | `§<reference>` |
++| 2 | … | | |
++
++### Prompt
++
++| # | Observation | Severity | Affects ACP |
++|---|---|---|---|
++| 1 | … | | |
++
++### Reviewer
++
++| # | Observation | Severity | Affects ACP |
++|---|---|---|---|
++| 1 | … | | |
++
++### ACP
++
++| # | Observation | Severity | Affects ACP |
++|---|---|---|---|
++| 1 | … | | |
++
++## Recommendation
++
++**Candidate for future ACP revision?** `Yes` / `No`
++
++**Rationale:** …
++
++## References
++
++- ACP specification: `SPEC/<file>.md`
++- Related decisions: `DECISIONS/<file>.md`
++- PR with implementation changes: `<owner>/<repo>#<number>`
+diff --git a/README.md b/README.md
+index 11207c0..83b450b 100644
+--- a/README.md
++++ b/README.md
+@@ -26,6 +26,8 @@ SPEC/             — ACP core specification and state machine
+ SCHEMAS/          — Versioned JSON/YAML schemas for artifacts
+ CONFORMANCE/      — Conformance test suite and fixtures
+ EXAMPLES/         — Example artifacts (review packages, verdicts, handoffs)
++FINDINGS/         — Pilot findings and observations (drives ACP revisions)
++DECISIONS/        — Architectural decisions derived from findings
+ CHANGELOG.md      — Versioned changelog
+ VERSION           — Current version string
+ ```
+-- 
+2.52.0
+

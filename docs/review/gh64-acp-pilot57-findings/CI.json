@@ -1,0 +1,19 @@
+{
+  "schema": "slarti.ci-evidence.v1",
+  "source_repository": "Homelab/ACP",
+  "head_commit": "8dd0f5c18378c9f37e7bdd3acdaf8fff97387336",
+  "runs": [
+    {
+      "id": 619,
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 618,
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ]
+}
