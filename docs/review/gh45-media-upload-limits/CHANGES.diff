@@ -1,30 +1,32 @@
-# CHANGES.diff — GH-45 Media Upload Limits (revised per review)
+# CHANGES.diff — GH-45 Media Upload Limits (revised per review, two-source-PR binding)
 
 This is the review package for the media-upload limit fixes that completed
-the homogeneous three-bridge stand (GH-45). It is bound to exact
+the homogeneous three-bridge stand (GH-45). It is now bound to two exact
 `Homelab/Architecture` source PRs.
 
 ## Bound source PRs (exact)
 
-### Synapse max_upload_size (PR #52, merged)
+### Synapse max_upload_size — PR #52 (merged)
 - Repository: Homelab/Architecture (Gitea)
-- PR: #52  (head fix/gh45-synapse-max-upload-size -> main)
+- PR: #52 (fix/gh45-synapse-max-upload-size -> main)
 - Base SHA:  77d69f7f051f09d330b875fcf17263fc904f7443
 - Head SHA:  4db6cec13229021cc099251cd6ea872b524a1ed9
+- Merged commit: 4d0c7a2 (main)
 - Diff SHA-256: fc19abc8516b3b63c6f0b2590fec4cd737ad4a6903295cf14b35b9af5628cf0d
-- Changed file (repository-relative): pi/synapse/synapse.yaml.example
+- Changed file: pi/synapse/synapse.yaml.example
 
-### Matrix frontproxy body-size override (PR #55, merged)
-- PR: #55  (head fix/gh45-frontproxy-max-upload -> main)
-- Versioned file: pi/compose/vhost.d/matrix.hl.maier.wtf_location
-  (`client_max_body_size 100m;`)
-- frontproxy image pinned to immutable digest
-  `jwilder/nginx-proxy@sha256:75387adbd9f18e76618d9502326c5bdafebbe0c8d00dcef486bed0d8582ff49b`
-  (replaces `:latest` for reproducible deploys)
-- Contract tests added: test_synapse_max_upload_size.sh,
-  test_frontproxy_matrix_body_size.sh
+### Matrix frontproxy body-size override — PR #55 (merged)
+- Repository: Homelab/Architecture (Gitea)
+- PR: #55 (fix/gh45-frontproxy-max-upload -> main)
+- Base SHA:  b208e7e5811f887ffc01d9b9ed7e73a8b42bfbd0
+- Head SHA:  3126dce842fc03b194490dfd97963191fa8ef019
+- Merged commit: 0143129144abd3b60593ef759cc164c2d096baad
+- Diff SHA-256: 1759663132ac1981c46d7199497be0334e43453f3149886ad34cc36a29816daa
+- Changed files (repository-relative):
+  - pi/compose/frontproxy.yml
+  - pi/compose/vhost.d/matrix.hl.maier.wtf_location
 
-## Exact diff — Synapse (full)
+## Exact diff — Synapse (full, via PR #52)
 
 ```diff
 diff --git a/pi/synapse/synapse.yaml.example b/pi/synapse/synapse.yaml.example
@@ -41,13 +43,46 @@ index 887c3ec..99ce034 100644
    - "turn:turn.hl.maier.wtf:3478?transport=udp"
 ```
 
-## Exact diff — Matrix frontproxy (versioned, PR #55)
+## Exact diff — Matrix frontproxy (full, via PR #55)
 
-The `client_max_body_size 100m;` override for `matrix.hl.maier.wtf` is now a
-managed vhost file (`pi/compose/vhost.d/matrix.hl.maier.wtf_location`) mounted
-into the frontproxy at `/etc/nginx/vhost.d`, so a host rebuild from this repo
-reproduces the working state (fixes Element web-app upload that returned
-HTTP 413).
+```diff
+diff --git a/pi/compose/frontproxy.yml b/pi/compose/frontproxy.yml
+index 7420ed1..fd2a2d5 100644
+--- a/pi/compose/frontproxy.yml
++++ b/pi/compose/frontproxy.yml
+@@ -1,6 +1,6 @@
+ services:
+   frontproxy:
+-    image: jwilder/nginx-proxy:latest
++    image: jwilder/nginx-proxy:latest@sha256:75387adbd9f18e76618d9502326c5bdafebbe0c8d00dcef486bed0d8582ff49b
+     container_name: frontproxy
+     restart: always
+     ports:
+diff --git a/pi/compose/vhost.d/matrix.hl.maier.wtf_location b/pi/compose/vhost.d/matrix.hl.maier.wtf_location
+new file mode 100644
+index 0000000..fc1fd80
+--- /dev/null
++++ b/pi/compose/vhost.d/matrix.hl.maier.wtf_location
+@@ -0,0 +1,14 @@
++client_max_body_size 100m;
++
++location = /.well-known/matrix/server {
++    root /usr/share/nginx/html;
++    try_files /matrix-server.json =404;
++    add_header Content-Type application/json;
++    add_header Access-Control-Allow-Origin *;
++}
++location = /.well-known/matrix/client {
++    root /usr/share/nginx/html;
++    try_files /matrix-client.json =404;
++    add_header Content-Type application/json;
++    add_header Access-Control-Allow-Origin *;
++}
+```
+
+(PR #55 also adds contract tests test_synapse_max_upload_size.sh and
+test_frontproxy_matrix_body_size.sh, and extends docs/matrix/proxy.md; those
+are test/doc companions, not part of the upload-limit diff above.)
 
 ## Runtime-only companions (outside Git per BRIDGE-OPERATIONS.md)
 
