@@ -1,0 +1,377 @@
+diff --git a/docs/AUDIOBOOKSHELF.md b/docs/AUDIOBOOKSHELF.md
+index ae93378..2cef100 100644
+--- a/docs/AUDIOBOOKSHELF.md
++++ b/docs/AUDIOBOOKSHELF.md
+@@ -1,4 +1,4 @@
+-# Audiobookshelf — Zielarchitektur
++# Audiobookshelf — Zielarchitektur (konsolidiert)
+ 
+ ## 1. Service Boundary und Docker-Platzierung
+ 
+@@ -20,7 +20,8 @@ via `docker-compose.yml` im Architecture-Repository.
+ |-------------|-----|--------|
+ | Docker-Netzwerk `frontproxy` | Laufzeit | existiert |
+ | Keycloak OIDC | Laufzeit | wird in GH-60 eingerichtet |
+-| NAS (NFS) | Speicher | wird in separatem Child-Issue eingerichtet |
++| NFS-Mount `audiobooks` | Speicher | wird in separatem Child-Issue eingerichtet |
++| NFS-Mount `podcasts` | Speicher | wird in separatem Child-Issue eingerichtet |
+ 
+ ---
+ 
+@@ -60,12 +61,15 @@ networks:
+ 
+ ### Datenpfade (persistent, auf Pi5-HDD)
+ 
+-| Container | Host (Pi5) | Zweck |
+-|-----------|-----------|-------|
+-| `/config` | `/mnt/hardDrive/docker/audiobookshelf/config` | Konfiguration |
+-| `/metadata` | `/mnt/hardDrive/docker/audiobookshelf/metadata` | Metadaten-Cache |
+-| `/audiobooks` | `/mnt/ro/nas_audiobooks` (NFS, siehe Abschnitt 7) | Hörbuch-Quelle |
+-| `/podcasts` | `/mnt/ro/nas_podcasts` (NFS, siehe Abschnitt 7) | Podcast-Quelle |
++| Container | Host (Pi5) | Zweck | Zugriff |
++|-----------|-----------|-------|---------|
++| `/config` | `/mnt/hardDrive/docker/audiobookshelf/config` | Konfiguration | read-write |
++| `/metadata` | `/mnt/hardDrive/docker/audiobookshelf/metadata` | Metadaten-Cache | read-write |
++| `/audiobooks` | `/mnt/ro/nas_audiobooks` (NFS, siehe Abschnitt 7) | Hörbuch-Quelle | **read-only** |
++| `/podcasts` | `/mnt/ro/nas_podcasts` (NFS, siehe Abschnitt 7) | Podcast-Quelle | **read-only** |
++
++Audiobookshelf schreibt ausschließlich in seine eigenen lokalen Volumes
++(config, metadata). Die Medienbibliotheken sind read-only gemountet.
+ 
+ ---
+ 
+@@ -93,8 +97,7 @@ networks:
+ - `frontproxy` (external): Alle HTTP-basierten Services teilen sich dieses
+   Bridge-Netzwerk. Der nginx-proxy Container routet eingehende Requests per
+   `VIRTUAL_HOST`-Label an den Zielcontainer.
+-- `internal` (bridged): Audiobookshelf-eigenes Netz für Container-internen
+-  Traffic (derzeit nur ein Container, aber vorbereitet für künftige Ergänzungen).
++- `internal` (bridged): Audiobookshelf-eigenes Netz.
+ 
+ Virtual Host: `audiobookshelf.hl.maier.wtf`
+ 
+@@ -105,12 +108,6 @@ den Reverse-Proxy erreichbar.
+ 
+ ## 4. Authentifizierungsgrenze (Keycloak)
+ 
+-```
+-User ──► Frontproxy ──► Keycloak (OIDC)
+-                │
+-                └── Audiobookshelf (客户端)
+-```
+-
+ - Audiobookshelf unterstützt OIDC nativ.
+ - Der Keycloak-Realm ist der bestehende Homelab-Realm.
+ - Der OIDC-Client wird in GH-60 eingerichtet.
+@@ -160,21 +157,9 @@ Referenz: GH-55 (Keycloak Authorization: Rollen und Claims authoritative)
+ 
+ ---
+ 
+-## 7. Logische NAS-Speichergrenze
++## 7. Speichergrenze (NAS)
+ 
+-```
+-NAS (192.168.2.141)                    Pi5
+-┌──────────────────────┐        ┌────────────────────────────┐
+-│  /share/MD0_DATA/    │  NFS   │  /mnt/ro/nas_audiobooks   │
+-│  ├── audiobooks/     │◄──────►│  ├── (Docker bind)        │
+-│  └── podcasts/       │        │  /mnt/ro/nas_podcasts      │
+-│                      │◄──────►│  └── (Docker bind)        │
+-│  Audiobookshelf      │        │                             │
+-│  (Daten, kein Dienst)│        │  Docker Volumes:            │
+-│                      │        │  /audiobooks → ro bind     │
+-│                      │        │  /podcasts   → ro bind     │
+-└──────────────────────┘        └────────────────────────────┘
+-```
++### Bestätigte NAS-Konfiguration
+ 
+ | Parameter | Wert |
+ |-----------|------|
+@@ -182,14 +167,47 @@ NAS (192.168.2.141)                    Pi5
+ | NAS-Shares | `audiobooks` + `podcasts` (bestehende Exporte) |
+ | Protokoll | NFSv3 (`vers=3`) |
+ | Mount-Optionen | `noauto,tcp,_netdev,vers=3,timeo=30,retry=3,rsize=8192,wsize=8192` |
+-| Mount-Pfad (ro) | `/mnt/ro/nas_audiobooks`, `/mnt/ro/nas_podcasts` |
+-| Mount-Pfad (rw) | `/mnt/rw/nas_audiobooks`, `/mnt/rw/nas_podcasts` (für Import-Pipeline) |
+-| Initialer Zugriff | read-only (Docker bind mount von `/mnt/ro/nas_*`) |
+-| UID-Mapping | NAS-seitig — keine client-seitigen `uid=`/`gid=` Optionen |
+ 
+-Die Mount-Konvention folgt `docs/STORAGE.md`. Der Pi5 mountet die
+-`audiobooks`- und `podcasts`-Shares. Beide Exporte existieren bereits auf der
+-NAS und müssen nur auf dem Pi5 eingebunden werden (separates Child-Issue).
++### Host-Mounts (Pi5)
++
++| NAS-Share | Mount-Pfad (ro) | Mount-Pfad (rw) | Dienst |
++|-----------|----------------|-----------------|--------|
++| `audiobooks` | `/mnt/ro/nas_audiobooks` | `/mnt/rw/nas_audiobooks` | audiobookshelf (ro), import (rw) |
++| `podcasts` | `/mnt/ro/nas_podcasts` | `/mnt/rw/nas_podcasts` | audiobookshelf (ro), import (rw) |
++
++### Zugriffsmodell
++
++```
++                ┌──────────────────────┐
++                │   Import/Library-Mgmt │  ← Lydia / versioniertes Skript
++                │   (rw auf NAS-Shares) │
++                └──────┬───────────────┘
++                       │ schreibt normalisierte Medien
++                       ▼
++    ┌───────────────────────────────────┐
++    │  NFS rw-Mount: /mnt/rw/nas_*     │
++    │  → NAS-Share: audiobooks/podcasts │
++    └───────────────────────────────────┘
++                       │
++                       ▼  (selbe Platte, andere Zone / ro-Mount)
++    ┌───────────────────────────────────┐
++    │  NFS ro-Mount: /mnt/ro/nas_*     │
++    │  → Docker-Bind in Container       │
++    │  → Audiobookshelf (nur lesend)    │
++    └───────────────────────────────────┘
++```
++
++- Audiobookshelf hat auf `audiobooks` und `podcasts` ausschließlich
++  **read-only**-Zugriff.
++- Schreibrechte auf die Medienbibliotheken gehören ausschließlich einer
++  separaten, versionierten Import- und Library-Management-Komponente.
++- Diese Komponente wird durch Lydia ausgeführt, ihre Implementierung, Policies
++  und Skripte liegen versioniert im Architecture- bzw. Runtime-Repository.
++- `ytdl-sub` ist ein reiner Downloader, kein allgemeiner Library-Manager. Es
++  schreibt in eine kontrollierte Drop-Zone, nicht direkt in die Hörbuch- oder
++  Podcast-Bibliothek.
++- Podcasts durchlaufen denselben Prozess: Drop-Zone → Prüfung → Publikation in
++  die lesbare Bibliothek.
+ 
+ **Wichtig:** Ohne `rsize=8192,wsize=8192` schlägt NFS auf dem Pi5 mit
+ `Cannot allocate memory` fehl. Ein Pi5-Neustart ist nötig, um einen
+@@ -198,94 +216,165 @@ zurückzusetzen.
+ 
+ ---
+ 
+-## 8. Bibliotheks-Struktur (Import-Pipeline)
++## 8. Medien-Lifecycle (kein FINO-Verhalten)
++
++Die Import-Pipeline arbeitet nach einem definierten Lifecycle. Das Prinzip
++"First In, Never Out" (FINO) ist explizit verboten.
++
++### Lifecycle-Zustände
++
++```
++INGEST
++   │
++   ▼
++IDENTIFY ──→ unklar ──→ QUARANTINE
++   │                        │
++   ▼                        ▼
++VALIDATE ──→ defekt ──→ REJECT
++   │
++   ├──→ Dublette? ──→ REPLACE (siehe Abschnitt 9)
++   │
++   └──→ Neu/OK ──→ PUBLISH
++                       │
++                       ▼
++              Audiobookshelf (ro)
++                       │
++                       ▼ (bei Ersatz)
++              REPLACE → ARCHIVE_TEMPORARILY
++                             │
++                             ▼ (nach Retention)
++                      DELETE_AFTER_RETENTION
++```
++
++| Zustand | Beschreibung | Verantwortlich |
++|---------|-------------|----------------|
++| `INGEST` | Datei landet in der Drop-Zone (Incoming) | Lydia / Upload |
++| `IDENTIFY` | Automatische Erkennung: Titel, Autor, Serie, Typ | Import-Komponente |
++| `VALIDATE` | Prüfung auf Vollständigkeit, Korruptheit, Metadaten | Import-Komponente |
++| `QUARANTINE` | Unsichere Zuordnung oder Qualität → manuelle Prüfung | Operator |
++| `REJECT` | Defekte oder nicht zuordenbare Dateien → gelöscht | Automatisch nach Freigabe |
++| `PUBLISH` | Normalisiertes Medium in die stabile Bibliothek übernommen | Import-Komponente |
++| `REPLACE` | Gezielter Austausch einer bestehenden Ausgabe (Abschnitt 9) | Import-Komponente |
++| `ARCHIVE_TEMPORARILY` | Alte Fassung eines Replacements, vor Retention-Löschung | Import-Komponente |
++| `DELETE_AFTER_RETENTION` | Endgültige Löschung nach Ablauf der Aufbewahrungsfrist | Scheduled (Eddie) |
++
++### Prüfkriterien bei VALIDATE
++
++- Vollständigkeit (alle Dateien eines Titels vorhanden)
++- Laufzeit (plausibel für das Medium)
++- Gekürzt oder ungekürzt (unabridged)
++- Kapitelstruktur vorhanden und konsistent
++- Codec und Container-Format
++- Effektive Audioqualität (nicht nur Bitrate — auch Dynamik, Artefakte)
++- Datei-Integrität (keine Korruption)
++- Metadaten (mindestens: Titel, Autor, Serie)
++- Sprecher und Ausgabe (bei mehreren Versionen)
++
++### Dubletten-Regeln
++
++- Dubletten werden nicht dauerhaft unkontrolliert gesammelt.
++- Eine bessere Fassung kann eine bestehende Fassung kontrolliert ersetzen.
++- "Besser" wird anhand mehrerer Kriterien entschieden (nicht nur Bitrate):
++  Vollständigkeit, Laufzeit, ungekürzt, Kapitelstruktur, Codec, Audioqualität.
++- Unsichere Qualitätsentscheidungen gehen in Quarantäne.
++- Kein automatisches destruktives Ersetzen bei uneindeutiger Zuordnung.
++
++---
++
++## 9. Replacement- und Cleanup-Workflow
+ 
+ ```
+-Incoming (Drop-Zone)
+-    │
+-    ▼
+-Quarantine / Review
+-    │
+-    ├── akzeptiert ──► Normalisierte Bibliothek
+-    │                       │
+-    │                       └── Audiobookshelf-sichtbar
+-    │
+-    └── abgelehnt / unsicher ──► Quarantine (manuelle Prüfung)
++1. Neue Version in temporäre Arbeitszone vorbereiten
++2. Technische + inhaltliche Prüfung (IDENTIFY + VALIDATE)
++3. Vergleich mit bestehender Ausgabe in der Bibliothek
++4. Bestehende Version in REPLACEMENT_ARCHIV verschieben
++5. Neue Version atomar in stabilen Bibliothekspfad übernehmen
++6. Audiobookshelf-Rescan auslösen
++7. Erkennung, Abspielbarkeit und Metadaten prüfen
++8. Benutzerfortschritt prüfen und dokumentieren
++9. Alte Fassung erst nach Retention-Frist löschen
+ ```
+ 
+-| Zone | Beschreibung | Zugriff | Automatisierung |
+-|------|-------------|---------|-----------------|
+-| **Incoming** | Rohablage für neue Dateien (Upload, manuell) | Lydia / Operator | Keine Mutation |
+-| **Quarantine** | Unklare oder nicht automatisch zuordenbare Dateien | Operator | Manuelle Prüfung |
+-| **Normalisiert** | Bereinigte, idempotent erfasste Medien | Audiobookshelf | Automatisiert |
+-| **Audiobookshelf-sichtbar** | Vom Service indexierte Verzeichnisse | Audiobookshelf (read) | Voll automatisiert |
++### Retention-Frist
+ 
+-Wichtige Regeln:
++Die Retention-Frist für alte Fassungen ist ein noch zu entscheidender
++Parameter und muss im Child-Issue "Retention und Cleanup" als
++Pflichtentscheidung definiert werden. Vorschlag: 90 Tage nach erfolgreichem
++Replacement.
+ 
+-- **Keine destruktiven Änderungen an der Quelle** ohne separate Autorisierung.
+-- **Idempotenz:** Wiederholtes Einlesen derselben Datei erzeugt keine Duplikate.
+-- **Unsichere Treffer** landen in der Quarantine, nicht automatisch in der
+-  Bibliothek.
+-- Die Import-Pipeline ist ein eigenes Child-Issue (siehe Abschnitt 10).
++### Besonderheiten bei Audiobookshelf
+ 
+----
++Ein Wechsel des Dateiformats (z.B. mehrere MP3-Dateien → eine einzelne M4B)
++kann die Erkennung und den Hörfortschritt in Audiobookshelf beeinflussen:
+ 
+-## 9. Verantwortungsgrenzen
++- `M4B` mit eingebetteten Kapiteln wird von Audiobookshelf anders behandelt
++  als ein MP3-Ordner.
++- Der Hörfortschritt kann bei Formatwechsel verloren gehen.
++- **Jeder Replace-Vorgang muss mit einem realen Benutzerkonto getestet werden,
++  bevor er produktiv ausgerollt wird.**
+ 
+-| Rolle | Aufgaben in dieser Architektur |
+-|-------|-------------------------------|
+-| **Operator** (Michael) | Triggt GH-57, erteilt Freigaben, führt Blackbox-Tests durch |
+-| **Planer** (ChatGPT) | Definiert Work Order, prüft Architektur |
+-| **Implementierer** (Slarti) | Erstellt Architecture PR, bereitet Child-Issues vor |
+-| **Reviewer** (ChatGPT) | Prüft PR SHA-gebunden anhand Review Package |
+-| **Eddie** (Merge-Gate) | Validiert ACP-Protokoll, CI-Status und Verdict vor Merge |
+-| **Lydia** (Runtime) | Führt freigegebene Runtime-Schritte aus (separate Issues) |
++---
+ 
+-Keine Rolle darf Aufgaben einer anderen Rolle übernehmen, solange das ACP
+-dies nicht explizit vorsieht.
++## 10. Rollen und Berechtigungen
++
++| Rolle | Aufgaben |
++|-------|----------|
++| **Operator** (Michael) | Entscheidet über Policies, destructive Freigaben und Sonderfälle |
++| **ChatGPT** (Planer/Reviewer) | Architektur, Review und Freigabeempfehlung |
++| **Slarti** (Implementierer) | Implementierung, PRs, technische Verifikation |
++| **Lydia** (Runtime) | Kontrollierte Runtime-Ausführung der versionierten Import- und Cleanup-Prozesse |
++| **Eddie** (Orchestrator) | Scheduling und Orchestrierung nach Freigabe |
++| **Audiobookshelf** (Service) | Reiner Consumer der Medienbibliotheken – kein Schreibzugriff auf Medien |
++| **ytdl-sub** (Tool) | Downloader, kein allgemeiner Library-Manager |
+ 
+ ---
+ 
+-## 10. Child-Issue-Abhängigkeitsgraph
++## 11. Child-Issue-Abhängigkeitsgraph
+ 
+ ```
+-GH-57 (Architektur)
++GH-57 (Architektur – dieses Issue)
++ │
++ ├── 1. [Audiobookshelf-Deployment]          ← GH-58 (angelegt)
++ │     │
++ │     ├── 2. [NFS-Mounts einrichten]        ← neues Issue
++ │     │
++ │     ├── 3. [Audiobookshelf-SSO]           ← GH-60 (angelegt)
++ │     │
++ │     ├── 4. [Rollen + Autorisierung]       ← GH-55 (angelegt)
++ │     │
++ │     └── 5. [Break-Glass-Zugang]           ← Teil von GH-60
++ │
++ ├── 6.  [Hörbuch-Drop-Zone]                 ← neues Issue
++ │
++ ├── 7.  [Podcast-Drop-Zone]                 ← neues Issue
+  │
+- ├──► GH-58 (Docker-Service bereitstellen)          [Deployment]
+- │      │
+- │      ├──► GH-59 (Reverse Proxy + TLS)             [Netzwerk]
+- │      │
+- │      └──► GH-60 (Keycloak OIDC + SSO)             [Identität]
+- │             │
+- │             └──► GH-55 (Authorization: Rollen)     [Autorisierung]
++ ├── 8.  [ytdl-sub-Integration]              ← neues Issue
+  │
+- ├──► [NFS-Mount + NAS-Export konfigurieren]         [Speicher]
++ ├── 9.  [Import + Normalisierungspipeline]  ← neues Issue
++ │     │
++ │     ├── 10. [Quarantine + Operator-Review] ← neues Issue
++ │     │
++ │     └── 11. [Library-Publishing]           ← neues Issue
+  │
+- ├──► [Import-Pipeline: Einlesen, Normalisieren]     [Import]
++ ├── 12. [Replacement + Upgrade-Workflow]     ← neues Issue
+  │
+- ├──► [Metadaten-Anreicherung + Abgleich]            [Metadaten]
++ ├── 13. [Retention + Cleanup]                ← neues Issue
+  │
+- ├──► [Scheduling: Regelmäßiger Import-Check]        [Betrieb]
++ ├── 14. [Audiobookshelf-Rescan + Integrationstests] ← neues Issue
+  │
+- ├──► [Monitoring + Healthcheck]                     [Betrieb]
++ ├── 15. [Fortschrittserhalt bei Medienersatz] ← neues Issue
+  │
+- └──► [Backup + Restore]                             [Betrieb]
++ ├── 16. [Monitoring]                         ← neues Issue
++ │
++ ├── 17. [Backup + Restore]                   ← neues Issue
++ │
++ └── 18. [Desaster-Recovery-Test]             ← neues Issue
+ ```
+ 
+-### Reihenfolge
+-
+-1. **GH-58** — Docker-Compose bereitstellen (Container läuft mit lokalen
+-   Volumes, ohne NAS, ohne SSO)
+-2. **GH-59** — Reverse-Proxy und TLS anbinden (öffentlich erreichbar, aber
+-   noch ohne OIDC)
+-3. **GH-60** — Keycloak-OIDC-Client und Break-Glass einrichten
+-4. **GH-55** — Autorisierungsstruktur (Rollen, Claims) in Keycloak
+-5. **NFS-Mount** — NAS-Export konfigurieren und auf Pi5 mounten
+-6. **Import-Pipeline** — Automatisierter Import aus Incoming → Bibliothek
+-7. **Metadaten** — Metadaten-Anreicherung und Dublettenprüfung
+-8. **Scheduling** — Regelmäßiger Import-Check
+-9. **Monitoring** — Healthcheck und Alerting
+-10. **Backup** — Backup- und Restore-Vertrag
+-
+-Die Issues GH-58 bis GH-60 sind bereits im Backlog angelegt (#58, #59, #60).
+-Die restlichen Punkte müssen als neue Issues erstellt werden.
++### Reihenfolge-Regel
++
++Keine Runtime-Umsetzung beginnt vor Architektur-, Storage- und
++Berechtigungsfreigabe. Die Deployment-Issues (1–5) setzen die abgeschlossene
++Architektur (dieses Issue) voraus. Die Pipeline-Issues (6–15) setzen die
++erfolgreiche Bereitstellung des Dienstes und der NFS-Mounts voraus.
++Betriebs-Issues (16–18) sind die letzten in der Kette.
