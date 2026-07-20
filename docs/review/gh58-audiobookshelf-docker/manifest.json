@@ -58,6 +58,7 @@
     "pi/compose/vhost.d/audiobookshelf.hl.maier.wtf_location"
   ],
   "diff_sha256": "66acbe8878d682f0a40015afc54305b408b4962ad0a43160282a301677f7bb1e",
+  "diff_note": "Combined diff from pre-GH-58 base to current main. Includes GH-59 proxy/TLS elements (VIRTUAL_HOST, LETSENCRYPT, frontproxy_default, vhost.d, proxy contract test) which are already merged and deployed on main. These are not part of GH-58 scope but are correctly present in the source.",
   "effective_config": {
     "image": "ghcr.io/advplyr/audiobookshelf@sha256:1eef6716183c52abafe5405e7d6be8390248ecd59c7488c44af871757ac8fc4d",
     "platform": "linux/arm64",
@@ -84,7 +85,7 @@
   },
   "runtime_evidence": {
     "container_status": "Up (healthy)",
-    "healthcheck_endpoint": "GET /status -> HTTP 200",
+    "healthcheck_endpoint": "GET / -> HTTP 200",
     "healthcheck_status": "healthy, FailingStreak: 0",
     "first_start_to_healthy": "8s",
     "restart_to_healthy": "8s",
@@ -108,5 +109,14 @@
     "persistence_verified": true,
     "restart_survives": true
   },
-  "gate": "GH-58 is fully implemented. All source PRs merged into Homelab/Architecture main. Container deployed and healthy on Pi5. This PR documents the complete review evidence."
+  "scope_clarification": {
+    "gh58_core": "Docker Compose service, healthcheck, resource limits, config/metadata/cache/testlibrary persistence, internal network, no host ports, no secrets",
+    "gh59_integrated": "VIRTUAL_HOST, LETSENCRYPT_*, frontproxy_default network, vhost.d config, proxy contract test — merged on main, not part of GH-58 scope but correctly present in source diff",
+    "excluded_from_scope": [
+      "OIDC / Keycloak (GH-60)",
+      "NAS-Medienimport (separates Issue)",
+      "Rollen / Authorization (separates Issue)"
+    ]
+  },
+  "gate": "GH-58 is fully implemented. All source PRs merged into Homelab/Architecture main. Container deployed and healthy on Pi5. Source diff includes GH-59 proxy/TLS elements already on main — see scope_clarification. PI_SERVICES.md inconsistencies fixed in commit ea4c560 (branch fix/gh58-review-piservices, PR pending in Gitea)."
 }

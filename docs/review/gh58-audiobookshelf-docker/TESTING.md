@@ -98,6 +98,12 @@ Ports: expose: ["80"] — no ports: section → no host binding
 **Compose file:** No hardcoded secrets, no `secrets:` block, no `configs:` block.
 **Documentation:** No credential values exposed.
 
+> **Note on GH-59 overlap:** The source diff includes GH-59 proxy/TLS elements
+> (VIRTUAL_HOST, LETSENCRYPT, frontproxy_default, vhost.d, proxy contract test)
+> which are already merged on Architecture main. These are not part of GH-58
+> acceptance scope. The table below only evaluates GH-58-specific criteria.
+> See `manifest.json.scope_clarification` for the full breakdown.
+
 ## 6. Acceptance Criteria Mapping
 
 | # | Criterion | Status | Evidence |
