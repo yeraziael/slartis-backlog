@@ -73,10 +73,10 @@ index 95b930a..9ff0e21 100644
  
 diff --git a/docs/audiobookshelf-oidc-verification.md b/docs/audiobookshelf-oidc-verification.md
 new file mode 100644
-index 0000000..39d599a
+index 0000000..434223c
 --- /dev/null
 +++ b/docs/audiobookshelf-oidc-verification.md
-@@ -0,0 +1,93 @@
+@@ -0,0 +1,94 @@
 +# GH-60 — Verification Matrix
 +
 +Status legend:
@@ -115,6 +115,7 @@ index 0000000..39d599a
 +| `pi/audiobookshelf/oidc/abs-server-settings.json` | valid JSON; secret placeholder only |
 +| `pi/audiobookshelf/oidc/keycloak-client-config.json` | valid JSON; secret placeholder only |
 +| No secret committed | VERIFIED: only `${OIDC_CLIENT_SECRET}` placeholders present |
++| `abs_role` mapper design | FIXED: two separate mappers (`abs_role-admin`, `abs_role-guest`) targeting the same claim. Original single mapper with duplicate `"role"` JSON keys was overwriting the second value. See PR review GH-78. |
 +
 +## 3. Functional tests — PENDING RUNTIME
 +
@@ -172,10 +173,10 @@ index 0000000..39d599a
 +- Secrets generated: 1 OIDC client secret, 1 break-glass password (values not recorded here).
 diff --git a/docs/audiobookshelf-oidc.md b/docs/audiobookshelf-oidc.md
 new file mode 100644
-index 0000000..23bca0c
+index 0000000..48ecb1f
 --- /dev/null
 +++ b/docs/audiobookshelf-oidc.md
-@@ -0,0 +1,175 @@
+@@ -0,0 +1,180 @@
 +# Audiobookshelf — Keycloak OIDC Integration (GH-60)
 +
 +This document is the authoritative OIDC specification for the production
@@ -244,9 +245,14 @@ index 0000000..23bca0c
 +| `audiobookshelf-users`           | `guest`     | `guest`  | read-only (play/download/access, no upload/edit/delete/mgmt) |
 +| `audiobookshelf-admins` (+users) | `admin`     | `admin`  | full server administration |
 +
-+`abs_role` is emitted by the **audiobookshelf-roles** protocol mapper
-+(Role Membership) from the group→client-role mappings. The raw `groups`
-+claim is also emitted (audit/transparency).
++`abs_role` is emitted by two separate protocol mappers (**abs_role-admin**
++and **abs_role-guest**), each targeting the same claim. Keycloak merges
++multiple mappers into an array. For users in both `audiobookshelf-admins`
++and `audiobookshelf-users`, the claim contains `['admin','guest']`; ABS
++checks `admin` first per its internal priority
++(`rolesInOrderOfPriority = ['admin','user','guest']`), so admin always
++wins without depending on array ordering. The raw `groups` claim is also
++emitted (audit/transparency).
 +
 +## 2. OIDC configuration
 +
@@ -516,10 +522,10 @@ index 0000000..bb83153
 +}
 diff --git a/pi/audiobookshelf/oidc/keycloak-client-config.json b/pi/audiobookshelf/oidc/keycloak-client-config.json
 new file mode 100644
-index 0000000..550ff3b
+index 0000000..da410d2
 --- /dev/null
 +++ b/pi/audiobookshelf/oidc/keycloak-client-config.json
-@@ -0,0 +1,55 @@
+@@ -0,0 +1,67 @@
 +{
 +  "_comment": "GH-60 — Audiobookshelf OIDC client (realm: homelab). Redacted representation for review/evidence. The client secret is generated at runtime by scripts/setup-keycloak.sh and is NEVER stored here. Apply with: pi/audiobookshelf/scripts/setup-keycloak.sh (see docs/audiobookshelf-runbook.md).",
 +  "realm": "homelab",
@@ -561,11 +567,23 @@ index 0000000..550ff3b
 +      "access.token.claim": true
 +    },
 +    {
-+      "name": "audiobookshelf-roles",
++      "name": "abs_role-admin",
 +      "protocol": "openid-connect",
 +      "protocolMapper": "oidc-role-membership-mapper",
 +      "claim.name": "abs_role",
-+      "roles": ["admin", "guest"],
++      "role": "admin",
++      "multivalued": true,
++      "userinfo.token.claim": true,
++      "id.token.claim": true,
++      "access.token.claim": true
++    },
++    {
++      "name": "abs_role-guest",
++      "protocol": "openid-connect",
++      "protocolMapper": "oidc-role-membership-mapper",
++      "claim.name": "abs_role",
++      "role": "guest",
++      "multivalued": true,
 +      "userinfo.token.claim": true,
 +      "id.token.claim": true,
 +      "access.token.claim": true
@@ -798,10 +816,10 @@ index 0000000..311a543
 +printf '%s\n' "$NEW"
 diff --git a/pi/audiobookshelf/scripts/setup-keycloak.sh b/pi/audiobookshelf/scripts/setup-keycloak.sh
 new file mode 100755
-index 0000000..89468f7
+index 0000000..6d26cb6
 --- /dev/null
 +++ b/pi/audiobookshelf/scripts/setup-keycloak.sh
-@@ -0,0 +1,185 @@
+@@ -0,0 +1,196 @@
 +#!/usr/bin/env bash
 +#
 +# setup-keycloak.sh — GH-60: Provision the Audiobookshelf OIDC client in the
@@ -922,8 +940,13 @@ index 0000000..89468f7
 +
 +# ---------------------------------------------------------------------------
 +# 4. Protocol mappers
-+#    groups   -> real Keycloak group names (audit / admission transparency)
-+#    abs_role -> ABS-consumed role tokens (admin|guest) derived from groups
++#    groups           -> real Keycloak group names (audit / admission transparency)
++#    abs_role-admin   -> ABS role token `admin`  (from client role `admin`)
++#    abs_role-guest   -> ABS role token `guest`  (from client role `guest`)
++#    Both abs_role mappers target the same claim; Keycloak merges them into an
++#    array. ABS `setUserGroup` checks `admin` first (priority defined by
++#    `rolesInOrderOfPriority = ['admin','user','guest']`), so `admin` wins for
++#    users carrying both roles.
 +# ---------------------------------------------------------------------------
 +echo ">> Ensuring protocol mappers" >&2
 +
@@ -945,22 +968,28 @@ index 0000000..89468f7
 +  }' >&2
 +fi
 +
-+if [[ "$(has_mapper audiobookshelf-roles)" != "yes" ]]; then
-+  $KCADM create clients/"$cid"/protocol-mappers/models -r "$REALM" -b '{
-+    "name":"audiobookshelf-roles",
-+    "protocol":"openid-connect",
-+    "protocolMapper":"oidc-role-membership-mapper",
-+    "config":{
-+      "claim.name":"abs_role",
-+      "jsonType.label":"String",
-+      "id.token.claim":"true",
-+      "access.token.claim":"true",
-+      "userinfo.token.claim":"true",
-+      "role":"admin",
-+      "role":"guest"
-+    }
-+  }' >&2
-+fi
++for role_name in admin guest; do
++  mapper_name="abs_role-${role_name}"
++  if [[ "$(has_mapper "$mapper_name")" != "yes" ]]; then
++    $KCADM create clients/"$cid"/protocol-mappers/models -r "$REALM" -b "$(cat <<EOF
++{
++  "name":"$mapper_name",
++  "protocol":"openid-connect",
++  "protocolMapper":"oidc-role-membership-mapper",
++  "config":{
++    "claim.name":"abs_role",
++    "jsonType.label":"String",
++    "multivalued":"true",
++    "id.token.claim":"true",
++    "access.token.claim":"true",
++    "userinfo.token.claim":"true",
++    "role":"$role_name"
++  }
++}
++EOF
++)" >&2
++  fi
++done
 +
 +# ---------------------------------------------------------------------------
 +# 5. Seed Michael as admin (member of BOTH groups)

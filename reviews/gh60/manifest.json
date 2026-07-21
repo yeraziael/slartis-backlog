@@ -7,7 +7,7 @@
       "repository": "Homelab/Architecture",
       "pr_number": 76,
       "pr_url": "http://192.168.2.30:3000/Homelab/Architecture/pulls/76",
-      "head_sha": "86698cbc9c77708012aecbd5461de2a2a3f111b5",
+      "head_sha": "68563f766866c0fc3e1d37c4307c2e7cfc78e514",
       "head_branch": "feature/gh60-audiobookshelf-keycloak-oidc",
       "base_branch": "main"
     },
@@ -20,13 +20,13 @@
     "artifacts": [
       {
         "path": "reviews/gh60/CHANGES.diff",
-        "description": "Full diff of the Gitea PR (12 files, +902/-17, ABS OIDC integration)",
-        "sha256": "92bedaff2e4fef364eb154304018d94b76a1cc0b4f8e2730322c5878b6c1d6e5"
+        "description": "Full diff of the Gitea PR (12 files, +921/-17, ABS OIDC integration) — includes fix: split abs_role into two mappers per review GH-78",
+        "sha256": "471abe4b6dc6749f40d7ea77e901be21187831c8f1c79a151b49420f478f5d91"
       },
       {
         "path": "reviews/gh60/TESTING.md",
         "description": "Verification matrix — compatibility VERIFIED, functional tests PENDING runtime execution",
-        "sha256": "d9e7f6cd34821c7ffbd135411d845e0b7d7b5f5e4323a0f4e82afb911e92aba5"
+        "sha256": "e6d90bf36a0afa1af9b189cad3904b5647c0ec04092f5859e9ece594f9ff40a6"
       }
     ],
     "verdict": null,
