@@ -73,7 +73,7 @@ index 95b930a..9ff0e21 100644
  
 diff --git a/docs/audiobookshelf-oidc-verification.md b/docs/audiobookshelf-oidc-verification.md
 new file mode 100644
-index 0000000..434223c
+index 0000000..1347bc5
 --- /dev/null
 +++ b/docs/audiobookshelf-oidc-verification.md
 @@ -0,0 +1,94 @@
@@ -115,7 +115,7 @@ index 0000000..434223c
 +| `pi/audiobookshelf/oidc/abs-server-settings.json` | valid JSON; secret placeholder only |
 +| `pi/audiobookshelf/oidc/keycloak-client-config.json` | valid JSON; secret placeholder only |
 +| No secret committed | VERIFIED: only `${OIDC_CLIENT_SECRET}` placeholders present |
-+| `abs_role` mapper design | FIXED: two separate mappers (`abs_role-admin`, `abs_role-guest`) targeting the same claim. Original single mapper with duplicate `"role"` JSON keys was overwriting the second value. See PR review GH-78. |
++| `abs_role` mapper design | FIXED: two separate mappers (`abs_role-admin`, `abs_role-guest`) targeting the same claim. Original single mapper with duplicate `"role"` JSON keys was overwriting the second value. Role filters now use qualified client-role names (`audiobookshelf.admin`, `audiobookshelf.guest`) as required by Keycloak for client-role selectors. See PR reviews GH-78. |
 +
 +## 3. Functional tests — PENDING RUNTIME
 +
@@ -522,10 +522,10 @@ index 0000000..bb83153
 +}
 diff --git a/pi/audiobookshelf/oidc/keycloak-client-config.json b/pi/audiobookshelf/oidc/keycloak-client-config.json
 new file mode 100644
-index 0000000..da410d2
+index 0000000..8009f2d
 --- /dev/null
 +++ b/pi/audiobookshelf/oidc/keycloak-client-config.json
-@@ -0,0 +1,67 @@
+@@ -0,0 +1,69 @@
 +{
 +  "_comment": "GH-60 — Audiobookshelf OIDC client (realm: homelab). Redacted representation for review/evidence. The client secret is generated at runtime by scripts/setup-keycloak.sh and is NEVER stored here. Apply with: pi/audiobookshelf/scripts/setup-keycloak.sh (see docs/audiobookshelf-runbook.md).",
 +  "realm": "homelab",
@@ -571,7 +571,8 @@ index 0000000..da410d2
 +      "protocol": "openid-connect",
 +      "protocolMapper": "oidc-role-membership-mapper",
 +      "claim.name": "abs_role",
-+      "role": "admin",
++      "role": "audiobookshelf.admin",
++      "_note": "qualified client-role name (clientId.clientRole), required by Keycloak to match client roles instead of realm roles",
 +      "multivalued": true,
 +      "userinfo.token.claim": true,
 +      "id.token.claim": true,
@@ -582,7 +583,8 @@ index 0000000..da410d2
 +      "protocol": "openid-connect",
 +      "protocolMapper": "oidc-role-membership-mapper",
 +      "claim.name": "abs_role",
-+      "role": "guest",
++      "role": "audiobookshelf.guest",
++      "_note": "qualified client-role name",
 +      "multivalued": true,
 +      "userinfo.token.claim": true,
 +      "id.token.claim": true,
@@ -816,10 +818,10 @@ index 0000000..311a543
 +printf '%s\n' "$NEW"
 diff --git a/pi/audiobookshelf/scripts/setup-keycloak.sh b/pi/audiobookshelf/scripts/setup-keycloak.sh
 new file mode 100755
-index 0000000..6d26cb6
+index 0000000..16996fb
 --- /dev/null
 +++ b/pi/audiobookshelf/scripts/setup-keycloak.sh
-@@ -0,0 +1,196 @@
+@@ -0,0 +1,198 @@
 +#!/usr/bin/env bash
 +#
 +# setup-keycloak.sh — GH-60: Provision the Audiobookshelf OIDC client in the
@@ -969,6 +971,8 @@ index 0000000..6d26cb6
 +fi
 +
 +for role_name in admin guest; do
++  # Keycloak uses qualified "clientId.clientRole" for client-role filters.
++  qualified_role="${CLIENT_ID}.${role_name}"
 +  mapper_name="abs_role-${role_name}"
 +  if [[ "$(has_mapper "$mapper_name")" != "yes" ]]; then
 +    $KCADM create clients/"$cid"/protocol-mappers/models -r "$REALM" -b "$(cat <<EOF
@@ -983,7 +987,7 @@ index 0000000..6d26cb6
 +    "id.token.claim":"true",
 +    "access.token.claim":"true",
 +    "userinfo.token.claim":"true",
-+    "role":"$role_name"
++    "role":"$qualified_role"
 +  }
 +}
 +EOF

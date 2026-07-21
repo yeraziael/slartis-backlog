@@ -36,7 +36,7 @@ All evidence is redacted: no secrets, tokens, cookies, or passwords appear.
 | `pi/audiobookshelf/oidc/abs-server-settings.json` | valid JSON; secret placeholder only |
 | `pi/audiobookshelf/oidc/keycloak-client-config.json` | valid JSON; secret placeholder only |
 | No secret committed | VERIFIED: only `${OIDC_CLIENT_SECRET}` placeholders present |
-| `abs_role` mapper design | FIXED: two separate mappers (`abs_role-admin`, `abs_role-guest`) targeting the same claim. Original single mapper with duplicate `"role"` JSON keys was overwriting the second value. See PR review GH-78. |
+| `abs_role` mapper design | FIXED: two separate mappers (`abs_role-admin`, `abs_role-guest`) targeting the same claim. Original single mapper with duplicate `"role"` JSON keys was overwriting the second value. Role filters now use qualified client-role names (`audiobookshelf.admin`, `audiobookshelf.guest`) as required by Keycloak for client-role selectors. See PR reviews GH-78. |
 
 ## 3. Functional tests — PENDING RUNTIME
 
