@@ -1,0 +1,35 @@
+{
+  "review_package": {
+    "acp_version": "0.1.0-draft",
+    "created": "2026-07-21T22:00:00Z",
+    "source": {
+      "system": "gitea",
+      "repository": "Homelab/Architecture",
+      "pr_number": 76,
+      "pr_url": "http://192.168.2.30:3000/Homelab/Architecture/pulls/76",
+      "head_sha": "86698cbc9c77708012aecbd5461de2a2a3f111b5",
+      "head_branch": "feature/gh60-audiobookshelf-keycloak-oidc",
+      "base_branch": "main"
+    },
+    "issue": {
+      "system": "github",
+      "repository": "yeraziael/slartis-backlog",
+      "number": 60,
+      "url": "https://github.com/yeraziael/slartis-backlog/issues/60"
+    },
+    "artifacts": [
+      {
+        "path": "reviews/gh60/CHANGES.diff",
+        "description": "Full diff of the Gitea PR (12 files, +902/-17, ABS OIDC integration)",
+        "sha256": "92bedaff2e4fef364eb154304018d94b76a1cc0b4f8e2730322c5878b6c1d6e5"
+      },
+      {
+        "path": "reviews/gh60/TESTING.md",
+        "description": "Verification matrix — compatibility VERIFIED, functional tests PENDING runtime execution",
+        "sha256": "d9e7f6cd34821c7ffbd135411d845e0b7d7b5f5e4323a0f4e82afb911e92aba5"
+      }
+    ],
+    "verdict": null,
+    "reviewer": "@ChatGPT"
+  }
+}

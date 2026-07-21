@@ -1,0 +1,1028 @@
+diff --git a/docs/AUDIOBOOKSHELF.md b/docs/AUDIOBOOKSHELF.md
+index 95b930a..9ff0e21 100644
+--- a/docs/AUDIOBOOKSHELF.md
++++ b/docs/AUDIOBOOKSHELF.md
+@@ -110,13 +110,17 @@ den Reverse-Proxy erreichbar.
+ 
+ ## 4. Authentifizierungsgrenze (Keycloak)
+ 
+-- Audiobookshelf unterstützt OIDC nativ.
+-- Der Keycloak-Realm ist der bestehende Homelab-Realm.
+-- Der OIDC-Client wird in GH-60 eingerichtet.
+-- Audiobookshelf fungiert als OIDC-Client/Relying Party.
+-- Keycloak ist der authoritative Identity Provider.
+-- Keine lokalen Standard-Accounts in Audiobookshelf — alle Nutzer authentifizieren
+-  sich über Keycloak-SSO.
++- Audiobookshelf unterstützt OIDC nativ (Authorization Code Flow, confidential Client).
++- Der Keycloak-Realm ist der bestehende Homelab-Realm (`homelab`).
++- Der dedizierte OIDC-Client `audiobookshelf` ist in GH-60 eingerichtet
++  (siehe [docs/audiobookshelf-oidc.md](audiobookshelf-oidc.md) und
++  [docs/audiobookshelf-runbook.md](audiobookshelf-runbook.md)).
++- Audiobookshelf fungiert als OIDC-Client/Relying Party; Keycloak ist der
++  authoritative Identity Provider.
++- Lokale Benutzer werden ausschließlich über `sub` an Keycloak gebunden und bei
++  erstem Login automatisch angelegt.
++- Einziger lokaler Regelbetriebs-Account ist der Break-Glass-Account `admin`
++  (siehe Abschnitt 6); keine weiteren lokalen Standard-Accounts.
+ 
+ ---
+ 
+@@ -124,14 +128,17 @@ den Reverse-Proxy erreichbar.
+ 
+ Referenz: GH-55 (Keycloak Authorization: Rollen und Claims authoritative)
+ 
+-- Rollen und Berechtigungen werden zentral in Keycloak definiert und von dort
+-  an Audiobookshelf als OIDC-Claims weitergereicht.
++- Rollen und Berechtigungen werden zentral in Keycloak definiert (Gruppen
++  `audiobookshelf-users`, `audiobookshelf-admins`) und über den `abs_role`-Claim
++  an Audiobookshelf weitergereicht.
++- Abbildung: `audiobookshelf-users` → ABS `guest` (lesend),
++  `audiobookshelf-admins` → ABS `admin` (vollständige Administration).
+ - Audiobookshelf-internes RBAC wird nur dort genutzt, wo Keycloak-Claims nicht
+   ausreichen.
+-- Die genaue Rollenstruktur (admin, bibliothekar, hörer, etc.) wird im Zuge
+-  von GH-55 und GH-60 definiert.
+ - Autorisierungsentscheidungen folgen dem Homelab-Standard: Keycloak ist
+   authoritative, Service-RBAC ist sekundär.
++- Details: [docs/audiobookshelf-oidc.md](audiobookshelf-oidc.md) §1 (Rights flow)
++  und [docs/audiobookshelf-runbook.md](audiobookshelf-runbook.md).
+ 
+ ---
+ 
+@@ -150,12 +157,17 @@ Referenz: GH-55 (Keycloak Authorization: Rollen und Claims authoritative)
+ 
+ ### Regeln
+ 
+-- Der Break-Glass-Account wird erst in GH-60 (oder einem spezifizierten
+-  Child-Issue) angelegt und konfiguriert.
+-- Das Passwort wird **nicht** in diesem Issue oder im Architecture-Repository
+-  erzeugt oder dokumentiert.
++- Der Break-Glass-Account `admin` wird in GH-60 angelegt und konfiguriert
++  (siehe [docs/audiobookshelf-runbook.md](audiobookshelf-runbook.md) §5 und
++  `pi/audiobookshelf/scripts/break-glass-setup.sh`).
++- Das Passwort wird kryptographisch sicher erzeugt, lokal auf den Account
++  gesetzt und **genau einmal** über den bestehenden Telegram-Betreiberkanal
++  zugestellt. Es wird **nicht** in diesem Repository, Issues, Logs oder
++  irgendeiner persistenter Konfiguration erzeugt oder dokumentiert.
+ - Break-Glass-Zugriff ist auf den Admin-Account beschränkt und protokolliert
+   (Audiobookshelf-Audit-Log).
++- Lokaler Login bleibt aktiv (`authOpenIDAutoLaunch=false`), damit `admin` im
++  Notfall ohne Keycloak erreichbar ist.
+ 
+ ---
+ 
+diff --git a/docs/audiobookshelf-oidc-verification.md b/docs/audiobookshelf-oidc-verification.md
+new file mode 100644
+index 0000000..39d599a
+--- /dev/null
++++ b/docs/audiobookshelf-oidc-verification.md
+@@ -0,0 +1,93 @@
++# GH-60 — Verification Matrix
++
++Status legend:
++- **VERIFIED** — checked in this session with reproducible evidence.
++- **PENDING RUNTIME** — procedure defined and ready; requires the runtime
++  cutover (Keycloak client creation + ABS settings application + live login),
++  which is executed by the runtime operator (Lydia) per the ACP work order.
++  Not executed in the planning session; **not** marked as passed.
++- **N/A** — not applicable.
++
++All evidence is redacted: no secrets, tokens, cookies, or passwords appear.
++
++## 1. Compatibility (source/discovery) — VERIFIED
++
++| Check | Result | Evidence |
++|---|---|---|
++| Native OIDC (Authorization Code) | PASS | `OidcAuthStrategy.js` present; `openid-client` Strategy |
++| Confidential client + secret | PASS | `authOpenIDClientSecret` field; server-side token exchange |
++| Stable binding by `sub` | PASS | `User.findUserFromOpenIdUserInfo` → `getUserByOpenIDSub`; `extraData.authOpenIDSub` persisted (`User.js:220-227,330`) |
++| No auto-link by email/username | PASS | `authOpenIDMatchExistingBy` left `null` (default) → no email/username branch (`ServerSettings.js:81,145`) |
++| Auto-provisioning | PASS | `authOpenIDAutoRegister` → `createUserFromOpenIdUserInfo` (`OidcAuthStrategy.js:170-185`) |
++| RP-Initiated Logout | PASS | `getEndSessionUrl` uses `id_token_hint` + `post_logout_redirect_uri` (`OidcAuthStrategy.js:393-419`, `Auth.js:502`) |
++| Discovery endpoint live | PASS | `GET /.well-known/openid-configuration` returns issuer `https://auth.hl.maier.wtf/realms/homelab`, `end_session_endpoint`, `jwks_uri` (curl, 2026-07-21) |
++| PKCE S256 (web flow) | **GAP (not blocker)** | No `authOpenIDUsePkce` field in `ServerSettings.js`; PKCE only for mobile flow — documented in `audiobookshelf-oidc.md §4` |
++| Native group→role mapping | **GAP (integration logic)** | `setUserGroup` only understands `admin`/`user`/`guest`; resolved via Keycloak Role-Membership mapper → `abs_role` (documented) |
++
++## 2. Configuration & artifacts — VERIFIED (structural)
++
++| Artifact | Result |
++|---|---|
++| `pi/audiobookshelf/scripts/setup-keycloak.sh` | bash syntax OK; refuses `set -x`; secret to stdout only |
++| `pi/audiobookshelf/scripts/apply-abs-settings.sh` | bash syntax OK; secret from env/file, substituted in memory |
++| `pi/audiobookshelf/scripts/break-glass-setup.sh` | bash syntax OK; RNG password, Telegram once, no logging |
++| `pi/audiobookshelf/scripts/verify-break-glass.sh` | bash syntax OK; password via `read -s`, never printed |
++| `pi/audiobookshelf/scripts/rotate-keycloak-secret.sh` | bash syntax OK |
++| `pi/audiobookshelf/oidc/abs-server-settings.json` | valid JSON; secret placeholder only |
++| `pi/audiobookshelf/oidc/keycloak-client-config.json` | valid JSON; secret placeholder only |
++| No secret committed | VERIFIED: only `${OIDC_CLIENT_SECRET}` placeholders present |
++
++## 3. Functional tests — PENDING RUNTIME
++
++| Test (GH-60 §10) | Expected | Status |
++|---|---|---|
++| 10.1 login (member of `audiobookshelf-users`) | success | PENDING RUNTIME |
++| 10.1 login denied (no `audiobookshelf-users`) | denied | PENDING RUNTIME |
++| 10.1 invalid redirect URI rejected | denied | PENDING RUNTIME |
++| 10.2 first login creates exactly one local account | 1 account | PENDING RUNTIME |
++| 10.2 second login no extra account | still 1 | PENDING RUNTIME |
++| 10.2 `preferred_username` change → same account | same `sub` | PENDING RUNTIME |
++| 10.3 standard user read-only | guest | PENDING RUNTIME |
++| 10.3 Michael admin via `audiobookshelf-admins` | admin | PENDING RUNTIME |
++| 10.3 admin revocation at next login | downgraded | PENDING RUNTIME |
++| 10.3 `audiobookshelf-users` removal blocks login | denied | PENDING RUNTIME |
++| 10.4 logout ends local session | yes | PENDING RUNTIME |
++| 10.4 logout ends Keycloak SSO | yes | PENDING RUNTIME |
++| 10.4 reload stays unauthenticated | yes | PENDING RUNTIME |
++| 10.4 different user can log in after | yes | PENDING RUNTIME |
++| 10.5 restart preserves config + behavior | yes | PENDING RUNTIME |
++| 10.6 secret rotation: new works, old fails | yes | PENDING RUNTIME |
++| 10.7 break-glass local login (offline password) | success | PENDING RUNTIME |
++| 10.7 independent of Keycloak | yes | PENDING RUNTIME |
++
++**Procedure (runbook `audiobookshelf-runbook.md`):** execute
++`setup-keycloak.sh` → `apply-abs-settings.sh` → login tests via browser →
++`break-glass-setup.sh` + `verify-break-glass.sh` → `rotate-keycloak-secret.sh`
+++ re-apply + restart → re-test.
++
++## 4. Security negative tests — PENDING RUNTIME
++
++| Test (GH-60 §10.8) | Expected | Status |
++|---|---|---|
++| Expired token rejected | denied | PENDING RUNTIME (isolated test env) |
++| Wrong issuer rejected | denied | PENDING RUNTIME |
++| Wrong audience / unauthorized party rejected | denied | PENDING RUNTIME |
++| Invalid signature rejected | denied | PENDING RUNTIME |
++| Token without `sub` rejected | denied | PENDING RUNTIME (`OidcAuthStrategy` throws `no sub`) |
++| User without allowed group rejected | denied | PENDING RUNTIME |
++
++These require a controlled environment with a forged/modified token and must
++not mutate production signature/TLS validation. Procedure: use the existing
++automated test harness or an isolated ABS instance with hand-crafted tokens.
++
++## 5. Blocker report
++**No blockers.** All MUSS capabilities (§4.1 sub-binding, §4.2 auto-provision,
++§7.1 RP-Initiated logout) are natively supported by Audiobookshelf 2.35.1.
++The two gaps (PKCE for web flow, native group-name mapping) are explicitly
++**non-blocking** per GH-60 §3.1 and §5.3 and are resolved/documented via
++permitted means (documentation; Keycloak role-membership integration logic).
++
++## 6. Changed runtime objects (after runtime execution)
++- Keycloak realm `homelab`: groups `audiobookshelf-users`, `audiobookshelf-admins`; client `audiobookshelf`; client roles `admin`, `guest`; mappers `audiobookshelf-groups`, `audiobookshelf-roles`; user `michael` in both groups.
++- Audiobookshelf: OIDC server settings applied; local `admin` break-glass account.
++- Secrets generated: 1 OIDC client secret, 1 break-glass password (values not recorded here).
+diff --git a/docs/audiobookshelf-oidc.md b/docs/audiobookshelf-oidc.md
+new file mode 100644
+index 0000000..23bca0c
+--- /dev/null
++++ b/docs/audiobookshelf-oidc.md
+@@ -0,0 +1,175 @@
++# Audiobookshelf — Keycloak OIDC Integration (GH-60)
++
++This document is the authoritative OIDC specification for the production
++Audiobookshelf instance. It implements GitHub issue
++`yeraziael/slartis-backlog#60`. All runtime objects are provisioned by the
++versioned scripts under `pi/audiobookshelf/scripts/`.
++
++## 1. Architecture
++
++```
++ Operator / User
++      │ HTTPS (audiobookshelf.hl.maier.wtf)
++      ▼
++ ┌──────────────┐     ┌──────────────────────────────────────────────┐
++ │  frontproxy  │     │            Audiobookshelf (RP)                │
++ │ nginx-proxy  │────▶│  - local break-glass account `admin`         │
++ │   :443       │     │  - OIDC client (confidential)                │
++ └──────────────┘     │  - users bound by OIDC `sub`                 │
++                     │  - guest = read-only, admin = server admin   │
++                     └──────────────────────────────────────────────┘
++                              │ Authorization Code Flow (HTTPS)
++                              ▼
++                     ┌────────────────────────────────┐
++                     │  Keycloak  (IdP, realm `homelab`)│
++                     │  auth.hl.maier.wtf              │
++                     │  groups: audiobookshelf-users   │
++                     │          audiobookshelf-admins  │
++                     └────────────────────────────────┘
++```
++
++### Trust boundaries
++- **External**: browser ↔ frontproxy ↔ Audiobookshelf, all HTTPS.
++- **Internal**: Audiobookshelf ↔ Keycloak over the docker network
++  (`frontproxy` / internal). Keycloak issuer URL is the external HTTPS
++  endpoint; internal container names are never used as issuer/redirect.
++- **Local-only**: the `admin` break-glass account authenticates locally and
++  never touches Keycloak. It is the recovery path when Keycloak is unavailable.
++
++### Authentication flow (Authorization Code, confidential)
++1. User clicks **Keycloak** on the ABS login page.
++2. ABS redirects to Keycloak `authorization_endpoint` with
++   `response_type=code`, `client_id=audiobookshelf`, `scope=openid profile email`,
++   `redirect_uri=https://audiobookshelf.hl.maier.wtf/auth/openid/callback`.
++3. Keycloak authenticates and returns an authorization code.
++4. ABS exchanges the code (with `client_secret`, server-side) at the token
++   endpoint, receives `id_token` + `access_token`.
++5. ABS fetches `userinfo` (contains `sub`, `preferred_username`, `email`,
++   `groups`, `abs_role`).
++6. ABS matches the user by `sub`; auto-registers on first login; applies group
++   → role mapping; issues a local session.
++
++### Identity binding (stable, by `sub`)
++Audiobookshelf 2.35.1 binds the local account **exclusively by the OIDC
++`sub` claim** (`User.findUserFromOpenIdUserInfo` → `getUserByOpenIDSub`).
++The `sub` is persisted on the user (`extraData.authOpenIDSub`). A change of
++`preferred_username` is attributed to the same account (no duplicate is
++created). `authOpenIDMatchExistingBy` is left **null** so existing local
++accounts are never auto-linked by mutable email/username (GH-60 §4.2).
++
++### Rights flow
++`groups` (real Keycloak groups) → `abs_role` (derived client roles)
++→ ABS user type:
++
++| Keycloak group(s)                | client role | ABS type | effective rights |
++|----------------------------------|-------------|----------|------------------|
++| `audiobookshelf-users`           | `guest`     | `guest`  | read-only (play/download/access, no upload/edit/delete/mgmt) |
++| `audiobookshelf-admins` (+users) | `admin`     | `admin`  | full server administration |
++
++`abs_role` is emitted by the **audiobookshelf-roles** protocol mapper
++(Role Membership) from the group→client-role mappings. The raw `groups`
++claim is also emitted (audit/transparency).
++
++## 2. OIDC configuration
++
++| Property | Value |
++|---|---|
++| Identity Provider | existing Keycloak, realm `homelab` |
++| Issuer | `https://auth.hl.maier.wtf/realms/homelab` |
++| Discovery | `https://auth.hl.maier.wtf/realms/homelab/.well-known/openid-configuration` |
++| Client ID | `audiobookshelf` |
++| Client type | confidential (client secret, server-side) |
++| Flow | Authorization Code |
++| Direct Access Grants | disabled |
++| Implicit Flow | disabled |
++| Service Accounts | disabled |
++| PKCE (S256) | **not configurable in 2.35.1 — see §4** |
++| Scopes | `openid profile email` |
++| Redirect URI | `https://audiobookshelf.hl.maier.wtf/auth/openid/callback` |
++| Post-Logout Redirect | `https://audiobookshelf.hl.maier.wtf/login` |
++| Web Origin | `https://audiobookshelf.hl.maier.wtf` |
++| End-session endpoint | `https://auth.hl.maier.wtf/realms/homelab/protocol/openid-connect/logout` |
++| Auto-provisioning | enabled (`authOpenIDAutoRegister=true`) |
++| Auto-launch OIDC | disabled (`authOpenIDAutoLaunch=false`) — local login retained |
++| Group claim consumed by ABS | `abs_role` |
++| Token signing | `RS256` (validated via JWKS, expiry, issuer, audience, state, nonce) |
++
++### Claims
++| Claim | Purpose | Presence |
++|---|---|---|
++| `sub` | stable identity key (persisted, used for binding) | required |
++| `preferred_username` | visible ABS username | required |
++| `email` | user info | if present in Keycloak |
++| `groups` | real Keycloak group membership (audit) | required (non-empty) |
++| `abs_role` | derived role tokens `admin`/`guest` (admission + role mapping) | required (non-empty) |
++
++### Keycloak groups & roles
++- Realm groups: `audiobookshelf-users`, `audiobookshelf-admins`
++  (the latter is a **child** of the former).
++- Client roles of `audiobookshelf`: `admin`, `guest`.
++- Group → client-role mapping:
++  - `audiobookshelf-users` → `guest`
++  - `audiobookshelf-admins` → `admin`
++- **Invariant (documented combined condition, GH-60 §5.2):** every member of
++  `audiobookshelf-admins` is also a member of `audiobookshelf-users`. The
++  provisioning script and the group-maintenance runbook enforce this; an admin
++  therefore always satisfies the login-admission group.
++- Seed: `michael` is a member of **both** groups (the only initial admin).
++
++## 3. Logout (RP-Initiated)
++ABS 2.35.1 supports RP-Initiated Logout natively
++(`OidcAuthStrategy.getEndSessionUrl`): on logout it terminates the local
++session and redirects to Keycloak `end_session_endpoint` with
++`id_token_hint` (the `id_token` saved at login) and
++`post_logout_redirect_uri=https://audiobookshelf.hl.maier.wtf/login`.
++This ends the Keycloak SSO session, enabling a different user to log in
++afterwards. The local **Keycloak** button remains available.
++
++## 4. Known technical limitations (with evidence)
++
++### PKCE (S256) — NOT supported for the web/confidential flow
++- **Version:** Audiobookshelf `2.35.1` (image digest
++  `sha256:1eef6716183c52abafe5405e7d6be8390248ecd59c7488c44af871757ac8fc4d`).
++- **Evidence:** the server-settings model exposes no PKCE toggle
++  (`/app/server/objects/settings/ServerSettings.js` enumerates only
++  `authOpenID*` fields; there is **no** `authOpenIDUsePkce`). PKCE is generated
++  only for the separate mobile flow (`generatePkce` in `OidcAuthStrategy.js`).
++- **Impact:** the Authorization Code flow for the web client is not protected
++  by PKCE. The client is **confidential** (secret exchanged server-side), which
++  mitigates code-interception for this first-party deployment.
++- **Blocker?** **No.** GH-60 §3.1 explicitly states missing native PKCE support
++  is **not** a blocker, only requiring documentation (provided here).
++- **Smallest upstream change:** add an `authOpenIDUsePkce` flag to
++  `ServerSettings` and pass `code_challenge`/`code_challenge_method=S256` into
++  the passport `openid-client` strategy `params` for the web flow.
++
++### `preferred_username` is not auto-synced on rename
++- **Evidence:** `verifyCallback` updates the user **type** from the group
++  claim but does not rewrite `username` on subsequent logins; the username is
++  fixed at first auto-registration from `preferred_username`.
++- **Impact:** a rename in Keycloak is correctly attributed to the same local
++  account (no duplicate — the §4.1 hard requirement), but the **displayed**
++  ABS username is not automatically updated. An administrator may rename the
++  local account in the ABS UI if desired.
++- **Blocker?** **No.** The binding-by-`sub` requirement is fully met.
++
++### No native group-name → ABS-role mapping
++- **Evidence:** `OidcAuthStrategy.setUserGroup` only understands the literal
++  role tokens `admin`/`user`/`guest`, not `audiobookshelf-users` /
++  `audiobookshelf-admins`.
++- **Resolution (GH-60 §5.3 permitted integration logic):** a Keycloak
++  Role-Membership mapper (`audiobookshelf-roles`) derives `admin`/`guest`
++  tokens from the authoritative groups into the `abs_role` claim. No second
++  manually maintained role source is introduced — the client roles are derived
++  from the two Keycloak groups.
++
++## 5. Security posture
++- Secrets are provided only via the runtime secret store; never committed,
++  logged, or placed in examples (only `${OIDC_CLIENT_SECRET}` placeholders).
++- Token validation is performed by the `openid-client` library: issuer,
++  signature (JWKS), `exp`, `nbf`, `iat`, audience, `state`, `nonce`, and
++  single-use authorization code. TLS is validated normally. No validation is
++  disabled.
++- Redirect URIs and post-logout URIs are exact HTTPS HTTPS values (no
++  wildcards). Web Origin is the exact external origin (no `*`).
++- Local login is retained only for the `admin` break-glass account.
+diff --git a/docs/audiobookshelf-runbook.md b/docs/audiobookshelf-runbook.md
+new file mode 100644
+index 0000000..62658f7
+--- /dev/null
++++ b/docs/audiobookshelf-runbook.md
+@@ -0,0 +1,107 @@
++# Audiobookshelf — Operations & Disaster Recovery Runbook (GH-60)
++
++Covers deployment of the OIDC integration, runtime-secret handling, day-to-day
++operations, break-glass use, and recovery. Implements the documentation areas
++required by GH-60 §11 (deployment, runtime-secrets, operations, DR, break-glass).
++
++## 1. Deployment / configuration parameters
++
++The OIDC settings live in the Audiobookshelf **server settings** (database),
++not in the compose file. They are applied via
++`pi/audiobookshelf/scripts/apply-abs-settings.sh` which `PATCH`es
++`/api/settings`. The canonical values are in
++`pi/audiobookshelf/oidc/abs-server-settings.json` (secret placeholder only).
++
++| Parameter | Value |
++|---|---|
++| `authOpenIDIssuerURL` | `https://auth.hl.maier.wtf/realms/homelab` |
++| `authOpenIDClientID` | `audiobookshelf` |
++| `authOpenIDClientSecret` | runtime secret (Keycloak client secret) |
++| `authOpenIDGroupClaim` | `abs_role` |
++| `authOpenIDAutoRegister` | `true` |
++| `authOpenIDMatchExistingBy` | `null` (never set to email/username) |
++| `authOpenIDAutoLaunch` | `false` (local break-glass login retained) |
++| `authOpenIDSubfolderForRedirectURLs` | `https://audiobookshelf.hl.maier.wtf` |
++
++Start order: Keycloak → frontproxy → audiobookshelf. The OIDC client must
++exist in Keycloak **before** ABS settings are applied. Health check: ABS
++container `healthy` and `GET /` returns the login page; after OIDC, the
++**Keycloak** button appears.
++
++## 2. Runtime secrets
++
++| Secret | Origin | Storage | Rotation |
++|---|---|---|---|
++| OIDC client secret | generated by `setup-keycloak.sh` | runtime secret store consumed by `apply-abs-settings.sh` (`OIDC_CLIENT_SECRET` / `OIDC_CLIENT_SECRET_FILE`) | `rotate-keycloak-secret.sh` |
++| Break-glass `admin` password | generated by `break-glass-setup.sh` | offline, operator-only (Telegram delivery, never persisted by automation) | `break-glass-setup.sh` (re-run) |
++
++Rules:
++- Secrets are never committed, printed, or logged. Scripts refuse to run under
++  `set -x`. The client secret is emitted once to stdout for the operator to
++  capture into the secret store.
++- File-based secrets use restrictive permissions (e.g. `chmod 600`) if a file
++  backend is used.
++
++## 3. Operations
++
++### User onboarding
++1. Create the user in Keycloak realm `homelab`.
++2. Add them to `audiobookshelf-users` (read-only). For admins, add to **both**
++   `audiobookshelf-users` and `audiobookshelf-admins`.
++3. The next login auto-provisions the ABS account (bound by `sub`).
++4. Share the relevant libraries with the user/group in the ABS UI (new accounts
++   have `accessAllLibraries:true` by default; restrict as needed).
++
++### Group maintenance
++- Adding/removing a user from `audiobookshelf-admins` takes effect at the next
++  login (ABS re-evaluates `abs_role` every login; admin revocation downgrades
++  the local account to `guest`, removal of `audiobookshelf-users` denies login).
++- Never create a second, manually maintained role source; the two Keycloak
++  groups are authoritative.
++
++### Permission / rename change
++- Rename in Keycloak: attributed to the same local account (bound by `sub`),
++  display name may be updated manually in ABS if desired.
++- Permission change: change Keycloak group membership; next login applies it.
++
++### Login / logout diagnosis
++- **No Keycloak button:** ABS settings not applied or client missing — re-run
++  `apply-abs-settings.sh`; check ABS logs for `OpenID Connect settings are not valid`.
++- **Login denied:** user not in `audiobookshelf-users` (no `abs_role`); check
++  the `groups`/`abs_role` claims in the ABS OIDC callback debug log
++  (`[OidcAuth]`).
++- **Logout does not end SSO:** verify `authOpenIDLogoutURL` equals the Keycloak
++  `end_session_endpoint` and the post-logout URI is whitelisted.
++
++### Regular secret rotation
++Run `pi/audiobookshelf/scripts/rotate-keycloak-secret.sh`, then re-apply ABS
++settings with the new secret and **restart the audiobookshelf container**
++(ABS caches the OIDC client). Verify old secret fails, new secret works.
++
++## 4. Disaster recovery
++
++1. **ABS config/db lost:** restore from the last ABS backup (config + metadata
++   volumes on the Pi5 HDD). OIDC server settings are persisted in the DB; if
++   the backup predates OIDC enablement, re-apply
++   `apply-abs-settings.sh`.
++2. **Keycloak client lost:** re-run `setup-keycloak.sh` to recreate groups,
++   client, roles, mappers, and re-seed `michael`; re-apply ABS settings with
++   the new secret.
++3. **Keycloak down:** the local `admin` break-glass account still logs in
++   (local auth, no Keycloak dependency). Use it to operate ABS until Keycloak
++   is restored.
++4. **Secret compromise:** rotate immediately (§3) and restart ABS.
++
++## 5. Break-glass procedure
++
++- **Purpose:** emergency local administration when Keycloak or SSO is
++  unavailable. Not for daily use.
++- **Account:** local `admin` (confidential client / SSO untouched).
++- **Setup / rotation:** `pi/audiobookshelf/scripts/break-glass-setup.sh`
++  generates a ≥192-bit password, sets it on the local `admin`, and delivers it
++  **exactly once** via the operator Telegram channel (password body only).
++- **Verification (no password in evidence):** `verify-break-glass.sh` reads the
++  password interactively (no echo) and prints only PASS/FAIL + redacted
++  metadata.
++- **Operator duty:** store the received password **offline**; rotate on a
++  schedule and after any suspected exposure. Never commit or log it.
+diff --git a/docs/keycloak-service-sso.md b/docs/keycloak-service-sso.md
+index d9602ee..349055d 100644
+--- a/docs/keycloak-service-sso.md
++++ b/docs/keycloak-service-sso.md
+@@ -39,6 +39,7 @@ The `master` realm is reserved for Keycloak administration.
+ | `paperless` | `https://pprls.hl.maier.wtf/accounts/oidc/keycloak/login/callback/` |
+ | `paperless-francine` | `https://pprlsf.hl.maier.wtf/accounts/oidc/keycloak/login/callback/` |
+ | `calibre-web-automated` | `https://cwa.hl.maier.wtf/login/keycloak/authorized` |
++| `audiobookshelf` | `https://audiobookshelf.hl.maier.wtf/auth/openid/callback` (confidential; post-logout `https://audiobookshelf.hl.maier.wtf/login`; see `docs/audiobookshelf-oidc.md`) |
+ 
+ Import `pi/keycloak/matrix-client-realm-export.example.json` only when the
+ `homelab` realm does not exist. If it already exists, export and review it;
+@@ -47,8 +48,10 @@ never import the template as an update.
+ Generate a separate client secret for each application. Store Paperless
+ secrets only in each runtime `docker-compose.env` file. Gitea stores its client
+ secret encrypted in its authentication-source configuration. CWAuto stores its
+-client secret inside its own `app.db` (see below). Never commit or print a
+-secret.
++client secret inside its own `app.db` (see below). Audiobookshelf stores its
++client secret in its server settings (database), applied via the versioned
++`pi/audiobookshelf/scripts/apply-abs-settings.sh` from the runtime secret
++store. Never commit or print a secret.
+ 
+ ## Staged migration
+ 
+diff --git a/pi/audiobookshelf/oidc/abs-server-settings.json b/pi/audiobookshelf/oidc/abs-server-settings.json
+new file mode 100644
+index 0000000..bb83153
+--- /dev/null
++++ b/pi/audiobookshelf/oidc/abs-server-settings.json
+@@ -0,0 +1,19 @@
++{
++  "_comment": "GH-60 Audiobookshelf OIDC server settings. Apply via PATCH /api/settings (see scripts/apply-abs-settings.sh). All endpoints are taken verbatim from the Keycloak `homeloab` realm discovery document. The client secret is NEVER stored here: substitute ${OIDC_CLIENT_SECRET} from the runtime secret store at apply time.",
++  "authOpenIDIssuerURL": "https://auth.hl.maier.wtf/realms/homelab",
++  "authOpenIDAuthorizationURL": "https://auth.hl.maier.wtf/realms/homelab/protocol/openid-connect/auth",
++  "authOpenIDTokenURL": "https://auth.hl.maier.wtf/realms/homelab/protocol/openid-connect/token",
++  "authOpenIDUserInfoURL": "https://auth.hl.maier.wtf/realms/homelab/protocol/openid-connect/userinfo",
++  "authOpenIDJwksURL": "https://auth.hl.maier.wtf/realms/homelab/protocol/openid-connect/certs",
++  "authOpenIDLogoutURL": "https://auth.hl.maier.wtf/realms/homelab/protocol/openid-connect/logout",
++  "authOpenIDClientID": "audiobookshelf",
++  "authOpenIDClientSecret": "${OIDC_CLIENT_SECRET}",
++  "authOpenIDTokenSigningAlgorithm": "RS256",
++  "authOpenIDButtonText": "Keycloak",
++  "authOpenIDAutoLaunch": false,
++  "authOpenIDAutoRegister": true,
++  "authOpenIDMatchExistingBy": null,
++  "authOpenIDGroupClaim": "abs_role",
++  "authOpenIDAdvancedPermsClaim": "",
++  "authOpenIDSubfolderForRedirectURLs": "https://audiobookshelf.hl.maier.wtf"
++}
+diff --git a/pi/audiobookshelf/oidc/keycloak-client-config.json b/pi/audiobookshelf/oidc/keycloak-client-config.json
+new file mode 100644
+index 0000000..550ff3b
+--- /dev/null
++++ b/pi/audiobookshelf/oidc/keycloak-client-config.json
+@@ -0,0 +1,55 @@
++{
++  "_comment": "GH-60 — Audiobookshelf OIDC client (realm: homelab). Redacted representation for review/evidence. The client secret is generated at runtime by scripts/setup-keycloak.sh and is NEVER stored here. Apply with: pi/audiobookshelf/scripts/setup-keycloak.sh (see docs/audiobookshelf-runbook.md).",
++  "realm": "homelab",
++  "clientId": "audiobookshelf",
++  "enabled": true,
++  "protocol": "openid-connect",
++  "publicClient": false,
++  "bearerOnly": false,
++  "standardFlowEnabled": true,
++  "directAccessGrantsEnabled": false,
++  "implicitFlowEnabled": false,
++  "serviceAccountsEnabled": false,
++  "frontchannelLogout": true,
++  "rootUrl": "https://audiobookshelf.hl.maier.wtf",
++  "baseUrl": "/",
++  "adminUrl": "https://audiobookshelf.hl.maier.wtf/auth/openid/callback",
++  "redirectUris": ["https://audiobookshelf.hl.maier.wtf/auth/openid/callback"],
++  "post.logout.redirect.uris": ["https://audiobookshelf.hl.maier.wtf/login"],
++  "webOrigins": ["https://audiobookshelf.hl.maier.wtf"],
++  "clientSecret": "${OIDC_CLIENT_SECRET}",
++  "groups": [
++    { "name": "audiobookshelf-users", "parent": null },
++    { "name": "audiobookshelf-admins", "parent": "audiobookshelf-users" }
++  ],
++  "clientRoles": ["admin", "guest"],
++  "groupRoleMappings": {
++    "audiobookshelf-users": ["guest"],
++    "audiobookshelf-admins": ["admin"]
++  },
++  "protocolMappers": [
++    {
++      "name": "audiobookshelf-groups",
++      "protocol": "openid-connect",
++      "protocolMapper": "oidc-group-membership-mapper",
++      "claim.name": "groups",
++      "full.path": false,
++      "userinfo.token.claim": true,
++      "id.token.claim": true,
++      "access.token.claim": true
++    },
++    {
++      "name": "audiobookshelf-roles",
++      "protocol": "openid-connect",
++      "protocolMapper": "oidc-role-membership-mapper",
++      "claim.name": "abs_role",
++      "roles": ["admin", "guest"],
++      "userinfo.token.claim": true,
++      "id.token.claim": true,
++      "access.token.claim": true
++    }
++  ],
++  "seedMembers": {
++    "michael": ["audiobookshelf-users", "audiobookshelf-admins"]
++  }
++}
+diff --git a/pi/audiobookshelf/scripts/apply-abs-settings.sh b/pi/audiobookshelf/scripts/apply-abs-settings.sh
+new file mode 100755
+index 0000000..3b06248
+--- /dev/null
++++ b/pi/audiobookshelf/scripts/apply-abs-settings.sh
+@@ -0,0 +1,62 @@
++#!/usr/bin/env bash
++#
++# apply-abs-settings.sh — GH-60: Push the OIDC server settings into the running
++# Audiobookshelf instance.
++#
++# SECURITY:
++#   * The client secret is supplied ONLY via environment variable
++#     OIDC_CLIENT_SECRET (or a file referenced by OIDC_CLIENT_SECRET_FILE).
++#   * It is substituted into the payload in memory and is NEVER written to a
++#     file, log, or the repository.
++#   * Run WITHOUT `set -x`.
++#
++# Prerequisites:
++#   * Audiobookshelf reachable at ABS_URL (default https://audiobookshelf.hl.maier.wtf).
++#   * An admin (root) ABS token in ABS_ADMIN_TOKEN (from `ABS_ADMIN_USERNAME` /
++#     `ABS_ADMIN_PASSWORD` exchanged for a token, or a pre-issued token).
++#   * jq available.
++#
++set -euo pipefail
++if [[ ${-:-} == *x* ]]; then
++  echo "Refusing to run with 'set -x' (would leak the client secret). Aborting." >&2
++  exit 1
++fi
++
++ABS_URL="${ABS_URL:-https://audiobookshelf.hl.maier.wtf}"
++SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
++SETTINGS_FILE="${SETTINGS_FILE:-$SCRIPT_DIR/oidc/abs-server-settings.json}"
++
++# Resolve the secret from env or from a referenced file (never echo it).
++if [[ -n "${OIDC_CLIENT_SECRET_FILE:-}" ]]; then
++  OIDC_CLIENT_SECRET="$(cat "$OIDC_CLIENT_SECRET_FILE")"
++elif [[ -z "${OIDC_CLIENT_SECRET:-}" ]]; then
++  echo "OIDC_CLIENT_SECRET (or OIDC_CLIENT_SECRET_FILE) must be set." >&2
++  exit 1
++fi
++
++ADMIN_TOKEN="${ABS_ADMIN_TOKEN:?ABS_ADMIN_TOKEN must be set (root/admin ABS token)}"
++
++# Substitute the secret in memory (no temp file, no trace in shell history
++# beyond this process which is discarded on exit).
++payload="$(jq --arg secret "$OIDC_CLIENT_SECRET" \
++  '._comment = null | .authOpenIDClientSecret = $secret' "$SETTINGS_FILE")"
++
++echo ">> Patching ABS server settings at $ABS_URL" >&2
++resp="$(curl -sS -X PATCH "$ABS_URL/api/settings" \
++  -H "Authorization: Bearer $ADMIN_TOKEN" \
++  -H "Content-Type: application/json" \
++  -d "$payload")"
++
++if echo "$resp" | jq -e '.authOpenIDIssuerURL' >/dev/null 2>&1; then
++  echo ">> Settings applied. OIDC issuer:" >&2
++  echo "$resp" | jq -r '.authOpenIDIssuerURL' >&2
++  echo ">> Verify 'authOpenIDClientSecret' is NOT echoed by the API (it is redacted)." >&2
++else
++  echo ">> ERROR: settings patch did not return expected fields:" >&2
++  echo "$resp" | head -c 500 >&2
++  echo >&2
++  exit 1
++fi
++
++# Discard the secret from memory immediately.
++unset OIDC_CLIENT_SECRET payload resp
+diff --git a/pi/audiobookshelf/scripts/break-glass-setup.sh b/pi/audiobookshelf/scripts/break-glass-setup.sh
+new file mode 100755
+index 0000000..d2ffcae
+--- /dev/null
++++ b/pi/audiobookshelf/scripts/break-glass-setup.sh
+@@ -0,0 +1,101 @@
++#!/usr/bin/env bash
++#
++# break-glass-setup.sh — GH-60: create/rotate the local Audiobookshelf
++# break-glass account `admin` and deliver its password to the operator over
++# the existing Telegram operator channel — exactly once, password only.
++#
++# SECURITY CONTRACT (GH-60 §6.2):
++#   * Password is generated with a cryptographic RNG (>= 192 bits entropy).
++#   * It is set on the local ABS `admin` account immediately.
++#   * It is sent to Telegram EXACTLY ONCE, message body = password ONLY
++#     (no prefix, no markdown, no code block, no companion text).
++#   * It is NEVER written to a file, shell history, process args, logs,
++#     CI output, issues, PRs, or the repository.
++#   * On unclear/failed Telegram delivery the password is DISCARDED, a NEW
++#     password is generated and set, and only the new value is sent once.
++#   * The same password is never sent twice.
++#   * Run WITHOUT `set -x`.
++#
++# Inputs (environment):
++#   ABS_URL                 default https://audiobookshelf.hl.maier.wtf
++#   ABS_ADMIN_TOKEN         root/admin ABS bearer token (required)
++#   TELEGRAM_BOT_TOKEN      operator-channel bot token (required)
++#   TELEGRAM_CHAT_ID        operator chat id            (required)
++#   BREAK_GLASS_USERNAME    default admin
++#
++set -euo pipefail
++if [[ ${-:-} == *x* ]]; then
++  echo "Refusing to run with 'set -x' (would leak the password). Aborting." >&2
++  exit 1
++fi
++
++ABS_URL="${ABS_URL:-https://audiobookshelf.hl.maier.wtf}"
++ADMIN_TOKEN="${ABS_ADMIN_TOKEN:?ABS_ADMIN_TOKEN must be set (root/admin ABS token)}"
++TG_TOKEN="${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN must be set (operator channel)}"
++TG_CHAT="${TELEGRAM_CHAT_ID:?TELEGRAM_CHAT_ID must be set (operator chat id)}"
++BG_USER="${BREAK_GLASS_USERNAME:-admin}"
++
++generate_password() {
++  # 32 random bytes -> 64 hex chars = 256 bits entropy (>= 192 bits required).
++  openssl rand -hex 32
++}
++
++set_abs_password() {
++  local pw="$1"
++  # Find existing user id (redacted: only the id is printed to stderr).
++  local uid
++  uid="$(curl -sS -X GET "$ABS_URL/api/users" \
++    -H "Authorization: Bearer $ADMIN_TOKEN" \
++    | jq -r --arg u "$BG_USER" '.[]? | select(.username==$u) | .id' | head -n1)"
++
++  if [[ -n "$uid" ]]; then
++    echo ">> Updating existing local user '$BG_USER' (id=$uid)" >&2
++    curl -sS -X PATCH "$ABS_URL/api/users/$uid" \
++      -H "Authorization: Bearer $ADMIN_TOKEN" \
++      -H "Content-Type: application/json" \
++      -d "$(jq -n --arg p "$pw" '{password:$p}')" >/dev/null
++  else
++    echo ">> Creating local break-glass user '$BG_USER'" >&2
++    curl -sS -X POST "$ABS_URL/api/users" \
++      -H "Authorization: Bearer $ADMIN_TOKEN" \
++      -H "Content-Type: application/json" \
++      -d "$(jq -n --arg u "$BG_USER" --arg p "$pw" '{username:$u,password:$p,type:"admin",isActive:true}')" >/dev/null
++  fi
++}
++
++send_once() {
++  local pw="$1"
++  # Body is the password ONLY. No parse_mode -> no markdown/code block.
++  local resp
++  resp="$(curl -sS "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
++    --data-urlencode "chat_id=$TG_CHAT" \
++    --data-urlencode "text=$pw")"
++  echo "$resp" | jq -e '.ok==true' >/dev/null 2>&1
++}
++
++# --- main -------------------------------------------------------------------
++PW="$(generate_password)"
++set_abs_password "$PW"
++
++if send_once "$PW"; then
++  echo ">> Break-glass password delivered exactly once to operator channel." >&2
++  echo ">> Operator stores it OFFLINE. Nothing else is printed." >&2
++  unset PW
++  exit 0
++fi
++
++# Delivery unclear/failed: discard, regenerate, set new, send new once.
++echo ">> Telegram delivery not confirmed. Discarding password, regenerating." >&2
++unset PW
++PW="$(generate_password)"
++set_abs_password "$PW"
++if send_once "$PW"; then
++  echo ">> New break-glass password delivered exactly once to operator channel." >&2
++  unset PW
++  exit 0
++fi
++
++echo ">> FATAL: unable to deliver break-glass password via Telegram." >&2
++echo ">> The ABS 'admin' password was set to a fresh secret; retrieve/rotate manually." >&2
++unset PW
++exit 1
+diff --git a/pi/audiobookshelf/scripts/rotate-keycloak-secret.sh b/pi/audiobookshelf/scripts/rotate-keycloak-secret.sh
+new file mode 100644
+index 0000000..311a543
+--- /dev/null
++++ b/pi/audiobookshelf/scripts/rotate-keycloak-secret.sh
+@@ -0,0 +1,40 @@
++#!/usr/bin/env bash
++#
++# rotate-keycloak-secret.sh — GH-60 §10.6: rotate the Audiobookshelf OIDC
++# client secret in Keycloak and emit the NEW secret (stdout only).
++#
++# After running this, re-apply ABS settings with the new secret
++# (apply-abs-settings.sh with OIDC_CLIENT_SECRET set) and restart the
++# audiobookshelf container so the cached OIDC client picks up the new secret.
++#
++# SECURITY: the new secret is printed ONCE to stdout and is NEVER written to
++# a file, log, or repository. Run WITHOUT `set -x`.
++#
++set -euo pipefail
++if [[ ${-:-} == *x* ]]; then
++  echo "Refusing to run with 'set -x' (would leak the secret). Aborting." >&2
++  exit 1
++fi
++
++REALM="homelab"
++CLIENT_ID="audiobookshelf"
++KC_ADMIN="${KC_ADMIN:?KC_ADMIN must be set}"
++KC_ADMIN_PASSWORD="${KC_ADMIN_PASSWORD:?KC_ADMIN_PASSWORD must be set}"
++
++KCADM="docker exec -i keycloak /opt/keycloak/bin/kcadm.sh"
++$KCADM config credentials --server http://localhost:8080 --realm master \
++  --user "$KC_ADMIN" --password "$KC_ADMIN_PASSWORD" >&2
++
++cid=$($KCADM get clients -r "$REALM" -q clientId="$CLIENT_ID" --fields id -c 1 2>/dev/null | docker exec -i keycloak python3 -c 'import sys,json;print(json.load(sys.stdin)[0]["id"])' 2>/dev/null)
++
++# Rotate: POST to the client-secret endpoint regenerates the credential.
++NEW=$($KCADM create clients/"$cid"/client-secret -r "$REALM" 2>/dev/null | docker exec -i keycloak python3 -c 'import sys,json;print(json.load(sys.stdin)["value"])' 2>/dev/null)
++
++echo "----------------------------------------------------------------------" >&2
++echo "New client secret for '$CLIENT_ID' generated." >&2
++echo "1) Store it in the ABS runtime secret store." >&2
++echo "2) Re-apply ABS settings (apply-abs-settings.sh)." >&2
++echo "3) Restart the audiobookshelf container." >&2
++echo "4) Verify login with old secret FAILS and new secret WORKS." >&2
++echo "----------------------------------------------------------------------" >&2
++printf '%s\n' "$NEW"
+diff --git a/pi/audiobookshelf/scripts/setup-keycloak.sh b/pi/audiobookshelf/scripts/setup-keycloak.sh
+new file mode 100755
+index 0000000..89468f7
+--- /dev/null
++++ b/pi/audiobookshelf/scripts/setup-keycloak.sh
+@@ -0,0 +1,185 @@
++#!/usr/bin/env bash
++#
++# setup-keycloak.sh — GH-60: Provision the Audiobookshelf OIDC client in the
++# existing Keycloak `homelab` realm.
++#
++# This script is the SINGLE source of truth for the runtime Keycloak objects
++# required by issue GH-60. It is executed by the runtime operator (Lydia) on
++# the host that runs the `keycloak` container.
++#
++# SECURITY:
++#   * The generated client secret is printed EXACTLY ONCE to stdout.
++#   * It is NEVER written to a file, log, CI output, or the repository.
++#   * Capture it immediately into the runtime secret store (see runbook).
++#   * Run with `set +x` / never pass `-x` so the secret cannot leak via
++#     shell tracing.
++#
++# Prerequisites:
++#   * `keycloak` container running on this host (quay.io/keycloak, realm
++#     `homelab` already exists).
++#   * Keycloak admin credentials supplied via environment:
++#       KC_ADMIN          (master-realm admin, e.g. `admin`)
++#       KC_ADMIN_PASSWORD
++#   * Optional:
++#       ABS_ADMIN_USERNAME  (Keycloak user that becomes ABS admin; default `michael`)
++#
++set -euo pipefail
++
++# Never trace this script: it handles a secret.
++if [[ ${-:-} == *x* ]]; then
++  echo "Refusing to run with 'set -x' (would leak the client secret). Aborting." >&2
++  exit 1
++fi
++
++REALM="homelab"
++CLIENT_ID="audiobookshelf"
++ABS_URL="https://audiobookshelf.hl.maier.wtf"
++CALLBACK="${ABS_URL}/auth/openid/callback"
++POST_LOGOUT="${ABS_URL}/login"
++ADMIN_USER="${ABS_ADMIN_USERNAME:-michael}"
++
++KC_ADMIN="${KC_ADMIN:?KC_ADMIN must be set (Keycloak master-admin user)}"
++KC_ADMIN_PASSWORD="${KC_ADMIN_PASSWORD:?KC_ADMIN_PASSWORD must be set}"
++
++KCADM="docker exec -i keycloak /opt/keycloak/bin/kcadm.sh"
++
++echo ">> Authenticating to Keycloak (realm: master)" >&2
++$KCADM config credentials --server http://localhost:8080 --realm master \
++  --user "$KC_ADMIN" --password "$KC_ADMIN_PASSWORD" >&2
++
++# ---------------------------------------------------------------------------
++# 1. Realm groups (authoritative role source)
++# ---------------------------------------------------------------------------
++echo ">> Ensuring realm groups" >&2
++
++users_gid=$($KCADM get groups -r "$REALM" -q name=audiobookshelf-users --fields id,name -c 1 2>/dev/null | docker exec -i keycloak python3 -c 'import sys,json;d=json.load(sys.stdin);print(d[0]["id"] if d else "")' 2>/dev/null || true)
++if [[ -z "$users_gid" ]]; then
++  users_gid=$($KCADM create groups -r "$REALM" -s name=audiobookshelf-users 2>/dev/null | tr -d '"')
++  echo "   created group audiobookshelf-users -> $users_gid" >&2
++fi
++
++admins_gid=$($KCADM get groups -r "$REALM" -q name=audiobookshelf-admins --fields id,name -c 1 2>/dev/null | docker exec -i keycloak python3 -c 'import sys,json;d=json.load(sys.stdin);print(d[0]["id"] if d else "")' 2>/dev/null || true)
++if [[ -z "$admins_gid" ]]; then
++  admins_gid=$($KCADM create groups -r "$REALM" -s name=audiobookshelf-admins -s parentId="$users_gid" 2>/dev/null | tr -d '"')
++  echo "   created group audiobookshelf-admins (child of users) -> $admins_gid" >&2
++fi
++
++# ---------------------------------------------------------------------------
++# 2. Client (confidential, Authorization Code flow)
++# ---------------------------------------------------------------------------
++echo ">> Ensuring client $CLIENT_ID" >&2
++cid=$($KCADM get clients -r "$REALM" -q clientId="$CLIENT_ID" --fields id,clientId -c 1 2>/dev/null | docker exec -i keycloak python3 -c 'import sys,json;d=json.load(sys.stdin);print(d[0]["id"] if d else "")' 2>/dev/null || true)
++
++if [[ -z "$cid" ]]; then
++  cid=$($KCADM create clients -r "$REALM" \
++    -s clientId="$CLIENT_ID" \
++    -s enabled=true \
++    -s protocol=openid-connect \
++    -s publicClient=false \
++    -s bearerOnly=false \
++    -s standardFlowEnabled=true \
++    -s directAccessGrantsEnabled=false \
++    -s implicitFlowEnabled=false \
++    -s serviceAccountsEnabled=false \
++    -s frontchannelLogout=true \
++    -s rootUrl="$ABS_URL" \
++    -s baseUrl=/ \
++    -s adminUrl="$CALLBACK" \
++    -s 'redirectUris=["'"$CALLBACK"'"]' \
++    -s 'post.logout.redirect.uris=["'"$POST_LOGOUT"'"]' \
++    -s 'webOrigins=["'"$ABS_URL"'"]' \
++    2>/dev/null | tr -d '"')
++  echo "   created client -> $cid" >&2
++else
++  echo "   client already exists -> $cid" >&2
++fi
++
++# ---------------------------------------------------------------------------
++# 3. Client roles + group→role mapping
++#    audiobookshelf-users  -> client role `guest`  (ABS read-only)
++#    audiobookshelf-admins -> client role `admin`  (ABS administrator)
++# ---------------------------------------------------------------------------
++echo ">> Ensuring client roles and group mappings" >&2
++
++for role in admin guest; do
++  if ! $KCADM get clients/"$cid"/roles/"$role" -r "$REALM" >/dev/null 2>&1; then
++    $KCADM create clients/"$cid"/roles -r "$REALM" -s name="$role" >&2
++  fi
++done
++
++admin_role_id=$($KCADM get clients/"$cid"/roles/admin -r "$REALM" --fields id -c 1 2>/dev/null | docker exec -i keycloak python3 -c 'import sys,json;print(json.load(sys.stdin)["id"])' 2>/dev/null)
++guest_role_id=$($KCADM get clients/"$cid"/roles/guest -r "$REALM" --fields id -c 1 2>/dev/null | docker exec -i keycloak python3 -c 'import sys,json;print(json.load(sys.stdin)["id"])' 2>/dev/null)
++
++# Map group -> client role (idempotent: ignore "already exists")
++$KCADM create groups/"$users_gid"/role-mappings/clients/"$cid" -r "$REALM" \
++  -b "[{\"id\":\"$guest_role_id\",\"name\":\"guest\",\"clientRole\":true,\"containerId\":\"$cid\"}]" 2>/dev/null || true
++$KCADM create groups/"$admins_gid"/role-mappings/clients/"$cid" -r "$REALM" \
++  -b "[{\"id\":\"$admin_role_id\",\"name\":\"admin\",\"clientRole\":true,\"containerId\":\"$cid\"}]" 2>/dev/null || true
++
++# ---------------------------------------------------------------------------
++# 4. Protocol mappers
++#    groups   -> real Keycloak group names (audit / admission transparency)
++#    abs_role -> ABS-consumed role tokens (admin|guest) derived from groups
++# ---------------------------------------------------------------------------
++echo ">> Ensuring protocol mappers" >&2
++
++has_mapper() { $KCADM get clients/"$cid"/protocol-mappers/models -r "$REALM" -q name="$1" --fields name -c 1 2>/dev/null | docker exec -i keycloak python3 -c 'import sys,json;d=json.load(sys.stdin);print("yes" if d else "no")' 2>/dev/null; }
++
++if [[ "$(has_mapper audiobookshelf-groups)" != "yes" ]]; then
++  $KCADM create clients/"$cid"/protocol-mappers/models -r "$REALM" -b '{
++    "name":"audiobookshelf-groups",
++    "protocol":"openid-connect",
++    "protocolMapper":"oidc-group-membership-mapper",
++    "config":{
++      "claim.name":"groups",
++      "jsonType.label":"String",
++      "full.path":"false",
++      "id.token.claim":"true",
++      "access.token.claim":"true",
++      "userinfo.token.claim":"true"
++    }
++  }' >&2
++fi
++
++if [[ "$(has_mapper audiobookshelf-roles)" != "yes" ]]; then
++  $KCADM create clients/"$cid"/protocol-mappers/models -r "$REALM" -b '{
++    "name":"audiobookshelf-roles",
++    "protocol":"openid-connect",
++    "protocolMapper":"oidc-role-membership-mapper",
++    "config":{
++      "claim.name":"abs_role",
++      "jsonType.label":"String",
++      "id.token.claim":"true",
++      "access.token.claim":"true",
++      "userinfo.token.claim":"true",
++      "role":"admin",
++      "role":"guest"
++    }
++  }' >&2
++fi
++
++# ---------------------------------------------------------------------------
++# 5. Seed Michael as admin (member of BOTH groups)
++# ---------------------------------------------------------------------------
++echo ">> Ensuring $ADMIN_USER is member of both groups" >&2
++uid=$($KCADM get users -r "$REALM" -q username="$ADMIN_USER" --fields id -c 1 2>/dev/null | docker exec -i keycloak python3 -c 'import sys,json;d=json.load(sys.stdin);print(d[0]["id"] if d else "")' 2>/dev/null || true)
++if [[ -n "$uid" ]]; then
++  $KCADM update users/"$uid"/groups/"$users_gid" -r "$REALM" \
++    -b "{\"realm\":\"$REALM\",\"userId\":\"$uid\",\"groupId\":\"$users_gid\"}" >/dev/null 2>&1 || true
++  $KCADM update users/"$uid"/groups/"$admins_gid" -r "$REALM" \
++    -b "{\"realm\":\"$REALM\",\"userId\":\"$uid\",\"groupId\":\"$admins_gid\"}" >/dev/null 2>&1 || true
++else
++  echo "   WARNING: user '$ADMIN_USER' not found in realm; add a real person to both groups manually." >&2
++fi
++
++# ---------------------------------------------------------------------------
++# 6. Emit the client secret — ONCE, to stdout only.
++# ---------------------------------------------------------------------------
++SECRET=$($KCADM get clients/"$cid"/client-secret -r "$REALM" 2>/dev/null | docker exec -i keycloak python3 -c 'import sys,json;print(json.load(sys.stdin)["value"])' 2>/dev/null)
++
++echo "----------------------------------------------------------------------" >&2
++echo "Keycloak client '$CLIENT_ID' provisioned in realm '$REALM'." >&2
++echo "Capture the secret below into the ABS runtime secret store NOW." >&2
++echo "It will NOT be shown again and is never written to disk by this script." >&2
++echo "----------------------------------------------------------------------" >&2
++printf '%s\n' "$SECRET"
+diff --git a/pi/audiobookshelf/scripts/verify-break-glass.sh b/pi/audiobookshelf/scripts/verify-break-glass.sh
+new file mode 100755
+index 0000000..485a9ac
+--- /dev/null
++++ b/pi/audiobookshelf/scripts/verify-break-glass.sh
+@@ -0,0 +1,33 @@
++#!/usr/bin/env bash
++#
++# verify-break-glass.sh — GH-60 §6.3: blackbox verification of the local
++# break-glass login. The password is read interactively (no echo) and is
++# NEVER included in any output, log, or evidence file.
++#
++# Usage: ABS_ADMIN_USERNAME=admin ./verify-break-glass.sh
++#   (prompts for the password; prints only PASS/FAIL + redacted metadata)
++#
++set -euo pipefail
++ABS_URL="${ABS_URL:-https://audiobookshelf.hl.maier.wtf}"
++USER="${ABS_ADMIN_USERNAME:-admin}"
++
++echo "Target: $USER @ $ABS_URL"
++read -rsp "Break-glass password (not shown): " PW
++echo
++
++resp="$(curl -sS -X POST "$ABS_URL/api/login" \
++  -H "Content-Type: application/json" \
++  -d "$(jq -n --arg u "$USER" --arg p "$PW" '{username:$u,password:$p}')")"
++unset PW
++
++if echo "$resp" | jq -e '.user and (.user.username==env.USER or .user.username=="'"$USER"'")' >/dev/null 2>&1; then
++  echo "RESULT: PASS"
++  echo "When:   $(date -u +%Y-%m-%dT%H:%M:%SZ)"
++  echo "Target: $USER @ $ABS_URL (Keycloak-independent local login)"
++  echo "Note:   password not present in this output."
++else
++  echo "RESULT: FAIL"
++  echo "When:   $(date -u +%Y-%m-%dT%H:%M:%SZ)"
++  echo "Target: $USER @ $ABS_URL"
++  exit 1
++fi
