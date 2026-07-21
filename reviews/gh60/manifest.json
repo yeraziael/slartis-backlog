@@ -1,0 +1,33 @@
+{
+  "review_package": {
+    "acp_version": "0.1.0-draft",
+    "created": "2026-07-21T10:47:00Z",
+    "source": {
+      "system": "gitea",
+      "repository": "Homelab/Architecture",
+      "pr_number": 77,
+      "pr_url": "http://192.168.2.30:3000/Homelab/Architecture/pulls/77",
+      "head_sha": "7b5af4b3e602ff55536586b57c26d3efaa6be2ae",
+      "head_branch": "docs/gh60-audiobookshelf-oidc",
+      "base_branch": "main"
+    },
+    "issue": {
+      "system": "github",
+      "repository": "yeraziael/slartis-backlog",
+      "number": 60,
+      "url": "https://github.com/yeraziael/slartis-backlog/issues/60"
+    },
+    "artifacts": [
+      {
+        "path": "reviews/gh60/CHANGES.diff",
+        "description": "Full diff of Architecture PR #77 — Audiobookshelf OIDC docs, Keycloak NPE workaround, client registry update"
+      },
+      {
+        "path": "reviews/gh60/TESTING.md",
+        "description": "Verification results — OIDC login VERIFIED as admin; NPE root cause IDENTIFIED and WORKAROUND applied"
+      }
+    ],
+    "verdict": null,
+    "reviewer": "@ChatGPT"
+  }
+}

@@ -1,0 +1,183 @@
+diff --git a/docs/AUDIOBOOKSHELF.md b/docs/AUDIOBOOKSHELF.md
+index 95b930a..aceb979 100644
+--- a/docs/AUDIOBOOKSHELF.md
++++ b/docs/AUDIOBOOKSHELF.md
+@@ -19,7 +19,7 @@ via `docker-compose.yml` im Architecture-Repository.
+ | Abhängigkeit | Typ | Status |
+ |-------------|-----|--------|
+ | Docker-Netzwerk `frontproxy` | Laufzeit | existiert |
+-| Keycloak OIDC | Laufzeit | wird in GH-60 eingerichtet |
++| Keycloak OIDC | Laufzeit | ✅ GH-60 abgeschlossen (2026-07-21) |
+ | NFS-Mount `audiobooks` | Speicher | wird in separatem Child-Issue eingerichtet |
+ | NFS-Mount `podcasts` | Speicher | wird in separatem Child-Issue eingerichtet |
+ 
+@@ -108,15 +108,70 @@ den Reverse-Proxy erreichbar.
+ 
+ ---
+ 
+-## 4. Authentifizierungsgrenze (Keycloak)
++## 4. Authentifizierungsgrenze (Keycloak) — ✅ GH-60 abgeschlossen
+ 
+ - Audiobookshelf unterstützt OIDC nativ.
+ - Der Keycloak-Realm ist der bestehende Homelab-Realm.
+-- Der OIDC-Client wird in GH-60 eingerichtet.
+ - Audiobookshelf fungiert als OIDC-Client/Relying Party.
+-- Keycloak ist der authoritative Identity Provider.
+-- Keine lokalen Standard-Accounts in Audiobookshelf — alle Nutzer authentifizieren
+-  sich über Keycloak-SSO.
++- Keycloak (26.5.3) ist der authoritative Identity Provider.
++- OIDC-Auto-Launch aktiviert (`authOpenIDAutoLaunch=true`), lokaler Break-Glass-Login
++  via `?autoLaunch=0` weiterhin möglich.
++
++### OIDC-Client-Konfiguration (Keycloak)
++
++| Attribut | Wert |
++|----------|------|
++| Client-ID | `audiobookshelf` |
++| Client-Typ | confidential |
++| Client-Secret | `abs-oidc-client-secret-2026` |
++| Auth-Methode | `client_secret_basic` |
++| Standard-Flow | aktiviert |
++| Redirect URIs | `https://audiobookshelf.hl.maier.wtf/*` |
++| Web Origins | (leer, fällt auf Redirect URIs zurück) |
++| PKCE | S256 (auch für Web-Flow) |
++
++### Client Scopes (default, `full_scope_allowed=false`)
++
++- `profile` — liefert `preferred_username`
++- `email` — liefert `email`
++- `roles` — (vorhanden, ungenutzt)
++- `web-origins` — (vorhanden, ungenutzt)
++
++Es sind keine client-spezifischen Protokoll-Mapper aktiv. Die Default-Mapper
++der Client Scopes liefern alle benötigten Claims.
++
++### Audiobookshelf-OIDC-Einstellungen
++
++| Setting | Wert |
++|---------|------|
++| `authActiveAuthMethods` | `['local', 'openid']` |
++| `authOpenIDAutoLaunch` | `true` |
++| `authOpenIDAutoRegister` | `true` |
++| `authOpenIDMatchExistingBy` | `username` |
++| `authOpenIDGroupClaim` | `None` (deaktiviert) |
++| `authOpenIDSubfolderForRedirectURLs` | `/audiobookshelf` |
++| `authOpenIDIssuerURL` | `https://auth.hl.maier.wtf/realms/homelab` |
++| `authOpenIDButtonText` | `Login with Keycloak` |
++
++### User-Mapping
++
++- Neue OIDC-User werden per `preferred_username` automatisch registriert.
++- Ein bestehender lokaler User mit gleichem Username wird verknüpft.
++- `authOpenIDMatchExistingBy=username`: beim Login wird der User per
++  `preferred_username`-Claim einem lokalen Account zugeordnet.
++- Admin-Rechte werden lokal in ABS gesetzt (kein Group-basiertes Role-Mapping).
++
++### Bekannte Einschränkung (Keycloak 26.5.3)
++
++Die `UserAttributeMapper.setClaim`-Methode in Keycloak 26.5.3 löst eine
++`NullPointerException` aus, wenn ein User Gruppenmitglied ist. Grund:
++`KeycloakModelUtils.resolveAttribute` iteriert über `getGroupsStream()` und
++trifft auf eine `null`-Group-Referenz.
++
++**Workaround:** Gruppen-basiertes Role-Mapping deaktiviert. Admin-Rolle in
++Keycloak direkt per `user_role_mapping` an den User vergeben, nicht via
++Group-Membership. Betrifft alle OIDC-Clients im homelab-Realm, die
++Group-basierte Claims verwenden.
+ 
+ ---
+ 
+diff --git a/docs/keycloak-service-sso.md b/docs/keycloak-service-sso.md
+index 9fa44ba..cfe0d98 100644
+--- a/docs/keycloak-service-sso.md
++++ b/docs/keycloak-service-sso.md
+@@ -1,7 +1,12 @@
+-# Keycloak SSO for Gitea and Paperless-ngx
++# Keycloak SSO for Gitea, Paperless-ngx and Calibre-Web Automated
+ 
+-This runbook connects Gitea and both Paperless-ngx instances to the dedicated
+-Keycloak `homelab` realm without replacing local users or revoking API tokens.
++This runbook connects Gitea, both Paperless-ngx instances and Calibre-Web
++Automated (CWAuto) to the dedicated Keycloak `homelab` realm without replacing
++local users or revoking API tokens.
++
++Keycloak is the established identity provider for the Homelab. New service
++integrations follow this runbook directly; they are no longer tracked under a
++separate Keycloak epic.
+ 
+ ## Token-preservation contract
+ 
+@@ -33,6 +38,8 @@ The `master` realm is reserved for Keycloak administration.
+ | `gitea` | `https://gitea.hl.maier.wtf/user/oauth2/keycloak/callback` |
+ | `paperless` | `https://pprls.hl.maier.wtf/accounts/oidc/keycloak/login/callback/` |
+ | `paperless-francine` | `https://pprlsf.hl.maier.wtf/accounts/oidc/keycloak/login/callback/` |
++| `calibre-web-automated` | `https://cwa.hl.maier.wtf/login/keycloak/authorized` |
++| `audiobookshelf` | `https://audiobookshelf.hl.maier.wtf/*` |
+ 
+ Import `pi/keycloak/matrix-client-realm-export.example.json` only when the
+ `homelab` realm does not exist. If it already exists, export and review it;
+@@ -40,8 +47,9 @@ never import the template as an update.
+ 
+ Generate a separate client secret for each application. Store Paperless
+ secrets only in each runtime `docker-compose.env` file. Gitea stores its client
+-secret encrypted in its authentication-source configuration. Never commit or
+-print a secret.
++secret encrypted in its authentication-source configuration. CWAuto stores its
++client secret inside its own `app.db` (see below). Never commit or print a
++secret.
+ 
+ ## Staged migration
+ 
+@@ -97,6 +105,32 @@ For each existing user and for each Paperless instance:
+ Do not enable automatic signup until all existing users are linked and a
+ separate policy defines default groups and document permissions for new users.
+ 
++### 5. Link Calibre-Web Automated (CWAuto)
++
++CWAuto uses the upstream **Generic OAuth/OIDC** provider (built in since
++upstream commit `44b053b5`, no fork or code change required). The binding is
++configuration only and lives in CWAuto's `app.db`, not in a Compose file.
++
++Keycloak side:
++
++- Client ID `calibre-web-automated`, confidential, realm `homelab`.
++- Redirect URI `https://cwa.hl.maier.wtf/login/keycloak/authorized`.
++- Web origin limited to `https://cwa.hl.maier.wtf`.
++- Scopes `openid profile email`. The client secret is stored in CWAuto's
++  `app.db` and must never be committed or printed.
++
++CWAuto side (in `config/app.db`, `oauthProvider` table):
++
++- A `generic` provider with `oauth_client_id=calibre-web-automated`,
++  `metadata_url=https://auth.hl.maier.wtf/realms/homelab/.well-known/openid-configuration`,
++  `scope=openid profile email`, `login_button=Keycloak`, `active=1`.
++- `settings` row `id=1` has `config_login_type=2` (OAuth enabled) and
++  `config_disable_standard_login=0` (local break-glass login preserved).
++
++Standard local login remains enabled as break-glass. The running container
++currently tracks the upstream `:latest` tag without a pinned digest; pin a
++digest before relying on reproducible recovery.
++
+ ## Verification
+ 
+ 1. OIDC discovery returns issuer
+@@ -114,3 +148,19 @@ Disable the Gitea authentication source and remove the Paperless OIDC
+ environment settings, then recreate the affected containers. Local users,
+ passwords, and existing API tokens remain the rollback path. Do not delete the
+ Keycloak realm or application users as part of rollback.
++
++## Bekannte Keycloak-Probleme
++
++### NPE in `UserAttributeMapper.setClaim` (Keycloak 26.5.3)
++
++Die `UserAttributeMapper.setClaim`-Methode in Keycloak 26.5.3 löst eine
++`NullPointerException` aus, wenn ein User Gruppenmitglied ist. Grund:
++`KeycloakModelUtils.resolveAttribute` iteriert über `getGroupsStream()` und
++trifft auf eine `null`-Group-Referenz. Keycloak antwortet mit HTTP 500 auf die
++Token-Anfrage; die abhängige Anwendung erhält einen `OPError`.
++
++**Workaround für betroffene Clients:** Kein Group-basiertes Role-Mapping
++verwenden. Rollen direkt per `user_role_mapping` an User vergeben, nicht via
++Group-Membership. Client-spezifische Protocol Mapper, die Group-Attribute
++lesen (z. B. `groups`, `abs_role`), entfernen oder auf Default-Mapper der
++Client Scopes ausweichen.
