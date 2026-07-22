@@ -4,20 +4,25 @@
   "review_target": "pr",
   "source_repository": "Homelab/Architecture",
   "source_issue": "slarti/backlog#254",
-  "source_pr": 78,
-  "source_pr_url": "https://gitea.hl.maier.wtf/Homelab/Architecture/pulls/78",
-  "base_commit": "ed54f1144f1df21af13c9a2a1fd5c685fa2a95ac",
-  "pr_head_commit": "2683d9542b21eaa2d70907f4306a023460774ee1",
+  "source_pr": 79,
+  "source_pr_url": "https://gitea.hl.maier.wtf/Homelab/Architecture/pulls/79",
+  "base_commit": "3180722ba546dfd9d5434b4d3d71d32eb82ebd43",
+  "effective_review_base": "ed54f1144f1df21af13c9a2a1fd5c685fa2a95ac",
+  "pr_head_commit": "5e4e566ab143f3e1a3f9b6a7bbd8b5798dc1bacb",
   "instruction_file": "Homelab/Architecture/AGENTS.md",
-  "instruction_commit": "ed54f1144f1df21af13c9a2a1fd5c685fa2a95ac",
+  "instruction_commit": "3180722ba546dfd9d5434b4d3d71d32eb82ebd43",
   "instruction_reloaded": true,
-  "changes_diff_sha256": "ad33f5e919ed2e441bebd8c85c6dcc6186dbec3a91269b583d064726e2cd2c1f",
+  "changes_diff_scope": "effective PW-D01 decision from pre-decision base through corrective head",
+  "changes_diff_sha256": "cd6c365e31b75fe8a6160cce28d10e38c1b8380d16d0a51a533a4a49bebc2385",
   "changed_files": [
     "docs/decisions/playwright/runner-bootstrap.md"
   ],
-  "ci_run_ids": [658, 659],
+  "ci_run_ids": [661, 662],
   "ci_conclusion": "success",
-  "gitea_evidence_comment": "https://gitea.hl.maier.wtf/slarti/backlog/issues/254#issuecomment-4228",
+  "gitea_evidence_comment": "https://gitea.hl.maier.wtf/slarti/backlog/issues/254#issuecomment-4240",
+  "supersedes_review_package_head": "73d5268a1c44f09a910d3356f678a3fc6d403543",
+  "predecessor_source_pr": 78,
+  "predecessor_merge_commit": "3180722ba546dfd9d5434b4d3d71d32eb82ebd43",
   "frozen_plan": {
     "identifier": "playwright-execution-plan-v1",
     "review_pr": "yeraziael/slartis-backlog#83",
@@ -31,5 +36,5 @@
   "accounts_mutated": false,
   "containers_or_images_executed": false,
   "external_systems_mutated": true,
-  "external_mutation_scope": "Gitea branch, pull request, issue journal, and CI metadata only"
+  "external_mutation_scope": "Git branches, Gitea/GitHub pull requests, issue journals, review requests, and CI metadata only"
 }

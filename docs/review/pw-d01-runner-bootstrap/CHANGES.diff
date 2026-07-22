@@ -1,9 +1,9 @@
 diff --git a/docs/decisions/playwright/runner-bootstrap.md b/docs/decisions/playwright/runner-bootstrap.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..7a22f38f1ef041705f5be8fa4b9640eaa22b428f
+index 0000000000000000000000000000000000000000..271bb2565774d5d0061109b9b48f415c76346972
 --- /dev/null
 +++ b/docs/decisions/playwright/runner-bootstrap.md
-@@ -0,0 +1,381 @@
+@@ -0,0 +1,491 @@
 +# PW-D01: Playwright Runner And Project Bootstrap Contract
 +
 +## Status
@@ -59,9 +59,11 @@ index 0000000000000000000000000000000000000000..7a22f38f1ef041705f5be8fa4b9640ea
 +| Package manager | npm; no pnpm, Yarn, or host package manager |
 +| Lock file | committed `tests/playwright/package-lock.json`, lockfile version 3 |
 +| Project module mode | ECMAScript modules (`"type": "module"`) |
++| Package script | `playwright test --config=playwright.config.ts --project=chromium` |
 +| Local entry point | `make test-playwright-platform` |
 +| CI entry point | `make test-playwright-platform` |
 +| Make target command | `bash tests/playwright/runner/run.sh platform` |
++| Browser shared memory | Private 1 GiB `/dev/shm` via `--shm-size=1g`; host IPC is forbidden |
 +
 +The platform-specific manifest digest, not the mutable tag and not only the
 +multi-platform index digest, is the runtime identity. The human-readable tag is
@@ -78,7 +80,9 @@ index 0000000000000000000000000000000000000000..7a22f38f1ef041705f5be8fa4b9640ea
 +├── playwright.config.ts
 +├── README.md
 +└── runner/
-+    └── run.sh
++    ├── bootstrap.spec.ts
++    ├── run.sh
++    └── validate-lock.mjs
 +
 +tests/test_playwright_bootstrap.py
 +```
@@ -102,15 +106,30 @@ index 0000000000000000000000000000000000000000..7a22f38f1ef041705f5be8fa4b9640ea
 +- `packageManager: "npm@11.13.0"`;
 +- exact engines `node: "24.17.0"` and `npm: "11.13.0"`;
 +- exact dev dependency `@playwright/test: "1.61.1"` with no range prefix;
-+- a `test:platform` script that runs the controlled platform suite through
-+  `playwright.config.ts` and project `chromium`.
++- exact script `test:platform: "playwright test --config=playwright.config.ts
++  --project=chromium"`.
 +
 +The lock file MUST:
 +
 +- be generated with npm `11.13.0`;
 +- use lockfile version 3;
 +- contain no floating dependency declaration;
++- contain only `https://registry.npmjs.org/` remote `resolved` URLs, with no
++  alternate host, HTTP, Git, file, or credential-bearing URL;
++- contain an npm integrity value for every remotely resolved package;
 +- be installed with `npm ci`, never `npm install`, during runner execution.
++
++`tests/playwright/runner/validate-lock.mjs` MUST fail closed unless all lockfile
++rules above and the exact root `@playwright/test: "1.61.1"` declaration hold.
++The dependency phase MUST run this validator before `npm ci` on every
++invocation; CI-only validation is insufficient.
++
++PW-I01 MUST include `runner/bootstrap.spec.ts` so its required platform target
++has one test from the first commit. This test MUST load the Playwright project
++without requesting `browser`, `context`, or `page`; PW-I02 owns the first
++Chromium launch and isolation test. The bootstrap test remains part of later
++platform runs. `--pass-with-no-tests` is forbidden because a missing suite must
++never become a successful run.
 +
 +No separate `typescript` package is selected. Playwright's supported built-in
 +TypeScript loading is sufficient for the initial configuration and tests.
@@ -118,10 +137,15 @@ index 0000000000000000000000000000000000000000..7a22f38f1ef041705f5be8fa4b9640ea
 +## Playwright Configuration Contract
 +
 +`tests/playwright/playwright.config.ts` MUST initially define exactly one
-+browser project named `chromium` using Playwright's bundled Chromium. It MUST
-+set `chromiumSandbox: false` explicitly; PW-I01 runs only controlled local
-+content with no network and does not introduce the additional seccomp artifact
-+required for a sandboxed `pwuser` configuration.
++browser project named `chromium` using Playwright's bundled Chromium. Test
++discovery MUST use project-relative `testDir: "."`, include
++`runner/bootstrap.spec.ts`, `platform/**/*.spec.ts`, and
++`services/**/*.spec.ts`, and exclude `node_modules` and the result root. It MUST
++set `retries: 0`, read the output directory from the required
++`PLAYWRIGHT_RESULTS_DIR` environment variable, fail when that variable is
++absent, and set `chromiumSandbox: false` explicitly. PW-I01 runs only controlled
++local content with no network and does not introduce the additional seccomp
++artifact required for a sandboxed `pwuser` configuration.
 +
 +PW-I01 MUST NOT enable Firefox, WebKit, videos, service-specific URLs,
 +authentication, retries, or live Homelab tests. Later tickets own those
@@ -143,29 +167,34 @@ index 0000000000000000000000000000000000000000..7a22f38f1ef041705f5be8fa4b9640ea
 +2. Create the host results directory before starting Docker.
 +3. invoke the exact image and `--platform linux/amd64`;
 +4. use `docker run --rm --init` for dependency installation and
-+   `docker run --rm --init --ipc=host` for browser execution;
++   `docker run --rm --init --shm-size=1g` for test execution; sharing the host
++   IPC namespace is forbidden;
 +5. mount the repository read-only at `/workspace`;
 +6. mount the results directory read-write at `/results`;
 +7. set the working directory to `/workspace/tests/playwright`;
 +8. create one uniquely named temporary Docker volume for
 +   `/workspace/tests/playwright/node_modules` and remove it in an exit trap;
 +9. run a dependency phase with that volume read-write, explicit Docker bridge
-+   networking, no secrets, and only the locked npm install command;
-+10. run the browser phase with `--network none` and the dependency volume
++   networking, no secrets, and only directory setup, version checks, lockfile
++   validation, and the locked npm install command;
++10. run the test phase with `--network none` and the dependency volume
 +    read-only;
-+11. provide ephemeral writable tmpfs mounts for `/tmp` and `/root/.npm` in each
-+    phase;
++11. provide one ephemeral writable `/tmp` tmpfs with mode `1777` in each phase,
++    set `HOME=/tmp/pw-home`, and set `npm_config_cache=/tmp/npm-cache`;
 +12. run both phases with a read-only root filesystem, all Linux capabilities
 +    dropped, and `no-new-privileges`;
-+13. install the locked project with
++13. validate the lockfile and then install the locked project with
 +    `npm ci --ignore-scripts --no-audit --no-fund`;
 +14. run only the selected package script with no network-fetched executable;
 +15. preserve the child exit code unchanged until PW-I03 introduces the final
 +    `0/1/2` result mapper;
-+16. run the browser phase as the invoking host UID/GID so `/results` ownership
-+    is correct without `chown` or an added capability;
++16. reject invoking UID `0` or GID `0` before creating a volume or container,
++    then run the test phase as the invoking non-root host UID/GID so `/results`
++    ownership is correct without `chown` or an added capability;
 +17. never mount the Docker socket, home directory, credential directory, SSH
-+    directory, or any service runtime path.
++    directory, or any service runtime path;
++18. pass only the environment variables shown below; host environment forwarding,
++    `--env-file`, and secret injection are forbidden in PW-I01.
 +
 +The dependency phase has registry access but no credentials, service variables,
 +results mount, or browser execution:
@@ -177,56 +206,66 @@ index 0000000000000000000000000000000000000000..7a22f38f1ef041705f5be8fa4b9640ea
 +  --read-only \
 +  --cap-drop ALL \
 +  --security-opt no-new-privileges \
-+  --tmpfs /tmp:rw,nosuid,nodev,size=512m \
-+  --tmpfs /root/.npm:rw,nosuid,nodev,size=128m \
++  --tmpfs /tmp:rw,nosuid,nodev,size=512m,mode=1777 \
 +  --workdir /workspace/tests/playwright \
 +  --mount type=bind,src="$REPOSITORY_ROOT",dst=/workspace,readonly \
 +  --mount type=volume,src="$NODE_MODULES_VOLUME",dst=/workspace/tests/playwright/node_modules \
 +  --env CI=true \
 +  --env HOME=/tmp/pw-home \
++  --env npm_config_cache=/tmp/npm-cache \
 +  --env npm_config_registry=https://registry.npmjs.org/ \
 +  mcr.microsoft.com/playwright:v1.61.1-noble@sha256:cf0daee9b994042e011bc29f20cdff1a9f682a039b43fcd738f7d8a9d3bcd9d6 \
-+  /bin/bash -lc 'test "$(node --version)" = v24.17.0 && test "$(npm --version)" = 11.13.0 && npm ci --ignore-scripts --no-audit --no-fund'
++  /bin/bash -lc 'mkdir -p "$HOME" "$npm_config_cache" && test "$(node --version)" = v24.17.0 && test "$(npm --version)" = 11.13.0 && node runner/validate-lock.mjs && npm ci --ignore-scripts --no-audit --no-fund'
 +```
 +
-+The browser phase has no network and cannot modify installed dependencies:
++The test phase has no network, a private shared-memory mount, and cannot modify
++installed dependencies:
 +
 +```bash
-+docker run --rm --init --ipc=host \
++docker run --rm --init --shm-size=1g \
 +  --platform linux/amd64 \
 +  --network none \
 +  --read-only \
 +  --cap-drop ALL \
 +  --security-opt no-new-privileges \
 +  --user "$HOST_UID:$HOST_GID" \
-+  --tmpfs /tmp:rw,nosuid,nodev,size=512m \
-+  --tmpfs /root/.npm:rw,nosuid,nodev,size=128m \
++  --tmpfs /tmp:rw,nosuid,nodev,size=512m,mode=1777 \
 +  --workdir /workspace/tests/playwright \
 +  --mount type=bind,src="$REPOSITORY_ROOT",dst=/workspace,readonly \
 +  --mount type=volume,src="$NODE_MODULES_VOLUME",dst=/workspace/tests/playwright/node_modules,readonly \
 +  --mount type=bind,src="$RESULTS_DIR",dst=/results \
 +  --env CI=true \
 +  --env HOME=/tmp/pw-home \
++  --env npm_config_cache=/tmp/npm-cache \
 +  --env PLAYWRIGHT_RESULTS_DIR=/results \
 +  mcr.microsoft.com/playwright:v1.61.1-noble@sha256:cf0daee9b994042e011bc29f20cdff1a9f682a039b43fcd738f7d8a9d3bcd9d6 \
-+  /bin/bash -lc 'mkdir -p "$HOME" && npm run test:platform'
++  /bin/bash -lc 'mkdir -p "$HOME" "$npm_config_cache" && npm run test:platform'
 +```
 +
 +The shell fragments are contract templates, not implementation in this decision
-+artifact. PW-I01 owns safe array-based shell construction, invoking UID/GID
-+capture, unique volume naming, and cleanup traps. The dependency volume MUST be
-+removed after every pass, failure, signal, or prerequisite error.
++artifact. They are the complete network, privilege, environment, mount, and
++runtime-identity contract; PW-I01 MUST NOT add or remove an argument in those
++categories. PW-I01 owns only safe array-based shell construction, variable
++names, diagnostics, invoking UID/GID capture, collision-safe volume naming, and
++trap syntax. Those mechanics MUST NOT alter the observable Docker arguments,
++exit code, or lifecycle. The dependency volume MUST be removed after every
++pass, failure, signal, or prerequisite error.
 +
 +## Network Boundary
 +
-+PW-I01 platform/bootstrap browser tests MUST run with `--network none`; they use
-+only controlled local content. This makes browser execution independent of DNS,
-+TLS, Keycloak, services, and the Internet.
++PW-I01 platform tests MUST run with `--network none`; they use only controlled
++local content. This makes test execution independent of DNS, TLS, Keycloak,
++services, and the Internet.
 +
-+The preceding dependency phase MAY reach only the explicitly configured package
-+source `https://registry.npmjs.org/` to execute the lockfile-bound `npm ci`. It
-+receives no runtime secret or service environment variable and does not launch a
-+browser. Registry dependency integrities remain bound by `package-lock.json`.
++The preceding dependency phase uses Docker's default bridge and therefore has
++general outbound network capability; Docker bridge networking is not a
++destination allowlist. The exposure is bounded by receiving no runtime secret,
++host environment, service variable, results mount, or browser execution;
++disabling package lifecycle scripts; and validating before installation that
++every remote lockfile URL uses `https://registry.npmjs.org/` with an integrity
++value. A future requirement for network-enforced destination filtering needs a
++separate reviewed proxy or egress-control decision and MUST NOT be claimed by
++PW-I01.
 +
 +Service-network mode is not enabled by PW-I01. A later reviewed ticket MUST
 +explicitly introduce its network argument and service/Keycloak target contract
@@ -234,11 +273,18 @@ index 0000000000000000000000000000000000000000..7a22f38f1ef041705f5be8fa4b9640ea
 +socket access remain forbidden.
 +
 +The dependency phase runs as image root but launches no browser and receives no
-+secret. The browser phase runs as the invoking host UID/GID with Chromium's
-+sandbox explicitly disabled. This decision compensates with controlled local
-+content, network-none platform mode, an ephemeral container, read-only root and
-+source mounts, dropped capabilities, no-new-privileges, no Docker socket, and
-+no persistent browser state. Untrusted websites are outside the platform scope.
++secret. The test phase runs as the invoking non-root host UID/GID with
++Chromium's sandbox explicitly disabled. This decision compensates with
++controlled local content, network-none platform mode, private shared memory, an
++ephemeral container, read-only root/source/dependency mounts, writable state
++limited to tmpfs and `/results`, dropped capabilities, no-new-privileges, no
++Docker socket, and no persistent browser state. Untrusted websites are outside
++the platform scope.
++
++PW-I01 introduces no secret interface. A later reviewed identity/service ticket
++MUST define an explicit environment-variable allowlist before credentials can
++be injected at container start; it may not introduce an env file, host
++environment forwarding, credential mount, or image-baked value.
 +
 +## Local And CI Invocation
 +
@@ -255,28 +301,87 @@ index 0000000000000000000000000000000000000000..7a22f38f1ef041705f5be8fa4b9640ea
 +```
 +
 +No global Node.js, npm, Playwright, browser, or browser-system package is a host
-+prerequisite. Docker and access to the pinned MCR image are the only runtime
-+tool prerequisites.
++prerequisite. Beyond the repository-standard Make, Bash, Python, and Git
++validation toolchain, Docker access, the pinned MCR image, and dependency-phase
++access to `https://registry.npmjs.org/` are the only runner-specific host
++prerequisites.
 +
 +## Version And Upgrade Contract
 +
-+An upgrade MUST change the following in one reviewed PR:
++An upgrade MUST change every affected item below in one reviewed PR:
 +
-+1. Playwright release/tag.
-+2. Multi-platform index digest recorded for provenance.
-+3. Selected linux/amd64 manifest digest used at runtime.
-+4. Exact `@playwright/test` package version.
-+5. Image-supplied Node/npm assertions if they changed.
-+6. Chromium version/revision record.
-+7. `package-lock.json`.
-+8. Platform self-test evidence and all active service smoke evidence.
++1. This decision's release, tag, index digest, selected manifest digest,
++   Node/npm, browser, package-integrity, and layer evidence.
++2. `package.json`, `package-lock.json`, runner image reference, runtime version
++   assertions, lock validator, Playwright configuration, and bootstrap contract
++   tests wherever the changed values appear.
++3. Manifest-first CI source and generated outputs if their commands or pinned
++   values are affected.
++4. Platform self-test evidence and all active service smoke evidence.
 +
 +The upgrade author MUST verify the tag and digests from MCR and the package
-+version from the official NPM registry. A tag-only update is invalid.
++version and integrity from the official NPM registry. The author MUST also
++verify the selected manifest's Node/npm and browser values, regenerate the lock
++file with the selected npm, run the lock validator, and verify that the current
++accepted image digest remains available before merge. A tag-only, partial, or
++evidence-free update is invalid.
 +
-+Rollback is one Git revert to the previous accepted decision/runner/package
-+set. Image, package, browser, Node/npm assertions, and lock file MUST roll back
-+together. No partial browser or package downgrade is allowed.
++Rollback is one Git revert of the complete upgrade PR to the previous accepted
++decision/package/configuration/runner/test/CI set. Image, package, browser,
++Node/npm assertions, lock file, validator expectations, and generated CI MUST
++roll back together. The reverted platform self-test MUST pass against the prior
++digest before rollback is declared complete. No data migration or persistent
++runner state exists; test results are disposable evidence and are not modified
++by rollback. If the prior digest is unavailable, rollback is blocked and MUST
++escalate rather than substitute a tag or partial downgrade.
++
++## PW-I01 Verification Contract
++
++`tests/test_playwright_bootstrap.py` and generated CI MUST make every PW-I01
++normative requirement observable. At minimum they MUST verify:
++
++1. exact package, engine, script, project, discovery, output, retry, and
++   Chromium-sandbox values;
++2. lockfile version, exact root dependency, allowed `resolved` URL host,
++   integrity presence, and validator fail-closed behavior for each forbidden
++   URL/integrity case;
++3. exact image/tag/digest/platform/version assertions and exact dependency/test
++   phase Docker argument sets;
++4. read-only source/root/dependency boundaries, writable tmpfs/results
++   boundaries, private shared memory, dropped capabilities,
++   no-new-privileges, network modes, environment allowlist, and every forbidden
++   mount/host namespace;
++5. non-root UID/GID rejection and matching result ownership contract;
++6. identical local/CI Make entry points, raw child-exit preservation, and
++   container/volume cleanup on success, command failure, and signal;
++7. a successful PW-I01 platform target using only the non-browser bootstrap
++   spec, with no global Node/npm/Playwright/browser prerequisite.
++
++Static tests may use a fake Docker executable to inspect arguments and lifecycle
++without weakening the required real-container `make test-playwright-platform`
++run. A requirement that cannot be asserted by these observable files, commands,
++or lifecycle outcomes is an architecture defect and MUST be escalated instead
++of implemented by convention.
++
++Normative statements outside PW-I01 are change-control gates. Their review
++package MUST prove the exact source SHA, changed-file inventory, required
++version-coupled file set, command outputs, CI runs, and reviewer verdict. No
++normative requirement in this decision may be accepted only by operator
++assertion or undocumented convention.
++
++## Deferred Decisions And Implementation Freedom
++
++PW-I01 does not decide service networking, secret names, evidence formats,
++final `0/1/2` mapping, retries, reporters, traces, screenshots, authentication,
++service selectors, or secondary browsers. Their later tickets MUST use the
++explicit seams above or amend this decision through independent review before
++changing an image, package, path, script, discovery rule, mount, privilege,
++environment, network, shared-memory, output, or lifecycle contract.
++
++The implementation freedom intentionally left to PW-I01 is limited to shell
++mechanics that are not externally observable: local variable names, equivalent
++array construction, diagnostic wording, and trap implementation. This is not
++permission to invent another architecture contract.
 +
 +## Evidence And Reproduction
 +
@@ -364,7 +469,9 @@ index 0000000000000000000000000000000000000000..7a22f38f1ef041705f5be8fa4b9640ea
 +### Persistent Dependency Or Browser Volume
 +
 +Rejected. It would retain state between runs and violate the ephemeral runner
-+contract. Dependency and npm cache mounts are tmpfs for every invocation.
++contract. The dependency volume is uniquely temporary and removed by the
++wrapper; npm cache, home, and other temporary state live only in per-container
++tmpfs.
 +
 +## Consequences
 +
@@ -372,7 +479,8 @@ index 0000000000000000000000000000000000000000..7a22f38f1ef041705f5be8fa4b9640ea
 +- Every run pays the cost of an isolated dependency phase and `npm ci`;
 +  reproducibility and clean state take priority over initial speed.
 +- Platform browser execution runs without any network, service, or credential;
-+  only the preceding secret-free dependency phase reaches the npm registry.
++  the preceding secret-free dependency phase has general bridge egress but
++  validates registry-only lockfile URLs before installation.
 +- Live service networking remains explicitly blocked until a later reviewed
 +  ticket introduces it.
 +- Root is limited to the secret-free dependency phase; browser execution uses
@@ -384,4 +492,6 @@ index 0000000000000000000000000000000000000000..7a22f38f1ef041705f5be8fa4b9640ea
 +PW-I01 may begin only after this decision is independently approved at its exact
 +PR head SHA and merged. Its executor MUST implement this contract literally and
 +MUST escalate rather than choose a different image, digest, Node/npm version,
-+package manager, path, mount, command, browser project, or network mode.
++package manager, lock policy, path, script, discovery rule, mount, command,
++environment, UID/GID rule, shared-memory mode, browser project, network mode,
++output boundary, or lifecycle behavior.
