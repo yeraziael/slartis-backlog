@@ -118,28 +118,35 @@ test -f /mnt/hardDrive/audiobookshelf/config/absdatabase.sqlite
 
 ## Acceptance Tests
 
-These tests verify requirements from `requirements.md`. Status reflects current implementation.
+These tests verify requirements from `requirements.md`. Evidence levels:
+
+| Level | Meaning |
+|---|---|
+| **Upstream native** | Feature exists in Audiobookshelf upstream. No Homelab-specific configuration verified. |
+| **Configured** | Explicitly configured for Homelab deployment. Configuration source referenced. |
+| **Verified** | Test executed with evidence reference (CI run, manual test log). |
+| **Pending** | Not yet testable — blocking dependency identified. |
 
 ### R-001 — R-006: Audiobook Serving
 
-| Test | Requirement | Status |
+| Test | Requirement | Evidence |
 |---|---|---|
-| Web UI serves over HTTPS | R-001 | Deployed |
+| Web UI serves over HTTPS | R-001 | Configured |
 | Web UI login via OIDC | R-001 | Pending (GH-60) |
-| Playback progress tracked per user | R-002 | Deployed (native) |
-| Chapter navigation works | R-003 | Deployed (native) |
-| Podcast RSS subscriptions work | R-006 | Deployed (native) |
+| Playback progress tracked per user | R-002 | Upstream native |
+| Chapter navigation works | R-003 | Upstream native |
+| Podcast RSS subscriptions work | R-006 | Upstream native |
 
 ### R-010 — R-011: Multiple Libraries
 
-| Test | Requirement | Status |
+| Test | Requirement | Evidence |
 |---|---|---|
-| Audiobooks and podcasts in separate libraries | R-010 | Deployed (native) |
-| Library config persists after restart | R-011 | Deployed |
+| Audiobooks and podcasts in separate libraries | R-010 | Upstream native |
+| Library config persists after restart | R-011 | Configured |
 
 ### R-020 — R-025: User Access
 
-| Test | Requirement | Status |
+| Test | Requirement | Evidence |
 |---|---|---|
 | User logs in via Keycloak OIDC | R-020 | Pending (GH-60) |
 | Guest user has read-only access | R-021 | Pending (GH-60) |
@@ -150,15 +157,15 @@ These tests verify requirements from `requirements.md`. Status reflects current 
 
 ### R-030 — R-038: OIDC Authentication
 
-| Test | Requirement | Status |
+| Test | Requirement | Evidence |
 |---|---|---|
 | Login uses Authorization Code Flow | R-031 | Pending (GH-60) |
 | OIDC Discovery used | R-036 | Pending (GH-60) |
-| All OIDC endpoints use HTTPS | R-037 | Deployed (proxy) |
+| All OIDC endpoints use HTTPS | R-037 | Configured (proxy) |
 
 ### R-040 — R-047: Authorisation
 
-| Test | Requirement | Status |
+| Test | Requirement | Evidence |
 |---|---|---|
 | `audiobookshelf-users` → read-only | R-040 | Pending (GH-60) |
 | `audiobookshelf-admins` → admin | R-041 | Pending (GH-60) |
@@ -170,7 +177,7 @@ These tests verify requirements from `requirements.md`. Status reflects current 
 
 ### R-050 — R-054: Identity Binding
 
-| Test | Requirement | Status |
+| Test | Requirement | Evidence |
 |---|---|---|
 | User bound via `sub` claim | R-050 | Pending (GH-60) |
 | Username change → no duplicate account | R-052 | Pending (GH-60) |
@@ -178,7 +185,7 @@ These tests verify requirements from `requirements.md`. Status reflects current 
 
 ### R-060 — R-065: Break-Glass
 
-| Test | Requirement | Status |
+| Test | Requirement | Evidence |
 |---|---|---|
 | `admin` account exists and works | R-060 | Pending (GH-60) |
 | Break-glass login independent of Keycloak | R-061 | Pending (GH-60) |
@@ -188,14 +195,14 @@ These tests verify requirements from `requirements.md`. Status reflects current 
 
 ### R-070 — R-075: Pi5 Resources
 
-| Test | Requirement | Status |
+| Test | Requirement | Evidence |
 |---|---|---|
-| Image platform linux/arm64 | R-070 | Deployed |
-| Memory ≤ 512 MB | R-071 | Deployed |
-| CPU ≤ 1.0 core | R-072 | Deployed |
-| Restart policy unless-stopped | R-073 | Deployed |
-| no-new-privileges set | R-074 | Deployed |
-| Log rotation configured | R-075 | Deployed |
+| Image platform linux/arm64 | R-070 | Configured |
+| Memory ≤ 512 MB | R-071 | Configured |
+| CPU ≤ 1.0 core | R-072 | Configured |
+| Restart policy unless-stopped | R-073 | Configured |
+| no-new-privileges set | R-074 | Configured |
+| Log rotation configured | R-075 | Configured |
 
 ### R-080 — R-087: NAS Storage
 
@@ -203,29 +210,29 @@ All planned — not implemented.
 
 ### R-090 — R-095: Configuration Persistence
 
-| Test | Requirement | Status |
+| Test | Requirement | Evidence |
 |---|---|---|
-| Config lives on Pi5 SSD at proper path | R-090, R-091 | Deployed |
-| Metadata lives on Pi5 SSD at proper path | R-092 | Deployed |
-| Cache under /metadata/cache/ | R-093 | Deployed |
-| SQLite database present | R-094 | Deployed |
-| Test library exists | R-095 | Deployed (empty) |
+| Config lives on Pi5 SSD at proper path | R-090, R-091 | Configured |
+| Metadata lives on Pi5 SSD at proper path | R-092 | Configured |
+| Cache under /metadata/cache/ | R-093 | Configured |
+| SQLite database present | R-094 | Configured |
+| Test library exists | R-095 | Configured (empty) |
 
 ### R-100 — R-104: Secret Handling
 
-| Test | Requirement | Status |
+| Test | Requirement | Evidence |
 |---|---|---|
-| No secrets committed to repo (via scan) | R-100 | Deployed (CI check) |
-| No secrets in test output | R-102 | Deployed (manual) |
+| No secrets committed to repo (via scan) | R-100 | Configured (CI check) |
+| No secrets in test output | R-102 | Configured (manual) |
 
 ### R-110 — R-114: TLS
 
-| Test | Requirement | Status |
+| Test | Requirement | Evidence |
 |---|---|---|
-| HTTPS works, HTTP redirects to HTTPS | R-110, R-111 | Deployed |
-| Let's Encrypt certificate valid | R-112 | Deployed |
-| FQDN resolves | R-113 | Deployed |
-| WebSocket connections work | R-114 | Deployed |
+| HTTPS works, HTTP redirects to HTTPS | R-110, R-111 | Configured |
+| Let's Encrypt certificate valid | R-112 | Configured |
+| FQDN resolves | R-113 | Configured |
+| WebSocket connections work | R-114 | Configured |
 
 ### R-120 — R-124: Backup
 
@@ -233,19 +240,19 @@ All planned — not implemented.
 
 ### R-130 — R-133: Monitoring
 
-| Test | Requirement | Status |
+| Test | Requirement | Evidence |
 |---|---|---|
-| Docker healthcheck configured and working | R-130 — R-132 | Deployed |
+| Docker healthcheck configured and working | R-130 — R-132 | Configured |
 
 ### R-140 — R-145: Deterministic Deployment
 
-| Test | Requirement | Status |
+| Test | Requirement | Evidence |
 |---|---|---|
-| Compose file exists and valid | R-140, R-141 | Deployed |
-| Image pinned by digest | R-142 | Deployed |
-| No host ports | R-143 | Deployed |
-| Two networks joined | R-144 | Deployed |
-| Restart preserves data | R-145 | Deployed (verified) |
+| Compose file exists and valid | R-140, R-141 | Configured |
+| Image pinned by digest | R-142 | Configured |
+| No host ports | R-143 | Configured |
+| Two networks joined | R-144 | Configured |
+| Restart preserves data | R-145 | Verified |
 
 ### R-150 — R-152: Metadata Quality
 
@@ -261,7 +268,7 @@ All planned — not implemented.
 
 ## Verification Matrix (OIDC)
 
-From GH-60 specification. To be executed after OIDC runtime deployment.
+From GH-60 specification. All tests use synthetic role-based identities (`abs-e2e-admin`, `abs-e2e-user`, `abs-e2e-denied`). To be executed after OIDC runtime deployment.
 
 ### Login
 
@@ -284,7 +291,7 @@ From GH-60 specification. To be executed after OIDC runtime deployment.
 | # | Test | Expected |
 |---|---|---|
 | 7 | Guest user has read-only access | No upload/admin options visible |
-| 8 | Admin user (Michael) has full admin | All admin functions available |
+| 8 | Admin user (`abs-e2e-admin`) has full admin | All admin functions available |
 | 9 | Admin group removed → no admin at next login | Admin features not available |
 | 10 | User group removed → login denied | Access denied |
 

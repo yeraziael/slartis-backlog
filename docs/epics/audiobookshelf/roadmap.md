@@ -3,7 +3,7 @@
 ## Milestone Overview
 
 ```
-M0: Architecture & Planning ──── DONE
+M0: Architecture & Planning ──── IN REVIEW (PR #81 open)
 M1: Docker Deployment ────────── DONE
 M2: Reverse Proxy & TLS ──────── DONE
 M3: Identity & Access ────────── IN PROGRESS (GH-60)
@@ -24,7 +24,7 @@ M9: Automation & Scheduler ───── PLANNED
 | Architecture baseline document (AUDIOBOOKSHELF.md) | Done | GH-57, Homelab/Architecture PR #61 |
 | Child-issue dependency graph (18 issues) | Done | GH-57 |
 | ACP Pilot 1 review | Approved | GH-57 |
-| Epic migration to Plan-as-Code | Done | This directory |
+| Epic migration to Plan-as-Code | IN REVIEW (PR #81) | This directory |
 
 ### M1: Docker Deployment (DONE)
 
@@ -64,7 +64,7 @@ M9: Automation & Scheduler ───── PLANNED
 | **Login/Logout verification** | **Pending** | **GH-60** |
 | **Negative security tests** | **Pending** | **GH-60** |
 
-**Blocker:** GH-60 must be completed before M4 can begin.
+**Blocker:** GH-60 runtime execution is required only for OIDC-specific config items in M4 (secrets, env vars). Storage layout, backup design and basic monitoring can proceed independently.
 
 ### M4: Storage & Configuration (PLANNED)
 
@@ -158,7 +158,7 @@ M3 (OIDC) blocks only identity-dependent items across all milestones. Storage la
 
 | Phase | Milestones | Risk | Value |
 |---|---|---|---|
-| 1: Foundation (DONE) | M0, M1, M2 | Low | Service running, externally accessible |
+| 1: Foundation (IN REVIEW) | M0, M1, M2 | Low | Service running, externally accessible |
 | 2: Identity (NOW) | M3 | Medium | SSO, family access, security |
 | 3: Storage (NEXT) | M4, M5 | Medium | Persistent data, media available |
 | 4: Media Pipeline | M6 | High | Data integrity, normalisation |
@@ -168,6 +168,7 @@ M3 (OIDC) blocks only identity-dependent items across all milestones. Storage la
 
 - **DONE** — implemented, deployed, verified.
 - **Deployed** — running in production.
+- **IN REVIEW** — specification complete, pending merge and issue closure.
 - **IN PROGRESS** — active implementation.
 - **Scripts versioned** — code ready, not yet executing.
 - **PLANNED** — requirements defined, not started.
