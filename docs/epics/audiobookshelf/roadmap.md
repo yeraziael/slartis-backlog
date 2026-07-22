@@ -17,7 +17,7 @@ M9: Automation & Scheduler ───── PLANNED
 
 ## Milestone Details
 
-### M0: Architecture & Planning (DONE)
+### M0: Architecture & Planning (IN REVIEW)
 
 | Item | Status | Source |
 |---|---|---|
