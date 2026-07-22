@@ -71,12 +71,13 @@ M9: Automation & Scheduler ───── PLANNED
 | Item | Status | Source |
 |---|---|---|
 | Persistent volume layout finalised | Requirements defined | GH-62 |
-| Environment variables documented | Requirements defined | GH-62 |
+| Environment variables (non-secret) documented | Requirements defined | GH-62 |
 | Backup strategy defined | Requirements defined | GH-62 |
 | Restore procedure documented | Requirements defined | GH-62 |
+| OIDC secret handling & env vars | Requirements defined | GH-62 (blocks on GH-60) |
 | **Implementation** | **Not started** | **GH-62** |
 
-**Depends on:** GH-60 (OIDC runtime must be working before configuration is finalised).
+**Depends on:** GH-58 (Docker volumes exist). OIDC-specific items block on GH-60; storage layout and backup design can proceed independently.
 
 ### M5: NAS Integration (PLANNED)
 
@@ -135,12 +136,23 @@ M9: Automation & Scheduler ───── PLANNED
 ## Dependency Graph
 
 ```
-M0 ──→ M1 ──→ M2 ──→ M3 ──→ M4 ──→ M5 ──→ M6 ──→ M7
-                                   │               │
-                                   └──→ M8 ──→ M9 ──┘
+Foundation (Layer 1):
+  M0 ──→ M1 ──→ M2
+
+Layer 2 (parallel):
+  M2 ──→ M3 (OIDC, blocks only secret items)
+  M1 ──→ M4 (storage & config, independent of M3)
+            │
+Layer 3:     └──→ M5 (NAS mount, needs M4 paths)
+                     │
+Layer 4:              ├──→ M6 (import pipeline, needs mounted media)
+                      ├──→ M7 (monitoring, adds NFS alerts)
+                      │
+Layer 5:              └──→ M8 (backup, needs documented layout from M4)
+                              └──→ M9 (automation, needs defined ops)
 ```
 
-M7, M8 and M9 can be partially parallelised after M5 (NAS) is complete.
+M3 (OIDC) blocks only identity-dependent items across all milestones. Storage layout, backup design, and basic monitoring can start before OIDC is deployed.
 
 ## Delivery Sequencing
 

@@ -42,7 +42,7 @@ This is the ordered list of executable child issues for the Audiobookshelf epic.
 |---|---|
 | **Status** | IN PROGRESS — scripts versioned (PR #76), runtime execution pending |
 | **Depends on** | GH-58, GH-59 |
-| **Blocks** | GH-62, all subsequent milestones |
+| **Blocks** | OIDC-specific items in GH-62, ISSUE-HARDENING |
 | **Scope** | OIDC Confidential Client, Authorization Code Flow, group-based access, `sub`-binding, auto-provisioning, RP-Initiated Logout, break-glass `admin`, secret rotation |
 | **Docs** | `requirements.md` (R-020 — R-065, R-100 — R-104), `architecture.md` §Keycloak, `interfaces.md` §1, `contracts.md` §Keycloak OIDC, `security.md`, `testing.md` §Verification Matrix |
 
@@ -53,20 +53,20 @@ This is the ordered list of executable child issues for the Audiobookshelf epic.
 | Field | Value |
 |---|---|
 | **Status** | OPEN — requirements defined |
-| **Depends on** | GH-60 |
+| **Depends on** | GH-58 (storage layout). OIDC-specific env vars block on GH-60 |
 | **Scope** | Persistent volume layout finalisation, environment variable documentation, backup strategy definition, restore procedure |
 | **Docs** | `requirements.md` (R-090 — R-095, R-120 — R-124), `contracts.md` §Backup |
 
-## Planned (Not Yet in GitHub Issues)
+## Planned — Provisional (Not Yet in GitHub Issues)
 
-The following issues were identified in GH-57 and `docs/epics/audiobookshelf/`. They need GitHub issues created.
+The following issues were identified in GH-57 and `docs/epics/audiobookshelf/`. They use provisional identifiers (`ISSUE-NFS`, `ISSUE-IMPORT`, etc.) until GitHub issues are created. The count, scope and dependency ordering are subject to refinement during the corrected dependency review.
 
 ### ISSUE-NFS: NAS NFS Mount
 
 | Field | Value |
 |---|---|
 | **Scope** | Mount `audiobooks` and `podcasts` NFSv3 shares from QNAP (192.168.2.141) on Pi5, configure fstab for auto-mount, bind-mount into Audiobookshelf container |
-| **Depends on** | GH-60, GH-62 |
+| **Depends on** | GH-62 (mount paths defined in GH-62). Does not require GH-60 |
 | **Key Requirements** | R-080 — R-087 |
 | **Docs** | `architecture.md` §NAS, `interfaces.md` §5, `contracts.md` §NAS/NFS, `operations.md` §NFS |
 
@@ -134,25 +134,31 @@ The following issues were identified in GH-57 and `docs/epics/audiobookshelf/`. 
 ## Dependency Chain Summary
 
 ```
-GH-57 (architecture) ──→ GH-58 (Docker) ──→ GH-59 (proxy/TLS) ──→ GH-60 (OIDC)
-                                                                      │
-                                                                      ▼
-                                                                   GH-62 (config/storage)
-                                                                      │
-                                                                      ▼
-                                                                   ISSUE-NFS
-                                                                      │
-                                              ┌───────────────────────┼───────────────────────┐
-                                              │                       │                       │
-                                              ▼                       ▼                       ▼
-                                       ISSUE-IMPORT            ISSUE-BACKUP            ISSUE-MONITORING
-                                              │                       │
-                                              ▼                       ▼
-                                       ISSUE-METADATA          ISSUE-SCHEDULER
-                                              │
-                                       ISSUE-PODCAST-MGMT
-                                              │
-                                       ISSUE-HARDENING
+Layer 0: GH-57 (architecture)
+             │
+Layer 1:     └───→ GH-58 (Docker service)
+                      │
+                  ┌───┴────────────┐
+                  ▼                   ▼
+Layer 2:   GH-59 (proxy/TLS)    GH-62 (config/storage)
+                  │                   └───────────────────┐
+                  ▼                                       │
+Layer 3:   GH-60 (OIDC)                                   │
+                  │                                       ▼
+                  │ (blocks only OIDC-specific items) ISSUE-NFS (NAS mount)
+                  │                                       │
+                  │             ┌─────────────────────────┼───────────────────┐
+                  │             │                         │                   │
+                  │             ▼                         ▼                   ▼
+                  │     ISSUE-IMPORT               ISSUE-BACKUP         ISSUE-MONITORING
+                  │             │                         │                   (basic: GH-58 suffices)
+                  │             ▼                         ▼
+                  │     ISSUE-METADATA              ISSUE-SCHEDULER
+                  │             │
+                  │             ▼
+                  │     ISSUE-PODCAST-MGMT
+                  │
+                  └─────────────── ISSUE-HARDENING (requires GH-60 runtime)
 ```
 
 ## Total Estimated Issues
@@ -163,13 +169,13 @@ GH-57 (architecture) ──→ GH-58 (Docker) ──→ GH-59 (proxy/TLS) ──
 | In Progress (in GitHub) | 1 | #60 |
 | Planned (in GitHub) | 1 | #62 |
 | Planned (not yet in GitHub) | 8 | NFS, Import, Metadata, Backup, Monitoring, Scheduler, Podcast, Hardening |
-| **Total** | **12** | |
+| **Total** | **12 provisional** | |
 
 ## Epic Completion Criteria
 
 The Audiobookshelf epic is complete when:
 
-1. All 12 issues are closed.
+1. All issues are closed.
 2. All `MUST` requirements from `requirements.md` are verified.
 3. The import pipeline operates without manual intervention.
 4. Backup and restore are automated and tested.

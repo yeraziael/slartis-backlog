@@ -1,182 +1,105 @@
-# Audiobookshelf — Architecture Decision Records
+# Audiobookshelf — Decision Register
 
-## ADR-001: Docker Compose on Pi5
+## Purpose
+
+This register records architectural and planning decisions for the Audiobookshelf epic. It is **not** a substitute for Architecture Decision Records (ADRs). Cross-epic or Homelab-wide decisions belong in `docs/adrs/`. This register tracks decisions scoped to this epic.
+
+Stable decision IDs are prefixed `ABDEC-`. Status values: `Accepted`, `Implemented`, `Proposed`, `Superseded`.
+
+## Register
+
+### ABDEC-001: Docker Compose on Pi5
 
 | Field | Value |
 |---|---|
-| **Status** | Accepted |
+| **Status** | Implemented |
+| **Decision** | Deploy Audiobookshelf as a Docker Compose service on Raspberry Pi 5 |
+| **Rationale** | Consistent with all other Homelab services; Pi5 is the designated Docker host |
+| **Alternatives** | Native install (inconsistent), rechenknecht (wrong host) |
+| **Consequences** | Compose in Homelab/Architecture, resource limits (512 MB RAM, 1 CPU) |
 | **Source** | GH-57, GH-58 |
-| **Date** | 2026-07-20 |
+| **Related ADR** | None (Homelab-wide Docker standard) |
 
-**Decision:** Deploy Audiobookshelf as a Docker Compose service on the Raspberry Pi 5.
-
-**Alternatives considered:**
-- Native installation on Pi5 — rejected: inconsistent with Homelab Docker standard.
-- Deployment on rechenknecht — rejected: rechenknecht is not a Docker service host.
-
-**Consequences:**
-- Consistent with all other Homelab services.
-- Compose file versioned in `Homelab/Architecture`.
-- Resource limits (512 MB RAM, 1 CPU) enforced via Docker.
-
----
-
-## ADR-002: Read-Only Media Access
+### ABDEC-002: Read-Only Media Access
 
 | Field | Value |
 |---|---|
 | **Status** | Accepted |
+| **Decision** | Audiobookshelf reads media read-only. Import pipeline handles all writes |
+| **Rationale** | Risk of corruption without separate write path; audit trail required |
+| **Alternatives** | Direct write from ABS (no audit), manual copy (not scalable) |
+| **Consequences** | Import pipeline is a separate component; 9-step replacement workflow; FINO forbidden |
 | **Source** | GH-57, AUDIOBOOKSHELF.md (Homelab/Architecture) |
-| **Date** | 2026-07-20 |
+| **Related ADR** | None |
 
-**Decision:** Audiobookshelf accesses media read-only. A separate import pipeline (executed by Lydia) handles all write operations.
-
-**Alternatives considered:**
-- Audiobookshelf writes directly to media directory — rejected: risk of corruption, no audit trail.
-- Manual file copy — rejected: not scalable, no duplicate detection.
-
-**Consequences:**
-- Import pipeline is a separate component with its own issue.
-- 9-step replacement workflow with retention period defined.
-- FINO behaviour (delete source on import) explicitly forbidden.
-
----
-
-## ADR-003: Keycloak OIDC as Sole External Identity Provider
+### ABDEC-003: Keycloak OIDC as Sole External IdP
 
 | Field | Value |
 |---|---|
-| **Status** | Accepted |
+| **Status** | Accepted (scripts versioned, runtime pending) |
+| **Decision** | Keycloak is the sole external IdP. OIDC Authorization Code Flow with Confidential Client |
+| **Rationale** | Homelab SSO standard; no alternative IdP available |
+| **Alternatives** | Local accounts (inconsistent with SSO), LDAP (not available) |
+| **Consequences** | `sub`-based binding, group role mapping, RP-Initiated Logout, break-glass `admin` retained |
 | **Source** | GH-57, GH-60, Homelab/Architecture PR #76 |
-| **Date** | 2026-07-20 |
+| **Related ADR** | None |
 
-**Decision:** Keycloak is the sole external identity provider. Audiobookshelf uses OIDC Authorization Code Flow with a Confidential Client.
-
-**Alternatives considered:**
-- Local accounts for all users — rejected: inconsistent with Homelab SSO standard.
-- LDAP integration — rejected: not available in Homelab.
-- OIDC with Public Client — rejected: less secure than Confidential Client.
-
-**Consequences:**
-- Stable identity binding via `sub` claim (not username or email).
-- Role mapping via Keycloak groups (`audiobookshelf-users`, `audiobookshelf-admins`).
-- RP-Initiated Logout for full SSO session termination.
-- Break-glass `admin` account retained for Keycloak-unavailable scenarios.
-
----
-
-## ADR-004: Pinned Image by Immutable Digest
+### ABDEC-004: Pinned Image by Immutable Digest
 
 | Field | Value |
 |---|---|
-| **Status** | Accepted |
+| **Status** | Implemented |
+| **Decision** | Container image pinned by SHA-256 digest, not version tag |
+| **Rationale** | Reproducible deployments; no surprise updates |
+| **Alternatives** | `:latest` tag (non-reproducible), version tag (mutable) |
+| **Consequences** | Manual update process; current digest: `ghcr.io/advplyr/audiobookshelf@sha256:1eef6716...` |
 | **Source** | GH-58, GH-59 |
-| **Date** | 2026-07-20 |
+| **Related ADR** | None |
 
-**Decision:** Pin the Audiobookshelf container image by its immutable SHA-256 digest, not by a version tag.
-
-**Alternatives considered:**
-- `:latest` tag — rejected: non-reproducible.
-- Semantic version tag (e.g. `:2.19.0`) — accepted during development, but final deployment must use digest.
-
-**Consequences:**
-- Reproducible deployments across environments.
-- Manual image update process (update digest, test, deploy).
-- Current pinned digest: `ghcr.io/advplyr/audiobookshelf@sha256:1eef6716183c52abafe5405e7d6be8390248ecd59c7488c44af871757ac8fc4d`.
-
----
-
-## ADR-005: No Host Port Binding
+### ABDEC-005: No Host Port Binding
 
 | Field | Value |
 |---|---|
-| **Status** | Accepted |
+| **Status** | Implemented |
+| **Decision** | Container exposes port 80 internally only. All external access via frontproxy |
+| **Rationale** | TLS termination, access control, reduced attack surface |
+| **Alternatives** | Host port mapping (bypasses proxy) |
+| **Consequences** | Two Docker networks (`frontproxy_default` + `audiobookshelf_internal`) |
 | **Source** | GH-58, GH-59 |
-| **Date** | 2026-07-20 |
+| **Related ADR** | None |
 
-**Decision:** The Audiobookshelf container exposes port 80 internally only. No `ports:` mapping to the host. All external access goes through the frontproxy (nginx-proxy + acme-companion).
-
-**Alternatives considered:**
-- Host port mapping with direct access — rejected: bypasses proxy, TLS, and access control.
-- Host port mapping behind proxy — rejected: unnecessary attack surface.
-
-**Consequences:**
-- Container joins `frontproxy_default` network for ingress.
-- Container has its own `audiobookshelf_internal` (internal: true) network for isolation.
-- Healthcheck runs on internal port 80.
-
----
-
-## ADR-006: NAS Storage via NFSv3
+### ABDEC-006: NAS Storage via NFSv3
 
 | Field | Value |
 |---|---|
 | **Status** | Accepted (not yet implemented) |
+| **Decision** | Media served from QNAP NAS (192.168.2.141) via NFSv3. Shares: `audiobooks`, `podcasts` |
+| **Rationale** | NAS is the Homelab media store; NFSv3 is the Homelab NAS standard per STORAGE.md |
+| **Alternatives** | NFSv4 (not standard), SMB (Linux complexity), local SSD (insufficient capacity) |
+| **Consequences** | Separate NFS mount issue; read-only mount for ABS; NFS options `rsize=8192,wsize=8192` |
 | **Source** | GH-57, Homelab/Architecture PRs #58, #60 |
-| **Date** | 2026-07-20 |
+| **Related ADR** | None |
 
-**Decision:** Media is served from the QNAP NAS (192.168.2.141) via NFSv3. Two shares: `audiobooks` and `podcasts`.
-
-**Alternatives considered:**
-- NFSv4 — rejected: STORAGE.md documents NFSv3 as Homelab standard.
-- SMB/CIFS — rejected: NFS is simpler for Linux-only serving.
-- Local SSD storage — rejected: insufficient capacity for media library.
-
-**Consequences:**
-- NFS mount is a separate child issue (not yet implemented).
-- Mount points: `/mnt/ro/nas_audiobooks`, `/mnt/ro/nas_podcasts`.
-- NFS options: `rsize=8192,wsize=8192,hard,intr,noatime`.
-- Media mounted read-only for Audiobookshelf container.
-
----
-
-## ADR-007: Import Pipeline as Separate Component
+### ABDEC-007: Import Pipeline as Separate Component
 
 | Field | Value |
 |---|---|
 | **Status** | Accepted (not yet implemented) |
+| **Decision** | Import pipeline is separate from ABS. Executed by Lydia. Handles normalisation, duplicate detection, quarantine |
+| **Rationale** | ABS lacks built-in duplicate detection and metadata normalisation |
+| **Alternatives** | Built-in upload (no quality control), manual import (not scalable) |
+| **Consequences** | 10-stage pipeline defined; idempotency required; source preserved until verification; write path via separate NFS mount |
 | **Source** | GH-57, AUDIOBOOKSHELF.md |
-| **Date** | 2026-07-20 |
+| **Related ADR** | None |
 
-**Decision:** The import pipeline is a separate component from Audiobookshelf. It handles metadata normalisation, duplicate detection, quarantine and library writes. Executed by Lydia.
-
-**Alternatives considered:**
-- Audiobookshelf built-in upload — rejected: no duplicate detection, no metadata normalisation, no quarantine workflow.
-- Manual import by operator — rejected: not scalable.
-
-**Consequences:**
-- 10-stage pipeline defined (Ingest → Analyse → Normalise → Duplicate Check → Quarantine/Library Write → Verify → Scan Trigger → Retention → Delete Source).
-- Source material preserved until successful normalisation verified.
-- Idempotency required.
-- Write access to NAS via separate NFS path (rw, not ro).
-
----
-
-## ADR-008: Single Local Break-Glass Account
+### ABDEC-008: Single Local Break-Glass Account
 
 | Field | Value |
 |---|---|
-| **Status** | Accepted |
+| **Status** | Accepted (scripts versioned, runtime pending) |
+| **Decision** | Exactly one local `admin` account, not bound to Keycloak. No other local production accounts |
+| **Rationale** | Access when Keycloak is unavailable; minimal local surface |
+| **Alternatives** | No local accounts (no access if KC down), one per user (undermines SSO) |
+| **Consequences** | Password ≥ 192 bit entropy, delivered once via Telegram, never in version control |
 | **Source** | GH-57, GH-60 |
-| **Date** | 2026-07-20 |
-
-**Decision:** Exactly one local account `admin` is retained for break-glass access. It is not bound to Keycloak. No other local production accounts exist.
-
-**Alternatives considered:**
-- No local accounts — rejected: no access if Keycloak is unavailable.
-- One local account per family member — rejected: undermines SSO purpose.
-- Local accounts with same permissions as OIDC — rejected: break-glass should be minimal.
-
-**Consequences:**
-- `admin` has full administrative rights.
-- Password ≥ 192 bit entropy, delivered once via Telegram.
-- Password never stored in version control.
-- Password rotation requires manual Telegram delivery.
-
----
-
-## Superseded Decisions
-
-| ADR | Decision | Superseded By | Reason |
-|---|---|---|---|
-| CWAuto OIDC Fork | Fork Calibre-Web Automated for OIDC support | Upstream Generic-OAuth Provider (ADR 0001 in docs/adr/) | Upstream v4.0.6+ has built-in OIDC via `metadata_url` |
+| **Related ADR** | None |

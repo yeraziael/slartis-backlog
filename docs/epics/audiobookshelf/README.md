@@ -47,25 +47,38 @@ This epic covers the complete lifecycle of Audiobookshelf in the Homelab:
 - No changes to Keycloak beyond the Audiobookshelf client.
 - No DNS, firewall or NAS configuration changes outside documented scope.
 
-## Authoritative Document Map
+## Authority Model
 
-This directory (`docs/epics/audiobookshelf/`) is the authoritative source for all Audiobookshelf planning. GitHub Issues are execution and tracking objects only — they do not contain the full architecture, requirements or specification.
+Audiobookshelf planning spans three repositories. Each has a distinct authority domain:
 
-| Document | Purpose |
-|----------|---------|
-| `README.md` | Epic entry point, status overview, document map |
-| `requirements.md` | Functional and non-functional requirements |
-| `architecture.md` | Service boundary, component model, trust boundaries, control/data flow |
-| `interfaces.md` | Interface contracts to all external systems |
-| `contracts.md` | Integration contracts, service-level agreements |
-| `backlog.md` | Ordered child-issue graph for execution |
-| `roadmap.md` | Milestone planning and delivery sequence |
-| `ci.md` | CI/CD pipeline specification |
-| `testing.md` | Test strategy and acceptance criteria |
-| `security.md` | Security model, threat boundaries, secret handling |
-| `operations.md` | Operational runbooks |
-| `decisions.md` | Architecture Decision Records |
-| `references.md` | Cross-references to external documentation |
+| Domain | Authoritative Repository | Scope |
+|---|---|---|
+| Epic planning, requirements, roadmap, backlog, decision register | `yeraziael/slartis-backlog` (`docs/epics/audiobookshelf/`) | WHAT and WHY — epic scope, requirements, priorities, dependencies, decisions |
+| Deployed architecture, Compose config, runtime scripts, hostnames, storage mappings | `Homelab/Architecture` (Gitea) | HOW — deployed infrastructure, runtime configuration, operational evidence |
+| Execution state, acceptance evidence | GitHub issues (`yeraziael/slartis-backlog`) | STATUS — per-issue tracking, verification results, blockers |
+
+**Conflict handling by domain:**
+- Epic requirements in this directory prevail over implied requirements in issue comments.
+- Deployed facts in `Homelab/Architecture` (actual port, image digest, mount path) prevail over planning assumptions in this directory.
+- GitHub issue state (open/closed) is authoritative for execution status.
+
+## Document Map
+
+| Document | Domain | Purpose |
+|----------|--------|---------|
+| `README.md` | Epic | Entry point, status overview, authority model, document map |
+| `requirements.md` | Epic | Functional and non-functional requirements |
+| `architecture.md` | Epic | Service boundary, component model, trust boundaries, control/data flow |
+| `interfaces.md` | Epic | Interface contracts to all external systems |
+| `contracts.md` | Epic | Integration contracts, service-level agreements |
+| `backlog.md` | Epic | Ordered child-issue graph for execution |
+| `roadmap.md` | Epic | Milestone planning and delivery sequence |
+| `ci.md` | Epic | CI/CD pipeline specification |
+| `testing.md` | Epic | Test strategy and acceptance criteria |
+| `security.md` | Epic | Security model, threat boundaries, secret handling |
+| `operations.md` | Epic | Operational runbooks |
+| `decisions.md` | Epic | Decision register |
+| `references.md` | Epic | Cross-references to external documentation |
 
 ## Relationship to GitHub Issues
 
@@ -81,15 +94,34 @@ This directory (`docs/epics/audiobookshelf/`) is the authoritative source for al
 
 ## High-Level Dependency Order
 
+Dependencies are grouped by technical prerequisite. Items at the same level can proceed in parallel.
+
 ```
-GH-57 (architecture baseline)
-  → GH-58 (Docker service)
-    → GH-59 (reverse proxy & TLS)
-      → GH-60 (Keycloak OIDC & SSO)
-        → GH-62 (configuration & storage)
-          → Import pipeline
-            → Metadata normalisation & duplicate detection
-              → Monitoring, backup, operations
+Foundation (DONE):
+  GH-57 (architecture baseline)
+    → GH-58 (Docker service)
+      → GH-59 (reverse proxy & TLS)
+
+Identity & Storage (parallelisable):
+  GH-58 ──→ GH-59 ──→ GH-60 (Keycloak OIDC & SSO)
+  GH-58 ──→ GH-62 (config & storage layout)           ← does not require GH-60 for storage design
+  GH-60 blocks only OIDC-specific config in GH-62 (secrets, env vars)
+
+Media Access:
+  GH-62 ──→ NFS mount (NAS shares audiobooks + podcasts)
+
+Media Pipeline:
+  NFS mount ──→ Import pipeline (normalisation, duplicate detection, quarantine)
+                     └── Metadata enrichment
+
+Operations (parallel after prerequisites met):
+  GH-58 ──→ Basic monitoring (healthcheck already deployed)
+  NFS mount ──→ Enhanced monitoring (NFS mount alerts)
+  GH-62 ──→ Backup & Restore design
+  GH-62 ──→ Automation & Scheduler (Eddie integration)
+
+Hardening (after OIDC runtime):
+  GH-60 ──→ Security hardening & negative tests
 ```
 
 GH-55 (Keycloak authorisation) and GH-77 (hostname registry) are Homelab-wide dependencies that influence but are not blocked by this epic.
