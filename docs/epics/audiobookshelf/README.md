@@ -19,7 +19,7 @@ Deploy and operate Audiobookshelf as the authoritative audiobook and podcast ser
 | Reverse proxy & TLS | Deployed | GH-59 (closed), Homelab/Architecture PRs #68, #70 |
 | Frontproxy ingress | Deployed | via nginx-proxy + acme-companion, standard Homelab pattern |
 | Keycloak OIDC config | Planned, scripts versioned | GH-60 (open), Homelab/Architecture PR #76 |
-| OIDC runtime execution | Pending | GH-60 (open), blocks GH-62 |
+| OIDC runtime execution | Pending | GH-60 (open), blocks only OIDC-specific items in GH-62 |
 | Break-glass admin account | Planned | GH-60 (open), `break-glass-setup.sh` versioned |
 | NAS media storage | Unmounted | NAS `192.168.2.141` identified, shares `audiobooks` + `podcasts` known, NFS mount not implemented |
 | Import pipeline | Not started | Architecture boundary defined in GH-57 |
@@ -144,6 +144,14 @@ This documentation was created on 2026-07-22 by migrating information from:
 - `yeraziael/slartis-backlog` review packages for GH-57, GH-58, GH-59.
 - `yeraziael/slartis-backlog` PROTOCOL.md, context.md.
 
-## Authority Statement
+## Domain Authority
 
-**This Git documentation is authoritative.** GitHub Issues contain only execution scope, acceptance criteria and evidence. If a conflict exists between an issue comment and a document in this directory, the document prevails. Issues are updated to reference the document version, not the other way around.
+Authority is qualified by domain as defined in the [Authority Model](#authority-model) section:
+
+| Domain | Authoritative Source |
+|---|---|
+| Epic requirements, roadmap, backlog, decisions | This directory (`docs/epics/audiobookshelf/`) |
+| Deployed architecture, runtime config, hostnames, storage | `Homelab/Architecture` (Gitea) |
+| Execution state, acceptance evidence | GitHub issues (`yeraziael/slartis-backlog`) |
+
+This directory **prevails over issue comments** for epic planning content. `Homelab/Architecture` **prevails over this directory** for deployed/runtime facts. GitHub issue state is authoritative for execution tracking.
