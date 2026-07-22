@@ -6,7 +6,7 @@
 | Source URL | https://gitea.hl.maier.wtf/slarti/backlog/issues/253 |
 | State | `open` |
 | Labels | `Systemarchitektur`, `epic` |
-| Updated | `2026-07-22T18:24:50+02:00` |
+| Updated | `2026-07-22T18:51:59+02:00` |
 
 ## Exact Ticket Contract
 
@@ -20,13 +20,22 @@
 - ACP authority: `Homelab/ACP` release `v0.1.0-draft`, current main `6b5e8ec58cde1e193b9310c01fc68b6885de8df5`. `SPEC/` remains empty; accepted Pilot 57 findings and `Homelab/Architecture/AGENTS.md` control evidence/review behavior without inventing a parallel ACP.
 - This issue tracks execution. GitHub is reviewer communication only.
 
+## Frozen Plan State
+
+- Freeze identifier: `playwright-execution-plan-v1`.
+- Independent review: `yeraziael/slartis-backlog#83`, review `4756629751`, reviewed head `274ad202a8319728fc610870c92a3a79d19c22b9`.
+- State: `FROZEN_AWAITING_FINAL_REVIEW_AND_OPERATOR_APPROVAL`.
+- No decision or implementation ticket may start until the operator explicitly approves execution.
+- After approval, PW-D01 is the first executable ticket; PW-I01 remains blocked by PW-D01 and the canonical-plan default-branch merge gate.
+- Any ticket-body, dependency, model, checkpoint, evidence, or reviewer-workflow change invalidates the freeze and requires a new SHA-bound review.
+
 ## Execution Status Index
 
-Summary: READY = PW-D01. BLOCKED = all other work. IN PROGRESS = none. IN REVIEW = none. COMPLETED = none. CHECKPOINT = dormant.
+Summary: FROZEN AWAITING FINAL REVIEW AND OPERATOR APPROVAL = all work. FIRST EXECUTABLE AFTER APPROVAL = PW-D01. IN PROGRESS = none. IN REVIEW = none. COMPLETED = none. CHECKPOINT = dormant.
 
 | Key | Gitea | Status | Dependency gate |
 |---|---|---|---|
-| PW-D01 | [#254](https://gitea.hl.maier.wtf/slarti/backlog/issues/254) | READY | none |
+| PW-D01 | [#254](https://gitea.hl.maier.wtf/slarti/backlog/issues/254) | FROZEN / FIRST AFTER APPROVAL | operator approval |
 | PW-D02 | [#255](https://gitea.hl.maier.wtf/slarti/backlog/issues/255) | BLOCKED | PW-D01 |
 | PW-I01 | [#256](https://gitea.hl.maier.wtf/slarti/backlog/issues/256) | BLOCKED | PW-D01 + plan merged to default branch |
 | PW-I02 | [#257](https://gitea.hl.maier.wtf/slarti/backlog/issues/257) | BLOCKED | PW-I01 |
@@ -106,4 +115,4 @@ Do not copy ticket bodies, dependency maps or the full internal backlog to GitHu
 
 ## Status Maintenance
 
-Slarti updates this index when a ticket moves among READY, BLOCKED, IN PROGRESS, IN REVIEW or COMPLETED. Exactly one next ticket becomes READY unless an explicitly independent decision is approved for parallel execution.
+While frozen, no ticket state advances. After explicit operator approval, Slarti marks only PW-D01 READY. Thereafter exactly one next ticket becomes READY unless an explicitly reviewed independent decision permits parallel execution.

@@ -7,30 +7,22 @@ decision tickets, twenty-one low-cost implementation tickets, and one mandatory
 ACP checkpoint. Each implementation ticket is bounded to one focused session
 and one Gitea pull request.
 
-No implementation work has started.
+The plan is frozen as `playwright-execution-plan-v1`. No implementation work
+has started, and no ticket is ready before final SHA-bound review and explicit
+operator approval.
 
 ## Dependency Graph
 
 ```text
-PW-D01
-  +-- PW-D02
-  +-- PW-I01 -> PW-I02 -> PW-I03 -> PW-I04 -> PW-I05
-                         ^          ^
-                         +-- PW-D02-+
-                                      |
-                                      v
-                               PW-ACP-CP1
-                                      |
-                                      v
-PW-D03 -> PW-I06 -> PW-I07 -> PW-I08
-                                      |
-PW-D04 -> PW-I09 -> PW-I10 -> PW-I11
-                                      |
-PW-D05 -> PW-I12 -> PW-I13 -> PW-I14 -> PW-I15
-                                      |
-                        PW-I16 -> PW-I17 -> PW-I18
-                                      |
-PW-D06 -------------------------------+-> PW-I19 -> PW-I20 -> PW-I21
+PW-D01 -> PW-D02
+PW-D01 -> PW-I01 -> PW-I02
+PW-D02 + PW-I02 -> PW-I03 -> PW-I04 -> PW-I05
+PW-I01..PW-I05 -> PW-ACP-CP1
+PW-ACP-CP1 -> PW-D03 -> PW-I06 -> PW-I07 -> PW-I08
+PW-I08 -> PW-D04 -> PW-I09 -> PW-I10 -> PW-I11
+PW-I11 -> PW-D05 -> PW-I12 -> PW-I13 -> PW-I14 -> PW-I15
+PW-I15 -> PW-I16 -> PW-I17 -> PW-I18
+PW-I17 + PW-D06 -> PW-I19 -> PW-I20 -> PW-I21
 ```
 
 The detailed dependency field in every ticket remains authoritative if this
@@ -40,7 +32,7 @@ diagram and an issue contract ever differ.
 
 | Key | Gitea | Initial status | Recommended model | Dependencies |
 |---|---:|---|---|---|
-| PW-D01 | #254 | READY | Sol high | none |
+| PW-D01 | #254 | FROZEN / FIRST AFTER APPROVAL | Sol high | none |
 | PW-D02 | #255 | BLOCKED | Sol high | PW-D01 |
 | PW-I01 | #256 | BLOCKED | DeepSeek V4 Flash Free | PW-D01, plan merged to default branch |
 | PW-I02 | #257 | BLOCKED | DeepSeek V4 Flash Free | PW-I01 |
@@ -150,6 +142,10 @@ PW-D05 and PW-D06.
 6. During execution, each Gitea PR receives one concise GitHub reviewer
    notification with internal ticket, PR/head SHA, scope, tests/CI, ACP evidence
    location and findings summary. The full backlog is not duplicated again.
+7. Implementation review prioritises contract compliance, model routing, ACP
+   checkpoint quality, and evidence generation. Playwright-specific details are
+   reviewed only where they affect the authoritative requirement or security
+   contract.
 
 ## Assumptions
 

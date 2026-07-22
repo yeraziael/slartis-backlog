@@ -4,5 +4,5 @@
   "branch": "review/playwright-execution-plan",
   "status_checks": [],
   "conclusion": "local_validation_success",
-  "note": "The repository defines no GitHub workflow. No status checks were observed on planning PR #82; structural, provenance, content, credential-pattern and whitespace validations passed locally."
+  "note": "The repository defines no GitHub workflow. Structural, provenance, content, contract-scope, credential-pattern and whitespace validations passed locally."
 }
