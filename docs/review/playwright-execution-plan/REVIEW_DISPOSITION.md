@@ -12,7 +12,7 @@
 
 | ID | Review point | Classification | Disposition |
 |---|---|---|---|
-| R-01 | Snapshot identifies exact source revision and snapshot identifier. | already satisfied | `manifest.json` records plan, Architecture and ACP commits plus snapshot SHA-256. Preserved as a freeze invariant. |
+| R-01 | Snapshot identifies exact source revision and snapshot identifier. | already satisfied | `manifest.json` records plan, Architecture and ACP commits plus the explicitly named Gitea ticket snapshot SHA-256. Preserved as a freeze invariant. |
 | R-02 | Keep first five tickets and their execution models in the package. | already satisfied | Preserved in `EXECUTION_PLAN.md`, PR body, and finalised with complexity/rationale in `FROZEN_PLAN.md`. |
 | R-03 | Keep the checkpoint as a hard gate before ticket six. | already satisfied | Gitea #261 and the frozen graph prohibit any PW-I06-or-later work before checkpoint `release`. |
 | R-04 | Keep GitHub review-only; Gitea owns execution history. | already satisfied | Preserved in parent #253 and final reviewer workflow. |

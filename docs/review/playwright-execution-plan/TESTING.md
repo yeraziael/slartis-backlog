@@ -6,7 +6,7 @@
 - Parent count: 1; decision count: 6; implementation count: 21; checkpoint count: 1: PASS.
 - Stable key set matches dependency graph: PASS.
 - No ticket carries `ready` while operator approval is pending: PASS.
-- Snapshot SHA-256: `93e483fb33ae235c9c3e1b3400b3e9d3fbdb5a4eaf8ab78dcf7e8c6bceb9d62f`.
+- Gitea ticket snapshot SHA-256: `93e483fb33ae235c9c3e1b3400b3e9d3fbdb5a4eaf8ab78dcf7e8c6bceb9d62f`.
 
 ## Required Repository Validation
 
@@ -24,7 +24,7 @@ Results:
 - JSON parsing for `manifest.json`, `tickets.json`, and `CI.json`: PASS.
 - Manifest inventory equals all 39 package files: PASS.
 - Issue numbers are exactly `#253-#281`: PASS.
-- Snapshot SHA-256 recomputation matches the manifest: PASS.
+- Gitea ticket snapshot SHA-256 recomputation matches the manifest: PASS.
 - All 28 child tickets contain every required contract section: PASS.
 - All 21 low-cost tickets use the approved model, prohibit out-of-scope files,
   contain at most three in-scope bullets, and contain no unresolved path-scope

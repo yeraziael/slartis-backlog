@@ -8,8 +8,10 @@
     253,
     281
   ],
-  "source_snapshot_sha256": "93e483fb33ae235c9c3e1b3400b3e9d3fbdb5a4eaf8ab78dcf7e8c6bceb9d62f",
-  "source_snapshot_updated_at": "2026-07-22T18:51:59+02:00",
+  "gitea_ticket_snapshot_sha256": "93e483fb33ae235c9c3e1b3400b3e9d3fbdb5a4eaf8ab78dcf7e8c6bceb9d62f",
+  "gitea_ticket_snapshot_hash_domain": "Canonical UTF-8 JSON serialization of docs/review/playwright-execution-plan/tickets.json using sorted object keys and separators (comma, colon)",
+  "gitea_ticket_snapshot_reproduction_command": "python3 -c 'import hashlib,json,pathlib; p=pathlib.Path(\"docs/review/playwright-execution-plan/tickets.json\"); data=json.loads(p.read_text(encoding=\"utf-8\")); canonical=json.dumps(data,sort_keys=True,separators=(\",\", \":\")).encode(\"utf-8\"); print(hashlib.sha256(canonical).hexdigest())'",
+  "gitea_ticket_snapshot_updated_at": "2026-07-22T18:51:59+02:00",
   "plan_repository": "yeraziael/slartis-backlog",
   "plan_path": "docs/epics/playwright/",
   "plan_pr": 82,

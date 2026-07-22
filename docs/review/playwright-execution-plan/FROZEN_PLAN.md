@@ -6,7 +6,9 @@
 - State: `FROZEN_AWAITING_FINAL_REVIEW_AND_OPERATOR_APPROVAL`.
 - Independent review: PR #83 review `4756629751`, reviewed head
   `274ad202a8319728fc610870c92a3a79d19c22b9`.
-- Source snapshot SHA-256: `93e483fb33ae235c9c3e1b3400b3e9d3fbdb5a4eaf8ab78dcf7e8c6bceb9d62f`.
+- Gitea ticket snapshot SHA-256: `93e483fb33ae235c9c3e1b3400b3e9d3fbdb5a4eaf8ab78dcf7e8c6bceb9d62f`.
+- Hash domain: canonical UTF-8 JSON serialization of `tickets.json` using
+  sorted object keys and separators `(comma, colon)`.
 - No implementation has begun. No ticket is ready before final SHA-bound review
   and explicit operator approval.
 - After approval, PW-D01 is first executable; PW-I01 remains blocked by PW-D01
@@ -15,6 +17,12 @@
 Any ticket-body, dependency, model, checkpoint, evidence, or reviewer-workflow
 change invalidates this freeze and requires a regenerated snapshot and new
 SHA-bound review.
+
+Reproduce the Gitea ticket snapshot SHA-256 from the repository root:
+
+```bash
+python3 -c 'import hashlib,json,pathlib; p=pathlib.Path("docs/review/playwright-execution-plan/tickets.json"); data=json.loads(p.read_text(encoding="utf-8")); canonical=json.dumps(data,sort_keys=True,separators=(",", ":")).encode("utf-8"); print(hashlib.sha256(canonical).hexdigest())'
+```
 
 ## Final Dependency Graph
 
