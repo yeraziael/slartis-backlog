@@ -1,0 +1,35 @@
+{
+  "review_package": {
+    "acp_version": "0.1.0-draft",
+    "created": "2026-07-21T22:00:00Z",
+    "source": {
+      "system": "gitea",
+      "repository": "Homelab/Architecture",
+      "pr_number": 76,
+      "pr_url": "http://192.168.2.30:3000/Homelab/Architecture/pulls/76",
+      "head_sha": "",
+      "head_branch": "feature/gh60-audiobookshelf-keycloak-oidc",
+      "base_branch": "main"
+    },
+    "issue": {
+      "system": "github",
+      "repository": "yeraziael/slartis-backlog",
+      "number": 60,
+      "url": "https://github.com/yeraziael/slartis-backlog/issues/60"
+    },
+    "artifacts": [
+      {
+        "path": "reviews/gh60/CHANGES.diff",
+        "description": "Full diff — includes fix: qualified client-role names (audiobookshelf.admin, audiobookshelf.guest)",
+        "sha256": "c5a486a1eaccf240ef367c8c2956900b4338da0aa51c318bb3e92426001f9f58"
+      },
+      {
+        "path": "reviews/gh60/TESTING.md",
+        "description": "Verification matrix — compatibility VERIFIED, functional tests PENDING runtime execution",
+        "sha256": "e1a27d989430995b6ca8ebf758f66603bb399bc7f41af76f7cfc9c510958d6cc"
+      }
+    ],
+    "verdict": null,
+    "reviewer": "@ChatGPT"
+  }
+}
