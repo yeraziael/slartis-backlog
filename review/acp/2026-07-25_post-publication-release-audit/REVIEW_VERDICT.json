@@ -1,0 +1,15 @@
+{
+  "schema": "acp.review-verdict.v2",
+  "reviewed_commit": "38baaf19568766e3911f63edd1509c8997030eab",
+  "review_type": "post-merge",
+  "review_basis": "merge-commit",
+  "reviewer": "slarti",
+  "verdict": "post-merge-audit",
+  "blocking_findings": [],
+  "remaining_followups": [
+    "The first stable ACP release must provide a real attestation and pass the audit with a non-empty stable-tag inventory.",
+    "Runtime consumers must record release pins separately from publication evidence."
+  ],
+  "supersedes_review": "https://github.com/yeraziael/slartis-backlog/pull/93",
+  "review_timestamp": "2026-07-25T21:54:23+01:00"
+}
