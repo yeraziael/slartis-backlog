@@ -1,0 +1,100 @@
+[
+  {
+    "scenario": "Unregistered action_ref",
+    "contract": {
+      "acp_version": "0.2.1-draft",
+      "trigger_id": "trigger-invalid-action-001",
+      "action_ref": "nonexistent.operation:1.0.0",
+      "provenance": {
+        "principal": "slarti",
+        "trace_id": "trace-invalid-action",
+        "created_at": "2026-07-25T12:00:00Z"
+      },
+      "trigger_type": "cron",
+      "schedule": {
+        "cron": "0 0 * * *"
+      },
+      "parameters": {}
+    },
+    "expected_rejection": "resolution",
+    "reason": "No executor registered for 'nonexistent.operation:1.0.0'"
+  },
+  {
+    "scenario": "Missing schedule for trigger_type cron",
+    "contract": {
+      "acp_version": "0.2.1-draft",
+      "trigger_id": "trigger-missing-schedule-002",
+      "action_ref": "ops.backup.paperless:1.0.0",
+      "provenance": {
+        "principal": "slarti",
+        "trace_id": "trace-missing-schedule",
+        "created_at": "2026-07-25T12:00:00Z"
+      },
+      "trigger_type": "cron",
+      "parameters": {}
+    },
+    "expected_rejection": "validation",
+    "reason": "Trigger type 'cron' requires a 'schedule' object with a 'cron' field"
+  },
+  {
+    "scenario": "Invalid cron expression",
+    "contract": {
+      "acp_version": "0.2.1-draft",
+      "trigger_id": "trigger-bad-cron-003",
+      "action_ref": "ops.health.pi:1.0.0",
+      "provenance": {
+        "principal": "slarti",
+        "trace_id": "trace-bad-cron",
+        "created_at": "2026-07-25T12:00:00Z"
+      },
+      "trigger_type": "cron",
+      "schedule": {
+        "cron": "every day at noon"
+      },
+      "parameters": {}
+    },
+    "expected_rejection": "validation",
+    "reason": "Invalid cron expression: 'every day at noon' does not match 5-field cron format"
+  },
+  {
+    "scenario": "Eddie contains execution logic (normative violation)",
+    "contract": {
+      "acp_version": "0.2.1-draft",
+      "trigger_id": "trigger-eddie-logic-004",
+      "action_ref": "custom.script:1.0.0",
+      "provenance": {
+        "principal": "slarti",
+        "trace_id": "trace-eddie-logic",
+        "created_at": "2026-07-25T12:00:00Z"
+      },
+      "trigger_type": "cron",
+      "schedule": {
+        "cron": "0 0 * * *"
+      },
+      "parameters": {},
+      "_violation": "Trigger contract tries to embed a shell command instead of referencing a registered action. Eddie must reject anything that is not a valid action_ref."
+    },
+    "expected_rejection": "resolution",
+    "reason": "Trigger contracts must reference registered actions via action_ref. Shell commands, script paths, and inline logic are not valid action_ref values."
+  },
+  {
+    "scenario": "Unversioned action_ref (schema violation)",
+    "contract": {
+      "acp_version": "0.2.1-draft",
+      "trigger_id": "trigger-no-version-005",
+      "action_ref": "ops.backup.paperless",
+      "provenance": {
+        "principal": "slarti",
+        "trace_id": "trace-no-version",
+        "created_at": "2026-07-25T12:00:00Z"
+      },
+      "trigger_type": "cron",
+      "schedule": {
+        "cron": "0 3 * * *"
+      },
+      "parameters": {}
+    },
+    "expected_rejection": "schema",
+    "reason": "action_ref 'ops.backup.paperless' is missing mandatory version suffix ':semver'"
+  }
+]

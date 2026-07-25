@@ -1,0 +1,50 @@
+{
+  "acp_version": "0.2.1-draft",
+  "trigger_id": "trigger-backup-paperless-daily",
+  "action_ref": "ops.backup.paperless:1.0.0",
+  "provenance": {
+    "principal": "slarti",
+    "trace_id": "trace-backup-policy-v2",
+    "created_at": "2026-07-25T06:00:00Z"
+  },
+  "trigger_type": "cron",
+  "schedule": {
+    "cron": "0 3 * * *",
+    "timezone": "Europe/Berlin",
+    "start_date": "2026-07-26T03:00:00+02:00",
+    "max_firings": 365
+  },
+  "parameters": {
+    "target": "paperless",
+    "compress": true
+  },
+  "retry": {
+    "max_retries": 3,
+    "backoff_strategy": "exponential",
+    "backoff_seconds": 60,
+    "max_backoff_seconds": 3600
+  },
+  "deduplication": {
+    "idempotency_key_source": "trigger_id + date",
+    "dedup_window_seconds": 86400
+  },
+  "concurrency": {
+    "max_concurrent": 1,
+    "lock_key": "backup-paperless",
+    "queue_on_conflict": false
+  },
+  "deadline": {
+    "missed_run_action": "skip",
+    "max_execution_seconds": 1800
+  },
+  "notifications": {
+    "on_success": [],
+    "on_failure": ["telegram"],
+    "on_missed": ["telegram"],
+    "escalate_after": 3
+  },
+  "activation": {
+    "enabled": true,
+    "version": "1.0.0"
+  }
+}
