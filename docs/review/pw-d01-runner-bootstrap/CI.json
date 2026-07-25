@@ -1,0 +1,57 @@
+{
+  "schema": "slarti.ci-evidence.v1",
+  "source_repository": "Homelab/Architecture",
+  "source_pr": 79,
+  "head_sha": "5e4e566ab143f3e1a3f9b6a7bbd8b5798dc1bacb",
+  "aggregate_conclusion": "success",
+  "runs": [
+    {
+      "id": 661,
+      "event": "push",
+      "url": "https://gitea.hl.maier.wtf/Homelab/Architecture/actions/runs/661",
+      "jobs": [
+        {
+          "id": 2538,
+          "name": "Architecture CI / Linting & Validation (push)",
+          "conclusion": "success"
+        },
+        {
+          "id": 2539,
+          "name": "Architecture CI / Unit Tests (push)",
+          "conclusion": "success"
+        },
+        {
+          "id": 2540,
+          "name": "Architecture CI / Reporting (push)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 662,
+      "event": "pull_request",
+      "url": "https://gitea.hl.maier.wtf/Homelab/Architecture/actions/runs/662",
+      "jobs": [
+        {
+          "id": 2541,
+          "name": "Architecture CI / Linting & Validation (pull_request)",
+          "conclusion": "success"
+        },
+        {
+          "id": 2542,
+          "name": "Architecture CI / Unit Tests (pull_request)",
+          "conclusion": "success"
+        },
+        {
+          "id": 2543,
+          "name": "Architecture CI / Reporting (pull_request)",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "required_pull_request_jobs": [
+    "Architecture CI / Linting & Validation (pull_request)",
+    "Architecture CI / Unit Tests (pull_request)"
+  ]
+}
