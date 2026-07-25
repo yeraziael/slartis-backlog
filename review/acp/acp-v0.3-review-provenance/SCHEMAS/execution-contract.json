@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gitea.hl.maier.wtf/Homelab/ACP/SCHEMAS/execution-contract.json",
+  "title": "ACP Execution Contract",
+  "description": "Formal contract between a Principal (Slarti/Operator) and an Executor (Lydia). Version 0.2.1-draft.",
+  "type": "object",
+  "properties": {
+    "acp_version": {
+      "type": "string",
+      "const": "0.2.1-draft"
+    },
+    "execution_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._~-]{1,128}$"
+    },
+    "action": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]{2,63}$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "principal": { "type": "string", "minLength": 1 },
+        "session_id": { "type": "string" },
+        "trace_id": { "type": "string", "minLength": 1 },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["principal", "trace_id", "created_at"],
+      "additionalProperties": false
+    },
+    "parameters": {
+      "type": "object",
+      "minProperties": 1
+    },
+    "preconditions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["file_exists", "path_accessible", "tool_available", "network_reachable", "resource_free", "custom"]
+          },
+          "target": { "type": "string", "minLength": 1 },
+          "message": { "type": "string" }
+        },
+        "required": ["type", "target"],
+        "additionalProperties": false
+      }
+    },
+    "security": {
+      "type": "object",
+      "properties": {
+        "allowed_paths": { "type": "array", "items": { "type": "string" } },
+        "requires_approval": { "type": "boolean" },
+        "allowed_hosts": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "constraints": {
+      "type": "object",
+      "properties": {
+        "timeout_seconds": { "type": "integer", "minimum": 1 },
+        "max_retries": { "type": "integer", "minimum": 0 },
+        "concurrency_key": { "type": "string" },
+        "idempotency_key": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "rollback": {
+      "type": "object",
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": ["revert", "compensating_action", "manual", "none"]
+        },
+        "action": { "type": "string" },
+        "parameters": { "type": "object" }
+      },
+      "required": ["strategy"],
+      "additionalProperties": false
+    },
+    "success_criteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["exit_code", "output_match", "file_exists", "custom"]
+          },
+          "target": { "type": "string", "minLength": 1 }
+        },
+        "required": ["type", "target"],
+        "additionalProperties": false
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "require_output": { "type": "boolean" },
+        "require_artifacts": { "type": "boolean" },
+        "require_logs": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "failure_handling": {
+      "type": "object",
+      "properties": {
+        "error_classes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "notify_on": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "escalate_after": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "acp_version",
+    "execution_id",
+    "action",
+    "version",
+    "provenance",
+    "parameters",
+    "constraints",
+    "rollback",
+    "success_criteria",
+    "evidence"
+  ],
+  "additionalProperties": false
+}

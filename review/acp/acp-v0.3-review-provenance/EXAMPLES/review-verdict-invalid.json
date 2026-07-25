@@ -1,0 +1,106 @@
+[
+  {
+    "scenario": "Self-verification with verdict 'approved' (type mismatch)",
+    "verdict": {
+      "schema": "acp.review-verdict.v2",
+      "reviewed_commit": "0000000000000000000000000000000000000000",
+      "review_type": "self-verification",
+      "review_basis": "pull-request",
+      "reviewer": "author",
+      "verdict": "approved",
+      "review_timestamp": "2026-07-25T12:00:00Z"
+    },
+    "expected_rejection": "schema",
+    "expected_constraint": "not one of",
+    "reason": "self-verification verdict must be 'consistency-verified', not 'approved'"
+  },
+  {
+    "scenario": "Self-verification with verdict 'request_changes' (type mismatch)",
+    "verdict": {
+      "schema": "acp.review-verdict.v2",
+      "reviewed_commit": "0000000000000000000000000000000000000000",
+      "review_type": "self-verification",
+      "review_basis": "pull-request",
+      "reviewer": "author",
+      "verdict": "request_changes",
+      "review_timestamp": "2026-07-25T12:00:00Z"
+    },
+    "expected_rejection": "schema",
+    "expected_constraint": "not one of",
+    "reason": "self-verification verdict must be 'consistency-verified', not 'request_changes'"
+  },
+  {
+    "scenario": "Independent review with verdict 'consistency-verified' (type mismatch)",
+    "verdict": {
+      "schema": "acp.review-verdict.v2",
+      "reviewed_commit": "0000000000000000000000000000000000000000",
+      "review_type": "independent",
+      "review_basis": "pull-request",
+      "reviewer": "reviewer",
+      "verdict": "consistency-verified",
+      "review_timestamp": "2026-07-25T12:00:00Z"
+    },
+    "expected_rejection": "schema",
+    "expected_constraint": "not one of",
+    "reason": "independent review verdict must be 'approved' or 'request_changes', not 'consistency-verified'"
+  },
+  {
+    "scenario": "Missing required field: reviewed_commit",
+    "verdict": {
+      "schema": "acp.review-verdict.v2",
+      "review_type": "independent",
+      "review_basis": "pull-request",
+      "reviewer": "reviewer",
+      "verdict": "approved",
+      "review_timestamp": "2026-07-25T12:00:00Z"
+    },
+    "expected_rejection": "schema",
+    "expected_constraint": "required property",
+    "reason": "Missing required field: reviewed_commit"
+  },
+  {
+    "scenario": "Invalid reviewed_commit format (short SHA)",
+    "verdict": {
+      "schema": "acp.review-verdict.v2",
+      "reviewed_commit": "abc123",
+      "review_type": "independent",
+      "review_basis": "pull-request",
+      "reviewer": "reviewer",
+      "verdict": "approved",
+      "review_timestamp": "2026-07-25T12:00:00Z"
+    },
+    "expected_rejection": "schema",
+    "expected_constraint": "does not match",
+    "reason": "reviewed_commit must be a full 40-character SHA-1 hash"
+  },
+  {
+    "scenario": "Invalid review_basis",
+    "verdict": {
+      "schema": "acp.review-verdict.v2",
+      "reviewed_commit": "0000000000000000000000000000000000000000",
+      "review_type": "independent",
+      "review_basis": "email-thread",
+      "reviewer": "reviewer",
+      "verdict": "approved",
+      "review_timestamp": "2026-07-25T12:00:00Z"
+    },
+    "expected_rejection": "schema",
+    "expected_constraint": "not one of",
+    "reason": "review_basis 'email-thread' is not in enum"
+  },
+  {
+    "scenario": "Invalid verdict value",
+    "verdict": {
+      "schema": "acp.review-verdict.v2",
+      "reviewed_commit": "0000000000000000000000000000000000000000",
+      "review_type": "independent",
+      "review_basis": "pull-request",
+      "reviewer": "reviewer",
+      "verdict": "maybe",
+      "review_timestamp": "2026-07-25T12:00:00Z"
+    },
+    "expected_rejection": "schema",
+    "expected_constraint": "not one of",
+    "reason": "verdict 'maybe' is not in enum"
+  }
+]

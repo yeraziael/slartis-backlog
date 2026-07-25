@@ -1,0 +1,71 @@
+[
+  {
+    "scenario": "Independent review — approved",
+    "verdict": {
+      "schema": "acp.review-verdict.v2",
+      "reviewed_commit": "96e3fc40d1873b23f8c6a326a3d8891dc253c3f8",
+      "review_type": "independent",
+      "review_basis": "pull-request",
+      "reviewer": "yeraziael",
+      "verdict": "approved",
+      "blocking_findings": [],
+      "remaining_followups": [],
+      "review_timestamp": "2026-07-25T12:20:00Z"
+    },
+    "expected": "pass"
+  },
+  {
+    "scenario": "Independent review — request changes",
+    "verdict": {
+      "schema": "acp.review-verdict.v2",
+      "reviewed_commit": "5a4f796eb5dd3e48750d6718b0f017bf89f1da3b",
+      "review_type": "independent",
+      "review_basis": "pull-request",
+      "reviewer": "yeraziael",
+      "verdict": "request_changes",
+      "blocking_findings": [
+        "activation.version must be required",
+        "trigger_id must use version-aware semantics"
+      ],
+      "remaining_followups": [],
+      "review_timestamp": "2026-07-25T12:10:00Z"
+    },
+    "expected": "pass"
+  },
+  {
+    "scenario": "Self-verification — consistency verified",
+    "verdict": {
+      "schema": "acp.review-verdict.v2",
+      "reviewed_commit": "b8521c867102ba2b71cbac891567ef5b5f8f3d0f",
+      "review_type": "self-verification",
+      "review_basis": "pull-request",
+      "reviewer": "emissaryofyeraziael",
+      "verdict": "consistency-verified",
+      "blocking_findings": [],
+      "remaining_followups": [
+        "Governance follow-up in yeraziael/ai-governance"
+      ],
+      "supersedes_review": "https://github.com/yeraziael/slartis-backlog/pull/91#issuecomment-5077541027",
+      "review_timestamp": "2026-07-25T12:19:00Z"
+    },
+    "expected": "pass"
+  },
+  {
+    "scenario": "Post-merge verification — audit",
+    "verdict": {
+      "schema": "acp.review-verdict.v2",
+      "reviewed_commit": "96e3fc40d1873b23f8c6a326a3d8891dc253c3f8",
+      "review_type": "post-merge",
+      "review_basis": "merge-commit",
+      "reviewer": "yeraziael",
+      "verdict": "post-merge-audit",
+      "blocking_findings": [],
+      "remaining_followups": [
+        "Deploy review-provenance.md to ai-governance"
+      ],
+      "supersedes_review": "https://gitea.hl.maier.wtf/Homelab/ACP/pulls/8#review-123",
+      "review_timestamp": "2026-07-25T12:30:00Z"
+    },
+    "expected": "pass"
+  }
+]

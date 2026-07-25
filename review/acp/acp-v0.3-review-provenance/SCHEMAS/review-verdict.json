@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gitea.hl.maier.wtf/Homelab/ACP/SCHEMAS/review-verdict.json",
+  "title": "ACP Review Verdict",
+  "description": "Verdict schema for ACP review provenance. Version 0.3.0-draft.",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "acp.review-verdict.v2"
+    },
+    "reviewed_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "review_type": {
+      "type": "string",
+      "enum": ["independent", "self-verification", "post-merge"]
+    },
+    "review_basis": {
+      "type": "string",
+      "enum": ["pull-request", "merge-commit", "release", "working-copy"]
+    },
+    "reviewer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["approved", "request_changes", "consistency-verified", "post-merge-audit"]
+    },
+    "blocking_findings": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "remaining_followups": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "supersedes_review": {
+      "type": "string"
+    },
+    "review_timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "schema",
+    "reviewed_commit",
+    "review_type",
+    "review_basis",
+    "reviewer",
+    "verdict",
+    "review_timestamp"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "review_type": { "const": "independent" } }
+      },
+      "then": {
+        "properties": {
+          "verdict": {
+            "enum": ["approved", "request_changes"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "review_type": { "const": "self-verification" } }
+      },
+      "then": {
+        "properties": {
+          "verdict": {
+            "enum": ["consistency-verified"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "review_type": { "const": "post-merge" } }
+      },
+      "then": {
+        "properties": {
+          "verdict": {
+            "enum": ["post-merge-audit"]
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

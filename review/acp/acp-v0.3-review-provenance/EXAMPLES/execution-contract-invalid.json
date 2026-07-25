@@ -1,0 +1,179 @@
+[
+  {
+    "scenario": "Missing required fields (acp_version, execution_id, action)",
+    "contract": {
+      "version": "1.0.0",
+      "provenance": {
+        "principal": "slarti",
+        "trace_id": "trace-missing-fields",
+        "created_at": "2026-07-25T12:00:00Z"
+      },
+      "parameters": {
+        "command": "ls -la"
+      },
+      "constraints": {
+        "timeout_seconds": 300,
+        "max_retries": 0,
+        "concurrency_key": "test",
+        "idempotency_key": "exec-missing-toplevel-000"
+      },
+      "rollback": {
+        "strategy": "none"
+      },
+      "success_criteria": [
+        { "type": "exit_code", "target": "0" }
+      ],
+      "evidence": {
+        "require_output": true
+      }
+    },
+    "expected_rejection": "schema",
+    "reason": "Missing required top-level fields: acp_version, execution_id, action"
+  },
+  {
+    "scenario": "Unknown action (not in executor registry)",
+    "contract": {
+      "acp_version": "0.2.1-draft",
+      "execution_id": "exec-invalid-action-001",
+      "action": "nonexistent.operation",
+      "version": "9.9.9",
+      "provenance": {
+        "principal": "slarti",
+        "trace_id": "trace-unknown-action",
+        "created_at": "2026-07-25T12:00:00Z"
+      },
+      "parameters": {
+        "target": "/etc/passwd"
+      },
+      "constraints": {
+        "timeout_seconds": 60,
+        "max_retries": 0,
+        "concurrency_key": "test",
+        "idempotency_key": "exec-invalid-action-001"
+      },
+      "rollback": {
+        "strategy": "none"
+      },
+      "success_criteria": [
+        { "type": "exit_code", "target": "0" }
+      ],
+      "evidence": {
+        "require_output": true
+      }
+    },
+    "expected_rejection": "execution",
+    "reason": "Action 'nonexistent.operation:9.9.9' is not registered with any executor"
+  },
+  {
+    "scenario": "Precondition failure: tool version mismatch",
+    "contract": {
+      "acp_version": "0.2.1-draft",
+      "execution_id": "exec-version-mismatch-002",
+      "action": "fileops.copy",
+      "version": "2.0.0",
+      "provenance": {
+        "principal": "slarti",
+        "trace_id": "trace-version-mismatch",
+        "created_at": "2026-07-25T12:00:00Z"
+      },
+      "parameters": {
+        "source": "/tmp/source.txt",
+        "dest": "/tmp/dest.txt"
+      },
+      "preconditions": [
+        {
+          "type": "tool_available",
+          "target": "fileops.copy:2.0.0",
+          "message": "fileops.copy v2.0.0 must be registered"
+        }
+      ],
+      "constraints": {
+        "timeout_seconds": 120,
+        "max_retries": 1,
+        "concurrency_key": "fileops",
+        "idempotency_key": "exec-version-mismatch-002"
+      },
+      "rollback": {
+        "strategy": "none"
+      },
+      "success_criteria": [
+        { "type": "exit_code", "target": "0" }
+      ],
+      "evidence": {
+        "require_output": true
+      }
+    },
+    "expected_rejection": "precondition",
+    "reason": "Only fileops.copy v1.3.0 is registered, not v2.0.0"
+  },
+  {
+    "scenario": "Missing parameters for action",
+    "contract": {
+      "acp_version": "0.2.1-draft",
+      "execution_id": "exec-missing-params-003",
+      "action": "issue.create",
+      "version": "1.0.0",
+      "provenance": {
+        "principal": "slarti",
+        "trace_id": "trace-missing-params",
+        "created_at": "2026-07-25T12:00:00Z"
+      },
+      "parameters": {},
+      "constraints": {
+        "timeout_seconds": 60,
+        "max_retries": 0,
+        "concurrency_key": "issues",
+        "idempotency_key": "exec-missing-params-003"
+      },
+      "rollback": {
+        "strategy": "none"
+      },
+      "success_criteria": [
+        { "type": "exit_code", "target": "0" }
+      ],
+      "evidence": {
+        "require_output": true
+      }
+    },
+    "expected_rejection": "schema",
+    "reason": "issue.create requires 'repo', 'title', and 'body' parameters; none provided"
+  },
+  {
+    "scenario": "Insufficient permissions: path outside allowed_paths",
+    "contract": {
+      "acp_version": "0.2.1-draft",
+      "execution_id": "exec-permission-denied-004",
+      "action": "fileops.read",
+      "version": "1.0.0",
+      "provenance": {
+        "principal": "slarti",
+        "trace_id": "trace-permission-denied",
+        "created_at": "2026-07-25T12:00:00Z"
+      },
+      "parameters": {
+        "path": "/etc/shadow"
+      },
+      "security": {
+        "allowed_paths": ["/home/lydia/workspace/"],
+        "requires_approval": false
+      },
+      "constraints": {
+        "timeout_seconds": 30,
+        "max_retries": 0,
+        "concurrency_key": "fileops",
+        "idempotency_key": "exec-permission-denied-004"
+      },
+      "rollback": {
+        "strategy": "none"
+      },
+      "success_criteria": [
+        { "type": "exit_code", "target": "0" }
+      ],
+      "evidence": {
+        "require_output": true
+      }
+    },
+    "expected_rejection": "permission",
+    "reason": "Path '/etc/shadow' is outside allowed_paths ['/home/lydia/workspace/']"
+  }
+]
