@@ -1,0 +1,43 @@
+manifest_version: v2
+project: acp
+repository: Homelab/ACP
+canonical_pr: 12
+base_commit: 07c3fcbd0f53493b847d812eede1df68770f84c2
+head_commit: b65a9ad1f26fea74e53013c430eeddb98d3d73e7
+author: slarti
+change_request: "Homelab/ACP#11"
+
+statistics:
+  files_changed: 5
+  insertions: 174
+  deletions: 3
+
+review_scope:
+  architecture: true
+  implementation: true
+  governance: true
+  security: true
+  compatibility: true
+  documentation: true
+
+integrity:
+  changeset_sha256: "420ce49ff0b1d16809efa0afbdf1fd4702d2336da6554d2b0f3fc37767d409f6"
+  review_verdict_sha256: "e6edb14a85aa1b232479f7923bad65b64167c92c2de6b19c9b19d93735044e97"
+
+generated:
+  timestamp: "2026-07-25T16:47:57+01:00"
+  tool: opencode/github-review-skill
+
+review_verdict:
+  schema: acp.review-verdict.v2
+  reviewed_commit: b65a9ad1f26fea74e53013c430eeddb98d3d73e7
+  review_type: post-merge
+  review_basis: merge-commit
+  reviewer: slarti
+  verdict: post-merge-audit
+  blocking_findings: []
+  remaining_followups:
+    - "Resolve yeraziael/ai-governance#42 before publishing the first stable ACP release."
+    - "Implement Homelab/ACP#11 for post-publication release-to-tag verification."
+  supersedes_review: null
+  review_timestamp: "2026-07-25T16:47:57+01:00"
