@@ -1,0 +1,27 @@
+project: acp
+repository: Homelab/ACP
+canonical_pr: 6
+base_commit: 6b5e8ec58cde1e193b9310c01fc68b6885de8df5
+head_commit: cf48b82fbb7ac371090feb9b9323418e33f900ae
+author: slarti
+change_request: "yeraziael/Slartis-backlog#88"
+
+statistics:
+  files_changed: 15
+  insertions: 1566
+  deletions: 5
+
+review_scope:
+  architecture: true
+  implementation: true
+  governance: true
+  security: true
+  compatibility: true
+  documentation: true
+
+integrity:
+  changeset_sha256: "ee44bf5187dcb9680c732dedc11abfd7e1594a8ae7dd9f0fed562365f55eb2b1"
+
+generated:
+  timestamp: "2026-07-25T12:25:00+01:00"
+  tool: opencode/github-review-skill
