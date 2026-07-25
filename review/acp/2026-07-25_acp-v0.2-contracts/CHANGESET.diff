@@ -1,8 +1,18 @@
+diff --git a/.gitea/workflows/ci.yaml b/.gitea/workflows/ci.yaml
+index 21a00f2..fdc3fe0 100644
+--- a/.gitea/workflows/ci.yaml
++++ b/.gitea/workflows/ci.yaml
+@@ -33,3 +33,5 @@ jobs:
+             grep -v -E '^\.[/\\]*(\.gitea|node_modules|\.git)' | \
+             grep -v -E '(token|secret|password)[= ][<[]' || \
+             { echo "Possible secrets found in committed files"; exit 1; }
++      - name: schema-test
++        run: python3 SCHEMAS/test_schemas.py
 diff --git a/CHANGELOG.md b/CHANGELOG.md
-index 42f55f5..227b6a2 100644
+index 42f55f5..53c2ba6 100644
 --- a/CHANGELOG.md
 +++ b/CHANGELOG.md
-@@ -1,5 +1,17 @@
+@@ -1,5 +1,28 @@
  # Changelog
  
 +## v0.2.0-draft
@@ -17,12 +27,23 @@ index 42f55f5..227b6a2 100644
 +- Added `EXAMPLES/trigger-contract-invalid.json` — 4 invalid Trigger Contract examples
 +- Added `DECISIONS/001-execution-trigger-contracts.md` — ADR-001 for this change
 +
++## v0.2.1-draft
++
++- **Breaking:** `action_ref` version suffix is now mandatory (was optional)
++- **Breaking:** `constraints`, `rollback`, `success_criteria` are now required top-level fields in Execution Contract
++- **Breaking:** `webhook.secret` renamed to `webhook.secret_ref` with normative resolution requirement
++- Added immutable identity model: `(trigger_id, activation.version)` is the immutable identity pair
++- Added conditional required sub-fields for `schedule`: cron type requires `cron`, schedule type requires `interval_seconds`
++- Added `SCHEMAS/test_schemas.py` — schema-level test harness with 12+ validation scenarios
++- Updated CI workflow to run schema tests
++- Added schema-level violation examples for unversioned action_ref and missing required fields
++
  ## v0.1.0-draft
  
  - Initial repository setup
 diff --git a/DECISIONS/001-execution-trigger-contracts.md b/DECISIONS/001-execution-trigger-contracts.md
 new file mode 100644
-index 0000000..e3d128a
+index 0000000..e13ef30
 --- /dev/null
 +++ b/DECISIONS/001-execution-trigger-contracts.md
 @@ -0,0 +1,99 @@
@@ -56,7 +77,7 @@ index 0000000..e3d128a
 +
 +## Decision
 +
-+Add two normative specifications to ACP v0.2.0-draft:
++Add two normative specifications to ACP v0.2.1-draft:
 +
 +1. **Execution Contract** (`SPEC/execution-contract.md`):
 +   - Defines what a Principal must provide for a single deterministic action.
@@ -137,10 +158,10 @@ index a985abc..99710d4 100644
 +| 001 | 2026-07-25 | Execution and Trigger Contracts for ACP v0.2 | Proposed | F-57-001, F-57-002, F-57-003, F-57-006 |
 diff --git a/EXAMPLES/execution-contract-invalid.json b/EXAMPLES/execution-contract-invalid.json
 new file mode 100644
-index 0000000..ffd4037
+index 0000000..ee90da5
 --- /dev/null
 +++ b/EXAMPLES/execution-contract-invalid.json
-@@ -0,0 +1,119 @@
+@@ -0,0 +1,179 @@
 +[
 +  {
 +    "scenario": "Missing required fields (acp_version, execution_id, action)",
@@ -154,6 +175,18 @@ index 0000000..ffd4037
 +      "parameters": {
 +        "command": "ls -la"
 +      },
++      "constraints": {
++        "timeout_seconds": 300,
++        "max_retries": 0,
++        "concurrency_key": "test",
++        "idempotency_key": "exec-missing-toplevel-000"
++      },
++      "rollback": {
++        "strategy": "none"
++      },
++      "success_criteria": [
++        { "type": "exit_code", "target": "0" }
++      ],
 +      "evidence": {
 +        "require_output": true
 +      }
@@ -164,7 +197,7 @@ index 0000000..ffd4037
 +  {
 +    "scenario": "Unknown action (not in executor registry)",
 +    "contract": {
-+      "acp_version": "0.2.0-draft",
++      "acp_version": "0.2.1-draft",
 +      "execution_id": "exec-invalid-action-001",
 +      "action": "nonexistent.operation",
 +      "version": "9.9.9",
@@ -176,6 +209,18 @@ index 0000000..ffd4037
 +      "parameters": {
 +        "target": "/etc/passwd"
 +      },
++      "constraints": {
++        "timeout_seconds": 60,
++        "max_retries": 0,
++        "concurrency_key": "test",
++        "idempotency_key": "exec-invalid-action-001"
++      },
++      "rollback": {
++        "strategy": "none"
++      },
++      "success_criteria": [
++        { "type": "exit_code", "target": "0" }
++      ],
 +      "evidence": {
 +        "require_output": true
 +      }
@@ -186,7 +231,7 @@ index 0000000..ffd4037
 +  {
 +    "scenario": "Precondition failure: tool version mismatch",
 +    "contract": {
-+      "acp_version": "0.2.0-draft",
++      "acp_version": "0.2.1-draft",
 +      "execution_id": "exec-version-mismatch-002",
 +      "action": "fileops.copy",
 +      "version": "2.0.0",
@@ -206,6 +251,18 @@ index 0000000..ffd4037
 +          "message": "fileops.copy v2.0.0 must be registered"
 +        }
 +      ],
++      "constraints": {
++        "timeout_seconds": 120,
++        "max_retries": 1,
++        "concurrency_key": "fileops",
++        "idempotency_key": "exec-version-mismatch-002"
++      },
++      "rollback": {
++        "strategy": "none"
++      },
++      "success_criteria": [
++        { "type": "exit_code", "target": "0" }
++      ],
 +      "evidence": {
 +        "require_output": true
 +      }
@@ -216,7 +273,7 @@ index 0000000..ffd4037
 +  {
 +    "scenario": "Missing parameters for action",
 +    "contract": {
-+      "acp_version": "0.2.0-draft",
++      "acp_version": "0.2.1-draft",
 +      "execution_id": "exec-missing-params-003",
 +      "action": "issue.create",
 +      "version": "1.0.0",
@@ -226,6 +283,18 @@ index 0000000..ffd4037
 +        "created_at": "2026-07-25T12:00:00Z"
 +      },
 +      "parameters": {},
++      "constraints": {
++        "timeout_seconds": 60,
++        "max_retries": 0,
++        "concurrency_key": "issues",
++        "idempotency_key": "exec-missing-params-003"
++      },
++      "rollback": {
++        "strategy": "none"
++      },
++      "success_criteria": [
++        { "type": "exit_code", "target": "0" }
++      ],
 +      "evidence": {
 +        "require_output": true
 +      }
@@ -236,7 +305,7 @@ index 0000000..ffd4037
 +  {
 +    "scenario": "Insufficient permissions: path outside allowed_paths",
 +    "contract": {
-+      "acp_version": "0.2.0-draft",
++      "acp_version": "0.2.1-draft",
 +      "execution_id": "exec-permission-denied-004",
 +      "action": "fileops.read",
 +      "version": "1.0.0",
@@ -252,6 +321,18 @@ index 0000000..ffd4037
 +        "allowed_paths": ["/home/lydia/workspace/"],
 +        "requires_approval": false
 +      },
++      "constraints": {
++        "timeout_seconds": 30,
++        "max_retries": 0,
++        "concurrency_key": "fileops",
++        "idempotency_key": "exec-permission-denied-004"
++      },
++      "rollback": {
++        "strategy": "none"
++      },
++      "success_criteria": [
++        { "type": "exit_code", "target": "0" }
++      ],
 +      "evidence": {
 +        "require_output": true
 +      }
@@ -262,12 +343,12 @@ index 0000000..ffd4037
 +]
 diff --git a/EXAMPLES/execution-contract-valid.json b/EXAMPLES/execution-contract-valid.json
 new file mode 100644
-index 0000000..51cdd03
+index 0000000..26e0de0
 --- /dev/null
 +++ b/EXAMPLES/execution-contract-valid.json
 @@ -0,0 +1,69 @@
 +{
-+  "acp_version": "0.2.0-draft",
++  "acp_version": "0.2.1-draft",
 +  "execution_id": "exec-20260725-ollama-prompt-a1b2c3d4",
 +  "action": "ollama.prompt",
 +  "version": "1.2.0",
@@ -337,15 +418,15 @@ index 0000000..51cdd03
 +}
 diff --git a/EXAMPLES/trigger-contract-invalid.json b/EXAMPLES/trigger-contract-invalid.json
 new file mode 100644
-index 0000000..93f6677
+index 0000000..257cb75
 --- /dev/null
 +++ b/EXAMPLES/trigger-contract-invalid.json
-@@ -0,0 +1,80 @@
+@@ -0,0 +1,100 @@
 +[
 +  {
 +    "scenario": "Unregistered action_ref",
 +    "contract": {
-+      "acp_version": "0.2.0-draft",
++      "acp_version": "0.2.1-draft",
 +      "trigger_id": "trigger-invalid-action-001",
 +      "action_ref": "nonexistent.operation:1.0.0",
 +      "provenance": {
@@ -363,9 +444,9 @@ index 0000000..93f6677
 +    "reason": "No executor registered for 'nonexistent.operation:1.0.0'"
 +  },
 +  {
-+    "scenario": "Missing schedule for cron trigger type",
++    "scenario": "Missing schedule for trigger_type cron",
 +    "contract": {
-+      "acp_version": "0.2.0-draft",
++      "acp_version": "0.2.1-draft",
 +      "trigger_id": "trigger-missing-schedule-002",
 +      "action_ref": "ops.backup.paperless:1.0.0",
 +      "provenance": {
@@ -382,7 +463,7 @@ index 0000000..93f6677
 +  {
 +    "scenario": "Invalid cron expression",
 +    "contract": {
-+      "acp_version": "0.2.0-draft",
++      "acp_version": "0.2.1-draft",
 +      "trigger_id": "trigger-bad-cron-003",
 +      "action_ref": "ops.health.pi:1.0.0",
 +      "provenance": {
@@ -402,7 +483,7 @@ index 0000000..93f6677
 +  {
 +    "scenario": "Eddie contains execution logic (normative violation)",
 +    "contract": {
-+      "acp_version": "0.2.0-draft",
++      "acp_version": "0.2.1-draft",
 +      "trigger_id": "trigger-eddie-logic-004",
 +      "action_ref": "custom.script:1.0.0",
 +      "provenance": {
@@ -419,16 +500,36 @@ index 0000000..93f6677
 +    },
 +    "expected_rejection": "resolution",
 +    "reason": "Trigger contracts must reference registered actions via action_ref. Shell commands, script paths, and inline logic are not valid action_ref values."
++  },
++  {
++    "scenario": "Unversioned action_ref (schema violation)",
++    "contract": {
++      "acp_version": "0.2.1-draft",
++      "trigger_id": "trigger-no-version-005",
++      "action_ref": "ops.backup.paperless",
++      "provenance": {
++        "principal": "slarti",
++        "trace_id": "trace-no-version",
++        "created_at": "2026-07-25T12:00:00Z"
++      },
++      "trigger_type": "cron",
++      "schedule": {
++        "cron": "0 3 * * *"
++      },
++      "parameters": {}
++    },
++    "expected_rejection": "schema",
++    "reason": "action_ref 'ops.backup.paperless' is missing mandatory version suffix ':semver'"
 +  }
 +]
 diff --git a/EXAMPLES/trigger-contract-valid.json b/EXAMPLES/trigger-contract-valid.json
 new file mode 100644
-index 0000000..e5f637d
+index 0000000..e4c02e0
 --- /dev/null
 +++ b/EXAMPLES/trigger-contract-valid.json
 @@ -0,0 +1,50 @@
 +{
-+  "acp_version": "0.2.0-draft",
++  "acp_version": "0.2.1-draft",
 +  "trigger_id": "trigger-backup-paperless-daily",
 +  "action_ref": "ops.backup.paperless:1.0.0",
 +  "provenance": {
@@ -497,20 +598,20 @@ index 83b450b..e745eee 100644
  
 diff --git a/SCHEMAS/execution-contract.json b/SCHEMAS/execution-contract.json
 new file mode 100644
-index 0000000..0d56e14
+index 0000000..1540a39
 --- /dev/null
 +++ b/SCHEMAS/execution-contract.json
-@@ -0,0 +1,137 @@
+@@ -0,0 +1,140 @@
 +{
 +  "$schema": "http://json-schema.org/draft-07/schema#",
 +  "$id": "https://gitea.hl.maier.wtf/Homelab/ACP/SCHEMAS/execution-contract.json",
 +  "title": "ACP Execution Contract",
-+  "description": "Formal contract between a Principal (Slarti/Operator) and an Executor (Lydia). Version 0.2.0-draft.",
++  "description": "Formal contract between a Principal (Slarti/Operator) and an Executor (Lydia). Version 0.2.1-draft.",
 +  "type": "object",
 +  "properties": {
 +    "acp_version": {
 +      "type": "string",
-+      "const": "0.2.0-draft"
++      "const": "0.2.1-draft"
 +    },
 +    "execution_id": {
 +      "type": "string",
@@ -634,26 +735,159 @@ index 0000000..0d56e14
 +    "version",
 +    "provenance",
 +    "parameters",
++    "constraints",
++    "rollback",
++    "success_criteria",
 +    "evidence"
 +  ],
 +  "additionalProperties": false
 +}
+diff --git a/SCHEMAS/test_schemas.py b/SCHEMAS/test_schemas.py
+new file mode 100644
+index 0000000..6dd073d
+--- /dev/null
++++ b/SCHEMAS/test_schemas.py
+@@ -0,0 +1,124 @@
++#!/usr/bin/env python3
++"""Test harness for ACP JSON Schemas.
++
++Validates schema syntax, valid examples pass, and schema-level rejections fail.
++Run from repo root: python3 SCHEMAS/test_schemas.py
++"""
++import json
++import sys
++from pathlib import Path
++
++import jsonschema
++
++
++REPO = Path(__file__).resolve().parent.parent
++SCHEMAS = REPO / "SCHEMAS"
++EXAMPLES = REPO / "EXAMPLES"
++
++
++def load(path):
++    with open(path) as f:
++        return json.load(f)
++
++
++def validate_invalid_examples(schema, examples_path):
++    """Run each invalid example scenario through the schema.
++
++    Scenarios with expected_rejection == "schema" must FAIL schema validation.
++    Other scenarios are informational.
++    """
++    errors = []
++    try:
++        examples = load(examples_path)
++    except json.JSONDecodeError as e:
++        return [f"  FAIL: {examples_path.name} is not valid JSON: {e}"]
++
++    for i, entry in enumerate(examples):
++        scenario = entry.get("scenario", f"entry-{i}")
++        contract = entry.get("contract", {})
++        expected_rejection = entry.get("expected_rejection", "")
++
++        try:
++            jsonschema.validate(contract, schema)
++            passed = True
++        except jsonschema.ValidationError:
++            passed = False
++
++        if expected_rejection == "schema":
++            if passed:
++                errors.append(
++                    f"  FAIL [{scenario}]: expected schema rejection but contract passed validation"
++                )
++            else:
++                print(f"  OK [{scenario}]: correctly rejected by schema")
++        elif expected_rejection == "validation":
++            if not passed:
++                print(f"  OK [{scenario}]: schema also catches this validation case")
++            else:
++                print(f"  INFO [{scenario}]: runtime-only validation (passes schema)")
++        else:
++            if not passed:
++                print(f"  INFO [{scenario}]: schema also catches this {expected_rejection} rejection (stricter schema)")
++            else:
++                print(f"  OK [{scenario}]: passes schema — rejection is runtime-level ({expected_rejection})")
++
++    return errors
++
++
++def main():
++    exit_code = 0
++
++    for schema_name, examples_valid, examples_invalid in [
++        ("trigger-contract.json", "trigger-contract-valid.json", "trigger-contract-invalid.json"),
++        ("execution-contract.json", "execution-contract-valid.json", "execution-contract-invalid.json"),
++    ]:
++        schema_path = SCHEMAS / schema_name
++        valid_path = EXAMPLES / examples_valid
++        invalid_path = EXAMPLES / examples_invalid
++
++        if not schema_path.exists():
++            print(f"  FAIL: {schema_path} not found")
++            exit_code = 1
++            continue
++
++        try:
++            schema = load(schema_path)
++        except json.JSONDecodeError as e:
++            print(f"  FAIL: {schema_name} is not valid JSON: {e}")
++            exit_code = 1
++            continue
++
++        try:
++            jsonschema.Draft7Validator.check_schema(schema)
++        except jsonschema.SchemaError as e:
++            print(f"  FAIL: {schema_name} is not a valid Draft-07 schema: {e}")
++            exit_code = 1
++            continue
++        print(f"  OK: {schema_name} is valid Draft-07 schema")
++
++        if valid_path.exists():
++            try:
++                contract = load(valid_path)
++            except json.JSONDecodeError as e:
++                print(f"  FAIL: {valid_path.name} is not valid JSON: {e}")
++                exit_code = 1
++                continue
++
++            try:
++                jsonschema.validate(contract, schema)
++                print(f"  OK: {valid_path.name} passes schema")
++            except jsonschema.ValidationError as e:
++                print(f"  FAIL: {valid_path.name} should pass schema but got: {e.message}")
++                exit_code = 1
++
++        if invalid_path.exists():
++            errors = validate_invalid_examples(schema, invalid_path)
++            for err in errors:
++                print(err)
++                exit_code = 1
++
++    return exit_code
++
++
++if __name__ == "__main__":
++    sys.exit(main())
 diff --git a/SCHEMAS/trigger-contract.json b/SCHEMAS/trigger-contract.json
 new file mode 100644
-index 0000000..59d74d3
+index 0000000..fdb4dfd
 --- /dev/null
 +++ b/SCHEMAS/trigger-contract.json
-@@ -0,0 +1,158 @@
+@@ -0,0 +1,174 @@
 +{
 +  "$schema": "http://json-schema.org/draft-07/schema#",
 +  "$id": "https://gitea.hl.maier.wtf/Homelab/ACP/SCHEMAS/trigger-contract.json",
 +  "title": "ACP Trigger Contract",
-+  "description": "Formal contract between a Principal (Slarti/Operator) and an Orchestrator (Eddie). Version 0.2.0-draft.",
++  "description": "Formal contract between a Principal (Slarti/Operator) and an Orchestrator (Eddie). Version 0.2.1-draft.",
 +  "type": "object",
 +  "properties": {
 +    "acp_version": {
 +      "type": "string",
-+      "const": "0.2.0-draft"
++      "const": "0.2.1-draft"
 +    },
 +    "trigger_id": {
 +      "type": "string",
@@ -661,7 +895,7 @@ index 0000000..59d74d3
 +    },
 +    "action_ref": {
 +      "type": "string",
-+      "pattern": "^[a-z][a-z0-9._/-]{2,63}(:[0-9]+\\.[0-9]+\\.[0-9]+)?$"
++      "pattern": "^[a-z][a-z0-9._/-]{2,63}:[0-9]+\\.[0-9]+\\.[0-9]+$"
 +    },
 +    "provenance": {
 +      "type": "object",
@@ -704,7 +938,7 @@ index 0000000..59d74d3
 +      "properties": {
 +        "path": { "type": "string", "minLength": 1 },
 +        "method": { "type": "string", "default": "POST" },
-+        "secret": { "type": "string" }
++        "secret_ref": { "type": "string", "pattern": "^[A-Za-z0-9._/-]+$" }
 +      },
 +      "required": ["path"],
 +      "additionalProperties": false
@@ -783,9 +1017,25 @@ index 0000000..59d74d3
 +  "allOf": [
 +    {
 +      "if": {
-+        "properties": { "trigger_type": { "enum": ["schedule", "cron"] } }
++        "properties": { "trigger_type": { "const": "cron" } }
 +      },
-+      "then": { "required": ["schedule"] }
++      "then": {
++        "required": ["schedule"],
++        "properties": {
++          "schedule": { "required": ["cron"] }
++        }
++      }
++    },
++    {
++      "if": {
++        "properties": { "trigger_type": { "const": "schedule" } }
++      },
++      "then": {
++        "required": ["schedule"],
++        "properties": {
++          "schedule": { "required": ["interval_seconds"] }
++        }
++      }
 +    },
 +    {
 +      "if": {
@@ -804,13 +1054,13 @@ index 0000000..59d74d3
 +}
 diff --git a/SPEC/execution-contract.md b/SPEC/execution-contract.md
 new file mode 100644
-index 0000000..4433f4b
+index 0000000..5669dfc
 --- /dev/null
 +++ b/SPEC/execution-contract.md
-@@ -0,0 +1,258 @@
+@@ -0,0 +1,267 @@
 +# Execution Contract (ACP v0.2)
 +
-+**Version:** 0.2.0-draft
++**Version:** 0.2.1-draft
 +**Status:** Draft
 +**Supersedes:** Implicit execution conventions in `lydia/home-repo`
 +
@@ -892,7 +1142,7 @@ index 0000000..4433f4b
 +### `acp_version`
 +- **Type:** `string` (const)
 +- **Required:** yes
-+- **Value:** `"0.2.0-draft"`
++- **Value:** `"0.2.1-draft"`
 +- **Description:** ACP specification version to which this contract conforms.
 +
 +### `execution_id`
@@ -966,8 +1216,11 @@ index 0000000..4433f4b
 +
 +### `constraints`
 +- **Type:** `object`
-+- **Required:** no
-+- **Description:** Execution boundaries.
++- **Required:** yes
++- **Description:** Execution boundaries. Every contract MUST specify explicit
++  timeouts, retry limits, and concurrency/idempotency keys. Default values
++  are never assumed — the Principal must choose deliberate bounds for every
++  execution.
 +
 +| Field | Type | Required | Default | Description |
 +|-------|------|----------|---------|-------------|
@@ -978,9 +1231,12 @@ index 0000000..4433f4b
 +
 +### `rollback`
 +- **Type:** `object`
-+- **Required:** no
-+- **Description:** Rollback strategy for failures. If absent, no automatic
-+  rollback is available.
++- **Required:** yes
++- **Description:** Rollback strategy for failures. Every contract MUST declare
++  what happens on failure. Even actions that cannot be reverted MUST declare
++  `strategy: none` explicitly. The Executor MUST execute the rollback strategy
++  before returning the `FAILED` result if the executed action left state changes
++  behind.
 +
 +| Field | Type | Required | Description |
 +|-------|------|----------|-------------|
@@ -990,9 +1246,12 @@ index 0000000..4433f4b
 +
 +### `success_criteria`
 +- **Type:** `array` of `object`
-+- **Required:** no
-+- **Description:** Explicit criteria that define success. If absent, a
-+  non-zero exit status or error response constitutes failure.
++- **Required:** yes
++- **Description:** Explicit criteria that define success. Every contract MUST
++  declare at least one success criterion. A non-zero exit status or error
++  response is always a failure regardless of criteria, but without explicit
++  criteria the Executor cannot determine what constitutes a successful outcome.
++  Example default: `[{ "type": "exit_code", "target": "0" }]`.
 +
 +Each criterion object:
 +
@@ -1068,13 +1327,13 @@ index 0000000..4433f4b
 +| `failure_handling` | Task contract `result.failure_reason`, `result.escalation_required` |
 diff --git a/SPEC/trigger-contract.md b/SPEC/trigger-contract.md
 new file mode 100644
-index 0000000..db8d966
+index 0000000..ce3292f
 --- /dev/null
 +++ b/SPEC/trigger-contract.md
-@@ -0,0 +1,329 @@
+@@ -0,0 +1,333 @@
 +# Trigger Contract (ACP v0.2)
 +
-+**Version:** 0.2.0-draft
++**Version:** 0.2.1-draft
 +**Status:** Draft
 +**Supersedes:** Eddie's implicit cron definitions and ad-hoc webhook registrations
 +
@@ -1096,11 +1355,15 @@ index 0000000..db8d966
 +   valid Execution Contracts from trigger definitions and submit them to the
 +   appropriate executor.
 +
-+3. **Trigger changes require a new version.** A trigger definition is immutable
-+   after activation. Parameter changes, schedule changes, or action changes
-+   require a new trigger version.
++3. **Immutable identity model.** Every trigger definition is uniquely identified
++   by the immutable pair `(trigger_id, activation.version)`. Changing any field
++   of an active trigger — parameters, schedule, action_ref, or trigger_type —
++   requires a new `activation.version`. Eddie MUST reject registration attempts
++   where the same `(trigger_id, version)` pair already exists with different
++   content. This ensures deterministic audit trails: every execution can be
++   traced to exactly one trigger version.
 +
-+4. **Missed runs are Eddie's accountability.** Eddie must handle scheduling
++5. **Missed runs are Eddie's accountability.** Eddie must handle scheduling
 +   gaps, retries, and deadline violations according to the contract without
 +   requiring operator intervention for routine misses.
 +
@@ -1156,7 +1419,7 @@ index 0000000..db8d966
 +### `acp_version`
 +- **Type:** `string` (const)
 +- **Required:** yes
-+- **Value:** `"0.2.0-draft"`
++- **Value:** `"0.2.1-draft"`
 +
 +### `trigger_id`
 +- **Type:** `string`
@@ -1169,9 +1432,9 @@ index 0000000..db8d966
 +### `action_ref`
 +- **Type:** `string`
 +- **Required:** yes
-+- **Pattern:** `^[a-z][a-z0-9._/-]{2,63}(:[0-9]+\.[0-9]+\.[0-9]+)?$`
-+- **Description:** Reference to a registered action with optional version
-+  suffix. Format: `<action>[:<version>]`. Example: `ollama.prompt:1.2.0`.
++- **Pattern:** `^[a-z][a-z0-9._/-]{2,63}:[0-9]+\.[0-9]+\.[0-9]+$`
++- **Description:** Reference to a registered action with mandatory version
++  suffix. Format: `<action>:<version>`. Example: `ollama.prompt:1.2.0`.
 +  Eddie MUST resolve this against the executor's registered capabilities and
 +  reject the trigger if no executor provides the action.
 +
@@ -1233,7 +1496,7 @@ index 0000000..db8d966
 +|-------|------|----------|-------------|
 +| `path` | `string` | yes | URL path suffix (e.g. `/webhooks/my-trigger`) |
 +| `method` | `string` | no | HTTP method to accept (default: `POST`) |
-+| `secret` | `string` (reference) | no | Reference to a shared secret for HMAC validation |
++| `secret_ref` | `string` | no | Reference to a shared secret for HMAC validation. Format: `secret:<name>` or `vault:<path>`. Eddie MUST resolve the reference to a concrete secret value before registration succeeds. An unresolvable reference MUST cause a `resolution` rejection. |
 +
 +### `parameters`
 +- **Type:** `object`
@@ -1402,9 +1665,9 @@ index 0000000..db8d966
 +| `notifications` | Not yet formalized; currently via `callback_url` + outgoing/ |
 +| `deadline` | Eddie dispatcher `checkTimeouts()` |
 diff --git a/VERSION b/VERSION
-index 3e56aee..9618463 100644
+index 3e56aee..a2124a6 100644
 --- a/VERSION
 +++ b/VERSION
 @@ -1 +1 @@
 -0.1.0-draft
-+0.2.0-draft
++0.2.1-draft

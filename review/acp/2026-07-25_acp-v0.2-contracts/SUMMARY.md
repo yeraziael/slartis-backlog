@@ -18,12 +18,13 @@ Formalise two contracts:
 
 ## Scope
 
-- 13 new/changed files
+- 15 new/changed files (13 original + 2 corrective: test_schemas.py, ci.yaml)
 - 2 new SPEC documents (execution-contract.md, trigger-contract.md)
-- 2 JSON Schemas (draft-07)
-- 4 example files (valid + invalid per contract)
+- 2 JSON Schemas (draft-07) corrected per review findings 1-6
+- 4 example files (valid + invalid per contract) updated
+- 1 test harness (SCHEMAS/test_schemas.py) added
 - 1 ADR (DECISIONS/001-execution-trigger-contracts.md)
-- VERSION bump 0.1.0-draft → 0.2.0-draft
+- VERSION bump 0.1.0-draft → 0.2.1-draft
 
 ## Not in Scope
 
