@@ -1,0 +1,15 @@
+{
+  "schema": "acp.review-verdict.v2",
+  "reviewed_commit": "b65a9ad1f26fea74e53013c430eeddb98d3d73e7",
+  "review_type": "post-merge",
+  "review_basis": "merge-commit",
+  "reviewer": "slarti",
+  "verdict": "post-merge-audit",
+  "blocking_findings": [],
+  "remaining_followups": [
+    "Resolve yeraziael/ai-governance#42 before publishing the first stable ACP release.",
+    "Implement Homelab/ACP#11 for post-publication release-to-tag verification."
+  ],
+  "supersedes_review": null,
+  "review_timestamp": "2026-07-25T16:47:57+01:00"
+}

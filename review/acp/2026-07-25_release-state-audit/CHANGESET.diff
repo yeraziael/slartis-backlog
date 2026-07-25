@@ -1,0 +1,233 @@
+diff --git a/.gitea/workflows/ci.yaml b/.gitea/workflows/ci.yaml
+index 99ece87..7e45687 100644
+--- a/.gitea/workflows/ci.yaml
++++ b/.gitea/workflows/ci.yaml
+@@ -11,7 +11,7 @@ jobs:
+         with:
+           fetch-depth: 0
+       - name: setup
+-        run: apt-get update -qq && apt-get install -y -qq git jq python3 python3-yaml
++        run: apt-get update -qq && apt-get install -y -qq git jq python3 python3-jsonschema python3-yaml
+       - name: version-consistency
+         run: |
+           [ -f VERSION ] || { echo "Missing VERSION"; exit 1; }
+@@ -26,7 +26,6 @@ jobs:
+           done
+       - name: schema-tests
+         run: |
+-          pip3 install jsonschema 2>/dev/null
+           python3 SCHEMAS/test_schemas.py
+       - name: no-secrets
+         run: |
+@@ -35,5 +34,5 @@ jobs:
+           ! grep -rnI --include='*.md' --include='*.yaml' --include='*.json' \
+             -E '(token|secret|password|credential|api.?key):' . 2>/dev/null | \
+             grep -v -E '^\.[/\\]*(\.gitea|node_modules|\.git)' | \
+-            grep -v -E '(token|secret|password)[= ][<[]' || \
++            grep -v -E '(token|secret|password)[=:][<[]' || \
+             { echo "Possible secrets found in committed files"; exit 1; }
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 946d1e7..2526fda 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,12 @@
+ # Changelog
+ 
++## Unreleased
++
++- Added release-state audit and release gate checklist. No stable ACP release
++  has been published from the current `0.3.0-draft` line.
++- CI now installs `python3-jsonschema` from the runner's Debian package set
++  instead of performing an unpinned runtime `pip` installation.
++
+ ## v0.3.0-draft
+ 
+ - Post-merge audit: `CONFORMANCE/post-merge-v0.3.md` — verified merge commit
+diff --git a/README.md b/README.md
+index e8c910a..505956a 100644
+--- a/README.md
++++ b/README.md
+@@ -42,6 +42,12 @@ Releases are created via Gitea's release function. Each release is bound to an
+ exact commit SHA. All external references must point to a release, not to a
+ branch.
+ 
++`VERSION` describes the current working line, not publication status. A version
++with the `-draft` suffix is not a stable release. The release inventory and
++blocked publication conditions are recorded in
++[`docs/release-audit-2026-07-25.md`](docs/release-audit-2026-07-25.md). Every
++release must satisfy [`RELEASE.md`](RELEASE.md); merging a PR is not a release.
++
+ ## License
+ 
+ Homelab internal — not for public distribution.
+diff --git a/RELEASE.md b/RELEASE.md
+new file mode 100644
+index 0000000..0349c27
+--- /dev/null
++++ b/RELEASE.md
+@@ -0,0 +1,57 @@
++# ACP Release Gate
++
++This document governs publication from `Homelab/ACP`. It complements the
++canonical release-management policy in `yeraziael/ai-governance`; it does not
++weaken that policy.
++
++## Release Is A Separate State
++
++A merged pull request, a green pull-request run, and a version string ending in
++`-draft` are implementation evidence. None creates a release. A release exists
++only when an immutable annotated Git tag and a published Gitea release refer to
++the same full commit SHA.
++
++## Blocking Gates
++
++Before creating a tag, the release owner MUST verify all of the following on
++the intended commit:
++
++1. The release-preparation PR is independently reviewed, merged, and its
++   required Gitea Actions run is green.
++2. `VERSION` is a stable Semantic Version without a `-draft` suffix and equals
++   the proposed tag without its `v` prefix.
++3. `CHANGELOG.md`, every current-version specification, schema description, and
++   release notes name the same version. Historical specifications retain their
++   historical version.
++4. `python3 SCHEMAS/test_schemas.py` passes on the exact target commit.
++5. The exact full SHA, CI run URL or ID, independent review, release notes,
++   compatibility impact, rollback path, and runtime-consumer status are
++   recorded as durable release evidence.
++6. A post-merge audit has no unresolved blocking finding. Follow-ups from older
++   audits must be re-checked rather than copied forward.
++7. The release-evidence format can bind the tag and its peeled commit without
++   a self-referential commit-SHA claim. The current cross-repository policy
++   needs an explicit resolution for this format before ACP's first stable
++   release.
++
++## Publication And Verification
++
++1. Create the annotated `vMAJOR.MINOR.PATCH` tag only after all gates pass.
++2. Publish the Gitea release from that tag, never from `main` or another moving
++   branch.
++3. Re-read the tag object, peeled commit, release target, title, notes, and
++   assets. Record the result in the release evidence.
++4. Confirm every declared runtime consumer is pinned to the released version or
++   is explicitly documented as using a draft. A runtime skill checksum alone is
++   not a protocol release pin.
++5. A defect after publication requires a corrective version. Published tags and
++   releases are never moved, deleted, or overwritten.
++
++## Automation Requirements
++
++The protected CI contract must reject a version/documentation mismatch. A
++post-publication release-audit job must authenticate to Gitea and fail when a
++stable tag lacks a published release, when the release target differs from the
++peeled tag commit, or when release notes are empty. This job is intentionally
++not enabled until its least-privilege credential and the evidence-binding
++format are defined and reviewed.
+diff --git a/docs/release-audit-2026-07-25.md b/docs/release-audit-2026-07-25.md
+new file mode 100644
+index 0000000..83166b9
+--- /dev/null
++++ b/docs/release-audit-2026-07-25.md
+@@ -0,0 +1,102 @@
++# ACP Release-State Audit, 2026-07-25
++
++## Scope And Evidence
++
++This audit is based on the canonical `Homelab/ACP` Git history and Gitea API,
++the `yeraziael/ai-governance` canonical-governance repository and GitHub
++mirror, and the Slarti OpenCode runtime. It distinguishes an immutable Git tag
++from a hosting-platform release and from a draft version in a working tree.
++
++## Version Inventory
++
++| Version | Commit | Tag | Gitea release | Status |
++|---|---|---|---|---|
++| `0.1.0-draft` | `d7933eb9564b55105bd61946f867496d2dc66f53` | `v0.1.0-draft` (annotated) | Published prerelease `v0.1.0-draft`, targeted at `main` | Published draft prerelease; target must be verified by peeled tag, not branch text |
++| `0.2.0-draft` | `beca7ca1db33794510771f5d9c5db1e4e0a17eea` | None | None | Implemented in merged ACP PR #6; never published |
++| `0.3.0-draft` | `99ce7eeea61022357c935eb6e2af061bafe30944` | None | None | Review-provenance implementation merged in ACP PR #9; never published |
++| `0.3.0-draft` current main | `07c3fcbd0f53493b847d812eede1df68770f84c2` | None | None | Includes post-v0.3 audit and immutable-identity fixes; Gitea CI run 686 failed in `schema-tests` |
++
++No `v0.2.0`, `v0.3.0`, or later ACP tag exists. No stable ACP Gitea release
++exists. There are no open ACP release PRs at the audit point.
++
++## Merge History Relevant To Release State
++
++| PR | Merge commit | Meaning |
++|---|---|---|
++| ACP #6 | `beca7ca1db33794510771f5d9c5db1e4e0a17eea` | Execution and Trigger Contracts (`0.2.0-draft`) |
++| ACP #7 | `cf48b82dcf53c144ae8369eb7f37b7b196875d3d` | v0.2 review fixes, merged into its feature branch rather than `main` |
++| ACP #9 | `99ce7eeea61022357c935eb6e2af061bafe30944` | Review Provenance (`0.3.0-draft`) |
++| ACP #10 | `682071a0e9fddc0e8dc3ec8ec7291133e864ed5a` | Post-merge audit |
++| ACP #8 | `07c3fcbd0f53493b847d812eede1df68770f84c2` | Immutable-identity correction now on `main` |
++
++The post-merge audit at `682071a` is stale: it says ACP #8 remains open and
++the `github-review` skill still needs an ACP v0.3 update. ACP #8 was later
++merged at `07c3fcb`; `yeraziael/ai-governance` main at
++`de1a9f972a15e26229a938bf72c582df88e6a5f8` contains the ACP v0.3 skill
++upgrade, and the runtime copy has the identical SHA-256 checksum.
++
++## Cross-System Comparison
++
++| Surface | Observed state | Consistency |
++|---|---|---|
++| Canonical ACP Git/Gitea | `main` declares `0.3.0-draft`; only `v0.1.0-draft` tag and prerelease are published | Incomplete release state |
++| ACP documentation | README describes release binding but did not distinguish a draft working version from a published release; changelog places v0.2.1 fixes inside the v0.3 draft entry | Ambiguous until this audit and gate were added |
++| Governance repository | GitHub and canonical Gitea `ai-governance` both resolve `main` to `de1a9f9`; `v0.1.0` and `v0.2.0` tags exist | Git mirrors agree on commits and tags |
++| Governance releases | GitHub has stable releases for v0.1.0 and v0.2.0; the committed v0.2 evidence names `cac16fe`, while the annotated tag peels to `fc9e644`. The Gitea release endpoint for `yeraziael/ai-governance` returned HTTP 404 to the Slarti audit credential, so its release inventory is not asserted here. | GitHub evidence/tag mismatch; Gitea release state requires an authorized re-check |
++| GitHub ACP mirror | No `Homelab/ACP` or `yeraziael/ACP` GitHub repository was accessible with the audit credential | No GitHub ACP mirror is evidenced; it must not be assumed |
++| Runtime | `~/.opencode/skills/github-review/SKILL.md` is byte-identical to `ai-governance/skills/github-review.md` at `de1a9f9` and declares ACP v0.3 support | Skill content is synchronized, but it is not version-pinned to an ACP release |
++
++## Gap Analysis
++
++1. ACP v0.2 was merged and tested at `beca7ca`, but was never tagged or
++   released. Subsequent review findings and immutable-identity corrections mean
++   it is not an appropriate first stable baseline.
++2. ACP v0.3 was merged and its initial CI run was green at `99ce7ee`, but it
++   lacks a tag and release. The current `main` CI run fails before executing the
++   suite because its workflow performs an unpinned runtime dependency install.
++3. `VERSION`, changelog, and specifications use draft markers, while the README
++   previously implied that a current release existed. A draft version cannot be
++   treated as a release.
++4. The current `CONFORMANCE/post-merge-v0.3.md` carries follow-ups that are now
++   resolved, so it cannot serve as final release evidence without a refreshed
++   audit.
++5. The canonical governance release policy requires committed evidence to name
++   the full tag target, while also requiring the tag to point at the merged
++   release-prep commit containing that evidence. A commit cannot contain its own
++   final SHA; the governance v0.2 evidence demonstrates the resulting mismatch.
++6. No CI job currently verifies Gitea release existence or release-to-tag target
++   equality after publication. Enabling one needs a reviewed least-privilege
++   credential and a settled evidence model.
++
++## Decision Recommendation
++
++Do not retroactively publish ACP v0.2. Its original implementation was followed
++by review corrections and the current main branch contains them only as part of
++the v0.3 draft line. Publishing it now would create a stable release known to
++exclude later correctness work.
++
++Prepare and publish **ACP v0.3.0 as the first stable ACP release** only after:
++
++1. this branch's CI dependency fix is merged and a Gitea Actions run on its
++   exact merge commit is green;
++2. the governance evidence-binding contradiction has an approved, implementable
++   resolution;
++3. a release-preparation PR changes the intended stable version consistently,
++   refreshes the post-merge audit against its exact target, and records complete
++   release notes and runtime-consumer status;
++4. the tag and Gitea release are created and independently re-read.
++
++## Required Governance Hardening
++
++1. Treat merge, CI success, tag creation, release publication, and runtime
++   deployment as distinct states with separately recorded gates.
++2. Require a release checklist and a post-merge audit that expires when any
++   recorded follow-up changes state.
++3. Make release evidence satisfiable: bind the release to the peeled annotated
++   tag in a post-publication attestation, or store the immutable target in an
++   external release record. Do not require a commit to contain its own SHA.
++4. Add protected CI version-drift checks and a post-publication Gitea audit for
++   missing releases, missing notes, and tag/release target disagreement.
++5. Require runtime consumers to record the released ACP tag and commit they
++   implement. A content checksum verifies synchronization only; it does not
++   establish a release deployment.
