@@ -1,0 +1,176 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gitea.hl.maier.wtf/Homelab/ACP/SCHEMAS/trigger-contract.json",
+  "title": "ACP Trigger Contract",
+  "description": "Formal contract between a Principal (Slarti/Operator) and an Orchestrator (Eddie). Version 0.2.1-draft.",
+  "type": "object",
+  "properties": {
+    "acp_version": {
+      "type": "string",
+      "const": "0.2.1-draft"
+    },
+    "trigger_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._~-]{1,128}$"
+    },
+    "action_ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._/-]{2,63}:[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "principal": { "type": "string", "minLength": 1 },
+        "trace_id": { "type": "string", "minLength": 1 },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["principal", "trace_id", "created_at"],
+      "additionalProperties": false
+    },
+    "trigger_type": {
+      "type": "string",
+      "enum": ["schedule", "cron", "event", "webhook", "manual", "condition"]
+    },
+    "schedule": {
+      "type": "object",
+      "properties": {
+        "cron": { "type": "string" },
+        "interval_seconds": { "type": "integer", "minimum": 1 },
+        "timezone": { "type": "string" },
+        "start_date": { "type": "string", "format": "date-time" },
+        "end_date": { "type": "string", "format": "date-time" },
+        "max_firings": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "event_filter": {
+      "type": "object",
+      "properties": {
+        "event_type": { "type": "string", "minLength": 1 },
+        "source": { "type": "string" },
+        "condition": { "type": "string" }
+      },
+      "required": ["event_type"],
+      "additionalProperties": false
+    },
+    "webhook": {
+      "type": "object",
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "method": { "type": "string", "default": "POST" },
+        "secret": { "type": "string" }
+      },
+      "required": ["path"],
+      "additionalProperties": false
+    },
+    "parameters": {
+      "type": "object"
+    },
+    "retry": {
+      "type": "object",
+      "properties": {
+        "max_retries": { "type": "integer", "minimum": 0 },
+        "backoff_strategy": {
+          "type": "string",
+          "enum": ["fixed", "exponential", "linear"]
+        },
+        "backoff_seconds": { "type": "integer", "minimum": 1 },
+        "max_backoff_seconds": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "deduplication": {
+      "type": "object",
+      "properties": {
+        "idempotency_key_source": { "type": "string" },
+        "dedup_window_seconds": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "concurrency": {
+      "type": "object",
+      "properties": {
+        "max_concurrent": { "type": "integer", "minimum": 1 },
+        "lock_key": { "type": "string" },
+        "queue_on_conflict": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "deadline": {
+      "type": "object",
+      "properties": {
+        "missed_run_action": {
+          "type": "string",
+          "enum": ["skip", "catch_up", "error"]
+        },
+        "max_execution_seconds": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "notifications": {
+      "type": "object",
+      "properties": {
+        "on_success": { "type": "array", "items": { "type": "string" } },
+        "on_failure": { "type": "array", "items": { "type": "string" } },
+        "on_missed": { "type": "array", "items": { "type": "string" } },
+        "escalate_after": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "activation": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+      },
+      "required": ["version"],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "acp_version",
+    "trigger_id",
+    "action_ref",
+    "provenance",
+    "trigger_type",
+    "parameters",
+    "activation"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "trigger_type": { "const": "cron" } }
+      },
+      "then": {
+        "required": ["schedule"],
+        "properties": {
+          "schedule": { "required": ["cron"] }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "trigger_type": { "const": "schedule" } }
+      },
+      "then": {
+        "required": ["schedule"],
+        "properties": {
+          "schedule": { "required": ["interval_seconds"] }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "trigger_type": { "const": "event" } }
+      },
+      "then": { "required": ["event_filter"] }
+    },
+    {
+      "if": {
+        "properties": { "trigger_type": { "const": "webhook" } }
+      },
+      "then": { "required": ["webhook"] }
+    }
+  ],
+  "additionalProperties": false
+}
