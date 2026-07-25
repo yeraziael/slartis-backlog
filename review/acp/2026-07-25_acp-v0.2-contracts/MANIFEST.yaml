@@ -23,5 +23,5 @@ integrity:
   changeset_sha256: "4a52c76bd4a791f1a15385d39ced305d29d797f6372ded5c689c2671dd5c4ada"
 
 generated:
-  timestamp: "2026-07-25T07:58:00"
+  timestamp: "2026-07-25T07:58:00+01:00"
   tool: opencode/github-review-skill
