@@ -30,7 +30,7 @@ modify the execution. Eddie contains no execution logic.
    content. This ensures deterministic audit trails: every execution can be
    traced to exactly one trigger version.
 
-5. **Missed runs are Eddie's accountability.** Eddie must handle scheduling
+4. **Missed runs are Eddie's accountability.** Eddie must handle scheduling
    gaps, retries, and deadline violations according to the contract without
    requiring operator intervention for routine misses.
 
@@ -86,15 +86,17 @@ modify the execution. Eddie contains no execution logic.
 ### `acp_version`
 - **Type:** `string` (const)
 - **Required:** yes
-- **Value:** `"0.2.1-draft"`
+- **Value:** `"0.2.0-draft"`
 
 ### `trigger_id`
 - **Type:** `string`
 - **Required:** yes
 - **Pattern:** `^[A-Za-z0-9._~-]{1,128}$`
 - **Description:** Globally unique identifier for this trigger definition.
-  Used for idempotent registration: registering the same `trigger_id` again
-  MUST update the existing definition, not create a duplicate.
+  Registration is version-aware: registering the same `(trigger_id, version)`
+  pair with identical content is idempotent; registering the same pair with
+  different content MUST be rejected. A new `activation.version` is required
+  for any change.
 
 ### `action_ref`
 - **Type:** `string`
@@ -103,7 +105,8 @@ modify the execution. Eddie contains no execution logic.
 - **Description:** Reference to a registered action with mandatory version
   suffix. Format: `<action>:<version>`. Example: `ollama.prompt:1.2.0`.
   Eddie MUST resolve this against the executor's registered capabilities and
-  reject the trigger if no executor provides the action.
+  reject the trigger if no executor provides the action or the specific
+  version.
 
 ### `provenance`
 - **Type:** `object`
@@ -163,7 +166,7 @@ modify the execution. Eddie contains no execution logic.
 |-------|------|----------|-------------|
 | `path` | `string` | yes | URL path suffix (e.g. `/webhooks/my-trigger`) |
 | `method` | `string` | no | HTTP method to accept (default: `POST`) |
-| `secret_ref` | `string` | no | Reference to a shared secret for HMAC validation. Format: `secret:<name>` or `vault:<path>`. Eddie MUST resolve the reference to a concrete secret value before registration succeeds. An unresolvable reference MUST cause a `resolution` rejection. |
+| `secret` | `string` (reference) | no | Reference to a shared secret for HMAC validation |
 
 ### `parameters`
 - **Type:** `object`
@@ -229,13 +232,15 @@ modify the execution. Eddie contains no execution logic.
 
 ### `activation`
 - **Type:** `object`
-- **Required:** no
-- **Description:** Activation controls.
+- **Required:** yes
+- **Description:** Activation controls and immutable identity component.
+  Together with `trigger_id`, the `version` field forms the immutable identity
+  pair `(trigger_id, activation.version)` for this trigger definition.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `enabled` | `boolean` | no | `true` | Whether the trigger is active on registration |
-| `version` | `string` | no | `"1.0.0"` | Trigger definition version for change tracking |
+| `version` | `string` | yes | — | Trigger definition version for change tracking and immutable identity. Changing any field requires a new version. |
 
 ## Return Value (Trigger Registration)
 

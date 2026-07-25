@@ -58,7 +58,7 @@
       "properties": {
         "path": { "type": "string", "minLength": 1 },
         "method": { "type": "string", "default": "POST" },
-        "secret_ref": { "type": "string", "pattern": "^[A-Za-z0-9._/-]+$" }
+        "secret": { "type": "string" }
       },
       "required": ["path"],
       "additionalProperties": false
@@ -123,6 +123,7 @@
         "enabled": { "type": "boolean" },
         "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
       },
+      "required": ["version"],
       "additionalProperties": false
     }
   },
@@ -132,30 +133,15 @@
     "action_ref",
     "provenance",
     "trigger_type",
-    "parameters"
+    "parameters",
+    "activation"
   ],
   "allOf": [
     {
       "if": {
-        "properties": { "trigger_type": { "const": "cron" } }
+        "properties": { "trigger_type": { "enum": ["schedule", "cron"] } }
       },
-      "then": {
-        "required": ["schedule"],
-        "properties": {
-          "schedule": { "required": ["cron"] }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": { "trigger_type": { "const": "schedule" } }
-      },
-      "then": {
-        "required": ["schedule"],
-        "properties": {
-          "schedule": { "required": ["interval_seconds"] }
-        }
-      }
+      "then": { "required": ["schedule"] }
     },
     {
       "if": {

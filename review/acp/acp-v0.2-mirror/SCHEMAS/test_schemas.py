@@ -1,15 +1,8 @@
 #!/usr/bin/env python3
-"""Test harness for ACP JSON Schemas.
-
-Validates schema syntax, valid examples pass, and schema-level rejections fail.
-Run from repo root: python3 SCHEMAS/test_schemas.py
-"""
 import json
 import sys
 from pathlib import Path
-
 import jsonschema
-
 
 REPO = Path(__file__).resolve().parent.parent
 SCHEMAS = REPO / "SCHEMAS"
@@ -22,11 +15,6 @@ def load(path):
 
 
 def validate_invalid_examples(schema, examples_path):
-    """Run each invalid example scenario through the schema.
-
-    Scenarios with expected_rejection == "schema" must FAIL schema validation.
-    Other scenarios are informational.
-    """
     errors = []
     try:
         examples = load(examples_path)
@@ -60,7 +48,7 @@ def validate_invalid_examples(schema, examples_path):
             if not passed:
                 print(f"  INFO [{scenario}]: schema also catches this {expected_rejection} rejection (stricter schema)")
             else:
-                print(f"  OK [{scenario}]: passes schema — rejection is runtime-level ({expected_rejection})")
+                print(f"  OK [{scenario}]: passes schema -- rejection is runtime-level ({expected_rejection})")
 
     return errors
 

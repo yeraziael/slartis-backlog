@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.2.1-draft
+
+- **Breaking:** `activation` is now a required top-level field; `activation.version` is required
+- **Breaking:** `action_ref` version suffix is now mandatory (was optional with `[:version]` pattern)
+- Added immutable identity model: `(trigger_id, activation.version)` is the normative identity pair
+- Changed `trigger_id` registration semantics from update-on-reregister to version-aware rejection of conflicting content
+- Added `SCHEMAS/test_schemas.py` — schema-level test harness
+- Added 3 new invalid scenarios: missing activation, missing activation.version, conflicting (trigger_id, version) content
+- Updated CI workflow to run schema tests
+
 ## v0.2.0-draft
 
 - Added `SPEC/execution-contract.md` — Execution Contract specification
@@ -11,17 +21,6 @@
 - Added `EXAMPLES/trigger-contract-valid.json` — valid Trigger Contract example
 - Added `EXAMPLES/trigger-contract-invalid.json` — 4 invalid Trigger Contract examples
 - Added `DECISIONS/001-execution-trigger-contracts.md` — ADR-001 for this change
-
-## v0.2.1-draft
-
-- **Breaking:** `action_ref` version suffix is now mandatory (was optional)
-- **Breaking:** `constraints`, `rollback`, `success_criteria` are now required top-level fields in Execution Contract
-- **Breaking:** `webhook.secret` renamed to `webhook.secret_ref` with normative resolution requirement
-- Added immutable identity model: `(trigger_id, activation.version)` is the immutable identity pair
-- Added conditional required sub-fields for `schedule`: cron type requires `cron`, schedule type requires `interval_seconds`
-- Added `SCHEMAS/test_schemas.py` — schema-level test harness with 12+ validation scenarios
-- Updated CI workflow to run schema tests
-- Added schema-level violation examples for unversioned action_ref and missing required fields
 
 ## v0.1.0-draft
 
