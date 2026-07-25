@@ -48,7 +48,8 @@
 - Maintains shared fixtures, helpers and platform configuration.
 - Diagnoses and resolves test failures.
 - Ensures evidence binding and provenance integrity.
-- Reviews and merges platform changes in `Homelab/Architecture`.
+- Reviews platform changes in `Homelab/Architecture`; Eddie or the Operator
+  retains merge authority.
 
 ### Vekling / CI Runner
 

@@ -2,12 +2,14 @@
 
 ## Child Issue Graph
 
-This is the ordered list of executable child issues for the Playwright epic. GitHub Issues track execution; this document is the authoritative ordering.
+This is the conceptual requirement backlog for the Playwright epic. Mutable
+execution state and the dependency-ordered PW-D/PW-I tickets live in Gitea
+`slarti/backlog#253-#281`; GitHub is the planning and review surface.
 
 ### Status Legend
 
-- **IN REVIEW** — specification complete, pending merge.
-- **PLANNED** — identified, not yet specified in GitHub.
+- **FROZEN** — reviewed planning baseline; mutable execution state is in Gitea.
+- **PLANNED** — identified in this conceptual backlog and decomposed in Gitea.
 - **BLOCKED** — waiting on dependency.
 - **DONE** — closed, merged, verified.
 
@@ -148,9 +150,11 @@ M0 (Planning — this epic)
 
 | Category | Count | Status |
 |---|---|---|
-| Planned (not yet in GitHub) | 10 | PW-01 through PW-10 |
+| Conceptual requirement groups | 10 | PW-01 through PW-10 |
 
-Epic completion triggers creation of these issues in GitHub as child issues. Each issue SHOULD be refined, scoped and estimated before implementation begins.
+The frozen execution plan maps these groups to Gitea issues `#253-#281`. The
+Gitea tickets are authoritative for execution scope, status, retries and
+findings; this document remains authoritative for requirement grouping.
 
 ## Epic Completion Criteria
 

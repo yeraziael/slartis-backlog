@@ -121,13 +121,13 @@ Normative keywords: **MUST** / **MUST NOT** / **REQUIRED** / **SHALL** / **SHALL
 | PWR-122 | Each service **MUST** document why browser testing adds value beyond lower-layer tests. | Confirmed | Planned |
 | PWR-123 | Onboarding **MUST NOT** require platform fixture changes for common patterns. | Desired | Planned |
 
-## 14. Open Questions
+## 14. Decision Questions
 
-| ID | Question | Relevant To |
-|---|---|---|
-| Q-001 | Which Playwright container image and version will be the baseline? | PWR-001 |
-| Q-002 | Where will synthetic Keycloak accounts be managed (Keycloak realm, automation script)? | PWR-020 — PWR-025 |
-| Q-003 | How long should evidence artifacts be retained in CI? | PWR-043 |
-| Q-004 | What is the retry policy for transient infrastructure failures? | PWR-103 |
-| Q-005 | Which Homelab services beyond Audiobookshelf and Jellyfin will adopt Playwright? | PWR-120 — PWR-123 |
-| Q-006 | Will Firefox and WebKit support be implemented for the initial release? | PWR-061, PWR-062 |
+| ID | Status | Question | Relevant To |
+|---|---|---|---|
+| Q-001 | Resolved by PW-D01 | The exact image, platform digest and package version are defined in `Homelab/Architecture/docs/decisions/playwright/runner-bootstrap.md`. | PWR-001 |
+| Q-002 | Open | Where will synthetic Keycloak accounts be managed (Keycloak realm, automation script)? | PWR-020 — PWR-025 |
+| Q-003 | Open | How long should evidence artifacts be retained in CI? | PWR-043 |
+| Q-004 | Open | What is the retry policy for transient infrastructure failures? | PWR-103 |
+| Q-005 | Open | Which Homelab services beyond Audiobookshelf and Jellyfin will adopt Playwright? | PWR-120 — PWR-123 |
+| Q-006 | Open | Will Firefox and WebKit support be implemented for the initial release? | PWR-061, PWR-062 |

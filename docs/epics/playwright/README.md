@@ -2,7 +2,9 @@
 
 ## Status
 
-**PLANNING** — Epic specification in review. No implementation started.
+**FROZEN_APPROVED_EXECUTING** — The execution plan is reviewed in PR #83 and
+tracked in Gitea `slarti/backlog#253-#281`. PW-D01 is complete; no runner
+implementation has started.
 
 ## Scope
 
@@ -37,7 +39,7 @@ Playwright complements and does not replace:
 ```
 Playwright Platform Epic (this directory)
          │
-         ├── Planning & Requirements ───── IN REVIEW (PR #82)
+         ├── Planning & Requirements ───── FROZEN BASELINE (PR #82)
          │
          ├── Runner Foundation ──────────── PLANNED
          │
@@ -61,10 +63,15 @@ The Playwright platform epic is a dependency of every adopting service epic. Eac
 | Domain | Repository | Authority |
 |---|---|---|
 | Epic scope, requirements, roadmap, backlog | `yeraziael/slartis-backlog` (`docs/epics/playwright/`) | This directory |
+| Mutable execution state, retries, findings | Gitea `slarti/backlog` (`#253-#281`) | Gitea issues |
 | Runner implementation, deployed config, runtime evidence | `Homelab/Architecture` (`tests/playwright/`) | Implementation authority |
 | Service-specific test coverage | `Homelab/Architecture` (per service suite) | Defined by each service epic |
 
-`yeraziael/slartis-backlog` is authoritative for what Playwright covers, why and when. `Homelab/Architecture` is authoritative for how it runs, what it tests and which evidence it produces.
+`yeraziael/slartis-backlog` is authoritative for what Playwright covers and why.
+Gitea `slarti/backlog` is authoritative for mutable execution state and ordering.
+`Homelab/Architecture` is authoritative for how the platform runs, what it tests
+and which evidence it produces. GitHub remains a review surface, not an
+execution tracker.
 
 ## Epic Documents
 

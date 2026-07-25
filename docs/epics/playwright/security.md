@@ -9,7 +9,7 @@
 | Credential exposure in CI logs | Attacker reads secrets from CI output | Secrets as CI variables; never echoed or logged | Planned |
 | Runner container compromise | Attacker accesses Homelab internal network | Ephemeral container; no persistent network access; discarded after run | Planned |
 | Synthetic identity abuse | Attacker uses test accounts for unauthorised access | Minimum permissions per role; rotatable credentials | Planned |
-| Browser-based data exfiltration | Malicious page exfiltrates test data | No personal data in test identities; runner has no outbound except to services under test | Planned |
+| Browser-based data exfiltration | Malicious page exfiltrates test data | No personal data in test identities; browser execution is limited to declared service and identity endpoints | Planned |
 | Test data privacy breach | Real user data visible in evidence | Controlled test data only; evidence sanitised before publication | Planned |
 
 ## Security Boundaries
@@ -87,7 +87,8 @@ Before evidence is published in a review package or stored persistently, the run
 |---|---|---|
 | Runner → Service | Internal Homelab LAN | HTTPS, frontproxy, TLS |
 | Runner → Keycloak | Internal Homelab LAN | HTTPS, OIDC |
-| Runner → Internet | None (isolated container) | No outbound access except to service |
+| Dependency bootstrap → Internet | General egress in the isolated PW-D01 dependency phase | No credentials or service variables; lock URL and integrity validation |
+| Browser execution → Network | Declared service/identity endpoints only; PW-D01 platform self-test uses network-none | Ephemeral container and explicit per-suite network contract |
 | CI system | `rechenknecht` | SSH key access, Pi5 internal network |
 
 ## Security Verification

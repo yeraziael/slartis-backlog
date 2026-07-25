@@ -2,12 +2,12 @@
 
 ## GitHub Issues and PRs
 
-| Reference | Title | State | Scope |
+| Reference | Title | Relationship | Scope |
 |---|---|---|---|
 | [#81](https://github.com/yeraziael/slartis-backlog/pull/81) | docs(epic): migrate Audiobookshelf to Plan-as-Code structure | Merged | Reference implementation for Plan-as-Code conventions |
-| [#82](https://github.com/yeraziael/slartis-backlog/pull/82) | docs(playwright): define shared browser test platform and roadmap | Open | This epic |
-| [#57](https://github.com/yeraziael/slartis-backlog/issues/57) | ACP Pilot 1: Audiobookshelf Zielarchitektur | Open | ACP protocol patterns, architecture conventions |
-| [#55](https://github.com/yeraziael/slartis-backlog/issues/55) | Keycloak Authorization | Open | Homelab-wide authorization model |
+| [#82](https://github.com/yeraziael/slartis-backlog/pull/82) | docs(playwright): define shared browser test platform and roadmap | Canonical plan baseline | This epic |
+| [#57](https://github.com/yeraziael/slartis-backlog/issues/57) | ACP Pilot 1: Audiobookshelf Zielarchitektur | Related epic | ACP protocol patterns, architecture conventions |
+| [#55](https://github.com/yeraziael/slartis-backlog/issues/55) | Keycloak Authorization | Dependency | Homelab-wide authorization model |
 
 ## Audiobookshelf Epic (Reference Implementation)
 

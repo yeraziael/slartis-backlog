@@ -39,7 +39,7 @@ jobs:
             -e TEST_PASSWORD=${{ secrets.PW_ABS_PASS }} \
             -e SUITE=smoke \
             -v $PWD/test-results:/results \
-            mcr.microsoft.com/playwright:v1.52.0@sha256:<digest> \
+            mcr.microsoft.com/playwright:<version>@sha256:<platform-digest> \
             npx playwright test --config=playwright.config.ts
 
       - name: Upload evidence
@@ -99,7 +99,9 @@ After a service deployment:
 ### Merge Policy
 
 - A passing Playwright suite MUST NOT override failing lower-layer tests (unit, API, integration, infrastructure).
-- A prerequisite_error MUST NOT block a release — it indicates an infrastructure issue, not a product regression.
+- A `prerequisite_error` MUST block a positive release/deployment gate until the
+  prerequisite is restored and the suite passes. It is classified as an
+  infrastructure issue, not a product regression.
 - A test failure in the smoke suite after deployment SHOULD trigger a rollback or investigation.
 
 ## Retry Policy

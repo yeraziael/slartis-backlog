@@ -30,11 +30,11 @@ Normative keywords per RFC 2119.
 ```json
 {
   "manifest_version": 1,
-  "source_commit": "<sha256>",
-  "architecture_commit": "<sha256>",
+  "source_commit": "<full-git-object-id>",
+  "architecture_commit": "<full-git-object-id>",
   "service_name": "audiobookshelf",
   "service_version": "<image-digest-or-version>",
-  "runner_image": "mcr.microsoft.com/playwright:v1.52.0@sha256:...",
+  "runner_image": "mcr.microsoft.com/playwright:<version>@sha256:<platform-digest>",
   "environment": "production",
   "suite": "smoke",
   "result": "pass",

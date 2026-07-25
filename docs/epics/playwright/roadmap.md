@@ -3,7 +3,7 @@
 ## Milestone Overview
 
 ```
-M0: Planning & Requirements ───── IN REVIEW (PR #82)
+M0: Planning & Requirements ───── FROZEN BASELINE (PR #82)
 M1: Runner Foundation ──────────── PLANNED
 M2: Shared Fixtures & Evidence ─── PLANNED
 M3: Audiobookshelf Smoke Pilot ─── PLANNED
@@ -20,12 +20,12 @@ Deliver a small shared platform, prove it against Audiobookshelf, then reuse the
 
 ## Milestone Details
 
-### M0: Planning & Requirements (IN REVIEW)
+### M0: Planning & Requirements (FROZEN)
 
 | Item | Status | Source |
 |---|---|---|
 | Epic scope document | Done | PR #82 (initial version) |
-| Plan-as-Code epic structure (14 documents) | IN REVIEW (PR #82) | This directory |
+| Plan-as-Code epic structure (13 documents) | FROZEN (PR #82) | This directory |
 | Authority boundaries defined | Done | README.md |
 | Synthetic identity model | Done | contracts.md, requirements.md |
 | Evidence contract defined | Done | contracts.md |
@@ -187,7 +187,7 @@ M5 may begin once the Audiobookshelf smoke suite is stable; complete authorisati
 
 | Phase | Milestones | Risk | Value |
 |---|---|---|---|
-| 1: Foundation (IN REVIEW) | M0 | Low | Approved scope, shared understanding |
+| 1: Foundation (FROZEN) | M0 | Low | Reviewed scope, shared understanding |
 | 2: Platform Core (NEXT) | M1, M2 | Low | Reproducible execution, reusable primitives |
 | 3: First Consumer | M3, M4 | Medium | Automated smoke + auth for Audiobookshelf |
 | 4: Integration | M5 | Medium | Evidence in workflow, no manual clicks |
@@ -211,6 +211,6 @@ The epic is complete when:
 ## Status Legend
 
 - **DONE** — implemented, deployed, verified.
-- **IN REVIEW** — specification complete, pending merge.
+- **FROZEN** — specification reviewed; execution follows the Gitea ticket plan.
 - **PLANNED** — requirements defined, not started.
 - **Not started** — no implementation work done.
