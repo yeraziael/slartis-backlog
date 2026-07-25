@@ -1,0 +1,1052 @@
+diff --git a/.gitea/workflows/ci.yaml b/.gitea/workflows/ci.yaml
+index 7e45687..7d18940 100644
+--- a/.gitea/workflows/ci.yaml
++++ b/.gitea/workflows/ci.yaml
+@@ -27,6 +27,9 @@ jobs:
+       - name: schema-tests
+         run: |
+           python3 SCHEMAS/test_schemas.py
++      - name: release-audit-fixtures
++        run: |
++          python3 CONFORMANCE/test_release_audit.py
+       - name: no-secrets
+         run: |
+           git diff --check 2>/dev/null || true
+diff --git a/.gitea/workflows/release-audit.yaml b/.gitea/workflows/release-audit.yaml
+new file mode 100644
+index 0000000..bd27252
+--- /dev/null
++++ b/.gitea/workflows/release-audit.yaml
+@@ -0,0 +1,35 @@
++name: ACP Post-Publication Release Audit
++
++"on":
++  schedule:
++    - cron: "17 3 * * *"
++  workflow_dispatch:
++
++jobs:
++  audit:
++    name: Stable Tag / Gitea Release Binding
++    runs-on: ubuntu-latest
++    steps:
++      - uses: actions/checkout@v4
++        with:
++          fetch-depth: 0
++      - name: setup
++        run: apt-get update -qq && apt-get install -y -qq git python3 python3-yaml
++      - name: credential-preflight
++        env:
++          ACP_RELEASE_AUDIT_TOKEN: ${{ secrets.ACP_RELEASE_AUDIT_TOKEN }}
++        run: |
++          [ -n "$ACP_RELEASE_AUDIT_TOKEN" ] || {
++            echo "Missing ACP_RELEASE_AUDIT_TOKEN repository secret"
++            exit 1
++          }
++      - name: post-publication-audit
++        env:
++          GITEA_API_URL: http://192.168.2.30:3000/api/v1
++          ACP_RELEASE_AUDIT_TOKEN: ${{ secrets.ACP_RELEASE_AUDIT_TOKEN }}
++        run: |
++          python3 CONFORMANCE/release_audit.py \
++            --repo-root . \
++            --repository Homelab/ACP \
++            --token-env ACP_RELEASE_AUDIT_TOKEN \
++            --json
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..43ae0e2
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,2 @@
++__pycache__/
++*.py[cod]
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 2526fda..64b4dd3 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -2,6 +2,9 @@
+ 
+ ## Unreleased
+ 
++- Added the post-publication Gitea release audit, deterministic release-drift
++  fixtures, least-privilege credential contract, and scheduled/manual workflow
++  for the canonical two-stage evidence model.
+ - Added release-state audit and release gate checklist. No stable ACP release
+   has been published from the current `0.3.0-draft` line.
+ - CI now installs `python3-jsonschema` from the runner's Debian package set
+diff --git a/CONFORMANCE/fixtures/release-audit/attestation-valid.yaml b/CONFORMANCE/fixtures/release-audit/attestation-valid.yaml
+new file mode 100644
+index 0000000..bdef9db
+--- /dev/null
++++ b/CONFORMANCE/fixtures/release-audit/attestation-valid.yaml
+@@ -0,0 +1,16 @@
++evidence_model_version: 2
++repository: Homelab/ACP
++release_version: 1.2.3
++annotated_tag_name: v1.2.3
++annotated_tag_object_id: ${TAG_OBJECT}
++peeled_target_commit_id: ${PEELED_COMMIT}
++hosting_platform: gitea
++hosting_platform_release_reference: https://gitea.example/Homelab/ACP/releases/tag/v1.2.3
++release_notes_hash: ${RELEASE_NOTES_HASH}
++assets:
++  - name: artifact.tar.gz
++    sha256: ${ARTIFACT_HASH}
++ci_run_reference: https://gitea.example/Homelab/ACP/actions/runs/123
++pre_publication_evidence_path: releases/v1.2.3/release-evidence.yaml
++pre_publication_evidence_commit: ${PEELED_COMMIT}
++creation_timestamp: 2030-01-01T00:00:01Z
+diff --git a/CONFORMANCE/fixtures/release-audit/release-valid.json b/CONFORMANCE/fixtures/release-audit/release-valid.json
+new file mode 100644
+index 0000000..df5246b
+--- /dev/null
++++ b/CONFORMANCE/fixtures/release-audit/release-valid.json
+@@ -0,0 +1,21 @@
++{
++  "id": 123,
++  "tag_name": "v1.2.3",
++  "target_commitish": "${PEELED_COMMIT}",
++  "name": "ACP v1.2.3",
++  "body": "ACP v1.2.3 release notes\n",
++  "draft": false,
++  "prerelease": false,
++  "published_at": "2030-01-01T00:00:00Z",
++  "html_url": "https://gitea.example/Homelab/ACP/releases/tag/v1.2.3",
++  "assets": [
++    {
++      "name": "artifact.tar.gz",
++      "browser_download_url": "memory://artifact.tar.gz"
++    },
++    {
++      "name": "release-attestation.yaml",
++      "browser_download_url": "memory://release-attestation.yaml"
++    }
++  ]
++}
+diff --git a/CONFORMANCE/release_audit.py b/CONFORMANCE/release_audit.py
+new file mode 100644
+index 0000000..9a5ee4c
+--- /dev/null
++++ b/CONFORMANCE/release_audit.py
+@@ -0,0 +1,436 @@
++#!/usr/bin/env python3
++"""Verify stable ACP tags against Gitea releases and release attestations."""
++
++import argparse
++from datetime import datetime, timezone
++import hashlib
++import json
++import os
++from pathlib import Path
++import re
++import subprocess
++import sys
++from urllib import error, parse, request
++
++import yaml
++
++
++STABLE_TAG = re.compile(r"^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
++FULL_SHA1 = re.compile(r"^[0-9a-f]{40}$")
++FULL_SHA256 = re.compile(r"^[0-9a-f]{64}$")
++ATTESTATION_ASSET = "release-attestation.yaml"
++REQUIRED_ATTESTATION_FIELDS = (
++    "evidence_model_version",
++    "repository",
++    "release_version",
++    "annotated_tag_name",
++    "annotated_tag_object_id",
++    "peeled_target_commit_id",
++    "hosting_platform",
++    "hosting_platform_release_reference",
++    "release_notes_hash",
++    "assets",
++    "ci_run_reference",
++    "pre_publication_evidence_path",
++    "pre_publication_evidence_commit",
++    "creation_timestamp",
++)
++
++
++class AuditError(Exception):
++    """Raised when the audit cannot safely execute."""
++
++
++def finding(code, tag, message):
++    return {"code": code, "tag": tag, "message": message}
++
++
++def run_git(repo_root, *args, check=True):
++    result = subprocess.run(
++        ["git", *args], cwd=repo_root, text=True,
++        capture_output=True, check=False,
++    )
++    if check and result.returncode:
++        raise AuditError(
++            f"git {' '.join(args)} failed: {result.stderr.strip()}"
++        )
++    return result
++
++
++def stable_tags(repo_root):
++    output = run_git(
++        repo_root,
++        "for-each-ref",
++        "--format=%(refname:short)%09%(objecttype)%09%(objectname)%09%(*objectname)%09%(creatordate:iso-strict)",
++        "refs/tags",
++    ).stdout
++    tags = []
++    for line in output.splitlines():
++        name, object_type, object_id, peeled, created_at = line.split("\t", 4)
++        if STABLE_TAG.fullmatch(name):
++            tags.append({
++                "name": name,
++                "object_type": object_type,
++                "object_id": object_id,
++                "peeled_commit": peeled or object_id,
++                "created_at": created_at,
++            })
++    return tags
++
++
++def parse_timestamp(value):
++    if isinstance(value, datetime):
++        timestamp = value
++    else:
++        text = str(value).strip().replace("Z", "+00:00")
++        timestamp = datetime.fromisoformat(text)
++    if timestamp.tzinfo is None:
++        timestamp = timestamp.replace(tzinfo=timezone.utc)
++    return timestamp
++
++
++def git_path_exists(repo_root, commit, path):
++    if not FULL_SHA1.fullmatch(str(commit)):
++        return False
++    result = run_git(repo_root, "cat-file", "-e", f"{commit}:{path}", check=False)
++    return result.returncode == 0
++
++
++class GiteaClient:
++    """Minimal read-only Gitea client used by the post-publication audit."""
++
++    def __init__(self, api_url, repository, token):
++        if not token:
++            raise AuditError("Gitea audit token is empty")
++        self.api_url = api_url.rstrip("/")
++        self.repository = "/".join(
++            parse.quote(part, safe="") for part in repository.split("/", 1)
++        )
++        self.token = token
++
++    def _open(self, url):
++        req = request.Request(
++            url,
++            headers={
++                "Authorization": f"token {self.token}",
++                "Accept": "application/json",
++            },
++        )
++        try:
++            return request.urlopen(req, timeout=30)
++        except error.HTTPError as exc:
++            if exc.code == 404:
++                return None
++            raise AuditError(f"Gitea request failed with HTTP {exc.code}") from exc
++        except error.URLError as exc:
++            raise AuditError(f"Gitea request failed: {exc.reason}") from exc
++
++    def get_release(self, tag):
++        encoded_tag = parse.quote(tag, safe="")
++        response = self._open(
++            f"{self.api_url}/repos/{self.repository}/releases/tags/{encoded_tag}"
++        )
++        if response is None:
++            return None
++        with response:
++            return json.load(response)
++
++    def download_asset(self, asset):
++        url = asset.get("browser_download_url") or asset.get("url")
++        if not url:
++            raise AuditError(f"Release asset {asset.get('name')} has no download URL")
++        response = self._open(url)
++        if response is None:
++            raise AuditError(f"Release asset {asset.get('name')} returned HTTP 404")
++        with response:
++            return response.read()
++
++
++def load_attestation(client, release, tag):
++    matches = [
++        asset for asset in (release.get("assets") or [])
++        if asset.get("name") == ATTESTATION_ASSET
++    ]
++    if len(matches) != 1:
++        return None, finding(
++            "ATTESTATION_ASSET_COUNT", tag,
++            "Release must contain exactly one release-attestation.yaml asset",
++        )
++    try:
++        document = yaml.safe_load(client.download_asset(matches[0]))
++    except (AuditError, UnicodeDecodeError, yaml.YAMLError) as exc:
++        return None, finding(
++            "ATTESTATION_INVALID", tag,
++            f"Cannot load release attestation: {exc}",
++        )
++    if not isinstance(document, dict):
++        return None, finding(
++            "ATTESTATION_INVALID", tag,
++            "Release attestation must be a YAML mapping",
++        )
++    return document, None
++
++
++def audit_attestation(repo_root, repository, client, tag_record,
++                      release, attestation):
++    tag = tag_record["name"]
++    findings = []
++    missing = [
++        field for field in REQUIRED_ATTESTATION_FIELDS
++        if field not in attestation or attestation[field] is None
++    ]
++    if missing:
++        findings.append(finding(
++            "ATTESTATION_FIELDS_MISSING", tag,
++            f"Missing required attestation fields: {', '.join(missing)}",
++        ))
++        return findings
++
++    if attestation.get("evidence_model_version") != 2:
++        findings.append(finding(
++            "ATTESTATION_MODEL_VERSION_MISMATCH", tag,
++            "evidence_model_version must be 2",
++        ))
++    if not isinstance(attestation.get("ci_run_reference"), str) or not (
++            attestation["ci_run_reference"].strip()):
++        findings.append(finding(
++            "CI_RUN_REFERENCE_INVALID", tag,
++            "ci_run_reference must identify a durable CI record",
++        ))
++
++    expected_version = tag.removeprefix("v")
++    bindings = (
++        ("repository", repository, "ATTESTATION_REPOSITORY_MISMATCH"),
++        ("release_version", expected_version, "ATTESTATION_VERSION_MISMATCH"),
++        ("annotated_tag_name", tag, "ATTESTATION_TAG_MISMATCH"),
++        ("annotated_tag_object_id", tag_record["object_id"],
++         "ATTESTATION_TAG_OBJECT_MISMATCH"),
++        ("peeled_target_commit_id", tag_record["peeled_commit"],
++         "ATTESTATION_PEELED_COMMIT_MISMATCH"),
++        ("pre_publication_evidence_commit", tag_record["peeled_commit"],
++         "PREPUBLICATION_COMMIT_MISMATCH"),
++    )
++    for field, expected, code in bindings:
++        if str(attestation.get(field)) != expected:
++            findings.append(finding(
++                code, tag,
++                f"{field} does not match release binding",
++            ))
++
++    if attestation.get("hosting_platform") != "gitea":
++        findings.append(finding(
++            "HOSTING_PLATFORM_MISMATCH", tag,
++            "hosting_platform must be gitea",
++        ))
++    if attestation.get("hosting_platform_release_reference") != release.get("html_url"):
++        findings.append(finding(
++            "RELEASE_REFERENCE_MISMATCH", tag,
++            "Attestation release reference does not match Gitea release URL",
++        ))
++
++    if "attestation_hash" in attestation:
++        findings.append(finding(
++            "ATTESTATION_SELF_REFERENCE", tag,
++            "Attestation must not contain attestation_hash",
++        ))
++
++    declared_assets = attestation.get("assets")
++    if not isinstance(declared_assets, list):
++        findings.append(finding(
++            "ATTESTATION_ASSETS_INVALID", tag,
++            "Attestation assets must be a list",
++        ))
++        declared_assets = []
++
++    declared_by_name = {}
++    for asset in declared_assets:
++        if not isinstance(asset, dict) or not asset.get("name"):
++            findings.append(finding(
++                "ATTESTATION_ASSETS_INVALID", tag,
++                "Each attestation asset must contain name and sha256",
++            ))
++            continue
++        name = asset["name"]
++        if name == ATTESTATION_ASSET:
++            findings.append(finding(
++                "ATTESTATION_SELF_REFERENCE", tag,
++                "Attestation must not list release-attestation.yaml in assets",
++            ))
++            continue
++        if name in declared_by_name:
++            findings.append(finding(
++                "ATTESTATION_ASSET_DUPLICATE", tag,
++                f"Attestation lists payload asset {name} more than once",
++            ))
++        declared_by_name[name] = asset
++
++    published_assets = {}
++    for asset in (release.get("assets") or []):
++        name = asset.get("name")
++        if name == ATTESTATION_ASSET:
++            continue
++        if name in published_assets:
++            findings.append(finding(
++                "PUBLISHED_ASSET_DUPLICATE", tag,
++                f"Gitea release contains payload asset {name} more than once",
++            ))
++        published_assets[name] = asset
++    if set(declared_by_name) != set(published_assets):
++        findings.append(finding(
++            "ASSET_SET_MISMATCH", tag,
++            "Attestation asset names do not equal published payload asset names",
++        ))
++
++    for name in sorted(set(declared_by_name) & set(published_assets)):
++        expected_hash = declared_by_name[name].get("sha256")
++        if not FULL_SHA256.fullmatch(str(expected_hash)):
++            findings.append(finding(
++                "ASSET_HASH_INVALID", tag,
++                f"Asset {name} has no full SHA-256",
++            ))
++            continue
++        actual_hash = hashlib.sha256(
++            client.download_asset(published_assets[name])
++        ).hexdigest()
++        if actual_hash != expected_hash:
++            findings.append(finding(
++                "ASSET_HASH_MISMATCH", tag,
++                f"Asset {name} SHA-256 does not match attestation",
++            ))
++
++    notes_hash = attestation.get("release_notes_hash")
++    actual_notes_hash = hashlib.sha256(
++        release["body"].encode("utf-8")
++    ).hexdigest()
++    if not FULL_SHA256.fullmatch(str(notes_hash)) or notes_hash != actual_notes_hash:
++        findings.append(finding(
++            "RELEASE_NOTES_HASH_MISMATCH", tag,
++            "Published release notes SHA-256 does not match attestation",
++        ))
++
++    evidence_path = attestation.get("pre_publication_evidence_path")
++    evidence_commit = attestation.get("pre_publication_evidence_commit")
++    if not isinstance(evidence_path, str) or not git_path_exists(
++            repo_root, evidence_commit, evidence_path):
++        findings.append(finding(
++            "PREPUBLICATION_EVIDENCE_MISSING", tag,
++            "Pre-publication evidence does not exist in the recorded commit",
++        ))
++
++    try:
++        created = parse_timestamp(attestation["creation_timestamp"])
++        tag_created = parse_timestamp(tag_record["created_at"])
++        release_created = parse_timestamp(release["published_at"])
++        if created < tag_created or created < release_created:
++            findings.append(finding(
++                "ATTESTATION_CREATED_TOO_EARLY", tag,
++                "Attestation predates the tag or hosting-platform release",
++            ))
++    except (KeyError, TypeError, ValueError):
++        findings.append(finding(
++            "ATTESTATION_TIMESTAMP_INVALID", tag,
++            "Attestation, tag, and release timestamps must be ISO 8601",
++        ))
++
++    return findings
++
++
++def audit_tag(repo_root, repository, client, tag_record):
++    tag = tag_record["name"]
++    findings = []
++    if tag_record["object_type"] != "tag":
++        findings.append(finding(
++            "TAG_NOT_ANNOTATED", tag,
++            "Stable release tag must be an annotated tag object",
++        ))
++        return findings
++
++    release = client.get_release(tag)
++    if release is None:
++        return [finding(
++            "RELEASE_MISSING", tag,
++            "Stable annotated tag has no Gitea release",
++        )]
++    if release.get("tag_name") != tag:
++        findings.append(finding(
++            "RELEASE_TAG_MISMATCH", tag,
++            "Gitea release refers to another tag",
++        ))
++    if release.get("draft") or release.get("prerelease"):
++        findings.append(finding(
++            "RELEASE_NOT_STABLE", tag,
++            "Stable tag release must not be draft or prerelease",
++        ))
++    if not str(release.get("body") or "").strip():
++        findings.append(finding(
++            "RELEASE_NOTES_EMPTY", tag,
++            "Gitea release notes are missing or empty",
++        ))
++        return findings
++    if release.get("target_commitish") != tag_record["peeled_commit"]:
++        findings.append(finding(
++            "RELEASE_TARGET_MISMATCH", tag,
++            "Gitea release target is not the full peeled tag commit",
++        ))
++
++    attestation, attestation_finding = load_attestation(client, release, tag)
++    if attestation_finding:
++        findings.append(attestation_finding)
++    else:
++        findings.extend(audit_attestation(
++            repo_root, repository, client, tag_record, release, attestation
++        ))
++    return findings
++
++
++def audit_repository(repo_root, repository, client):
++    repo_root = Path(repo_root).resolve()
++    return [
++        item
++        for tag_record in stable_tags(repo_root)
++        for item in audit_tag(repo_root, repository, client, tag_record)
++    ]
++
++
++def main(argv=None):
++    parser = argparse.ArgumentParser(
++        description="Audit ACP stable tags against Gitea release attestations"
++    )
++    parser.add_argument("--repo-root", default=".")
++    parser.add_argument("--repository", default="Homelab/ACP")
++    parser.add_argument(
++        "--gitea-api-url",
++        default=os.environ.get("GITEA_API_URL", ""),
++    )
++    parser.add_argument(
++        "--token-env", default="ACP_RELEASE_AUDIT_TOKEN",
++        help="Environment variable containing the read-only Gitea token",
++    )
++    parser.add_argument("--json", action="store_true")
++    args = parser.parse_args(argv)
++
++    token = os.environ.get(args.token_env, "")
++    if not args.gitea_api_url:
++        parser.error("--gitea-api-url or GITEA_API_URL is required")
++    try:
++        client = GiteaClient(args.gitea_api_url, args.repository, token)
++        findings = audit_repository(args.repo_root, args.repository, client)
++    except AuditError as exc:
++        print(f"ERROR: {exc}", file=sys.stderr)
++        return 2
++
++    if args.json:
++        print(json.dumps({
++            "repository": args.repository,
++            "findings": findings,
++            "error_count": len(findings),
++        }, indent=2))
++    else:
++        for item in findings:
++            print(f"[ERROR] [{item['code']}] {item['tag']}: {item['message']}")
++        print(f"\n{len(findings)} release-audit error(s)")
++    return 2 if findings else 0
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/CONFORMANCE/test_release_audit.py b/CONFORMANCE/test_release_audit.py
+new file mode 100644
+index 0000000..c72f740
+--- /dev/null
++++ b/CONFORMANCE/test_release_audit.py
+@@ -0,0 +1,240 @@
++#!/usr/bin/env python3
++"""Deterministic conformance tests for the ACP post-publication audit."""
++
++import copy
++import hashlib
++import importlib.util
++import json
++import os
++from pathlib import Path
++import subprocess
++import tempfile
++import unittest
++
++import yaml
++
++
++REPO = Path(__file__).resolve().parent.parent
++FIXTURES = Path(__file__).resolve().parent / "fixtures" / "release-audit"
++MODULE_PATH = Path(__file__).resolve().parent / "release_audit.py"
++SPEC = importlib.util.spec_from_file_location("release_audit", MODULE_PATH)
++release_audit = importlib.util.module_from_spec(SPEC)
++SPEC.loader.exec_module(release_audit)
++
++
++class FakeGiteaClient:
++    def __init__(self, release, blobs):
++        self.release = release
++        self.blobs = blobs
++
++    def get_release(self, tag):
++        if self.release and self.release.get("tag_name") == tag:
++            return copy.deepcopy(self.release)
++        return copy.deepcopy(self.release)
++
++    def download_asset(self, asset):
++        return self.blobs[asset["browser_download_url"]]
++
++
++def git(repo, *args, env=None):
++    result = subprocess.run(
++        ["git", *args], cwd=repo, env=env, text=True,
++        capture_output=True, check=False,
++    )
++    if result.returncode:
++        raise AssertionError(result.stderr)
++    return result.stdout.strip()
++
++
++def replace_placeholders(value, replacements):
++    if isinstance(value, dict):
++        return {key: replace_placeholders(item, replacements)
++                for key, item in value.items()}
++    if isinstance(value, list):
++        return [replace_placeholders(item, replacements) for item in value]
++    if isinstance(value, str):
++        for marker, replacement in replacements.items():
++            value = value.replace(marker, replacement)
++    return value
++
++
++class ReleaseAuditTests(unittest.TestCase):
++    def build_fixture(self):
++        tmp = tempfile.TemporaryDirectory()
++        repo = Path(tmp.name)
++        git(repo, "init", "-q")
++        git(repo, "config", "user.name", "ACP Test")
++        git(repo, "config", "user.email", "acp@example.test")
++
++        evidence = repo / "releases" / "v1.2.3" / "release-evidence.yaml"
++        evidence.parent.mkdir(parents=True)
++        evidence.write_text(
++            "evidence_model_version: 2\n"
++            "repository: Homelab/ACP\n"
++            "proposed_version: 1.2.3\n"
++            "proposed_tag: v1.2.3\n",
++            encoding="utf-8",
++        )
++        git(repo, "add", ".")
++        commit_env = os.environ.copy()
++        commit_env.update({
++            "GIT_AUTHOR_DATE": "2029-12-31T23:59:57Z",
++            "GIT_COMMITTER_DATE": "2029-12-31T23:59:57Z",
++        })
++        git(repo, "commit", "-q", "-m", "release preparation", env=commit_env)
++        peeled = git(repo, "rev-parse", "HEAD")
++
++        tag_env = os.environ.copy()
++        tag_env["GIT_COMMITTER_DATE"] = "2029-12-31T23:59:58Z"
++        git(repo, "tag", "-a", "v1.2.3", "-m", "ACP v1.2.3", env=tag_env)
++        tag_object = git(repo, "rev-parse", "v1.2.3^{object}")
++
++        release = json.loads(
++            (FIXTURES / "release-valid.json").read_text(encoding="utf-8")
++        )
++        artifact = b"deterministic ACP artifact\n"
++        notes = release["body"].encode("utf-8")
++        replacements = {
++            "${TAG_OBJECT}": tag_object,
++            "${PEELED_COMMIT}": peeled,
++            "${RELEASE_NOTES_HASH}": hashlib.sha256(notes).hexdigest(),
++            "${ARTIFACT_HASH}": hashlib.sha256(artifact).hexdigest(),
++        }
++        release = replace_placeholders(release, replacements)
++        attestation_text = replace_placeholders(
++            (FIXTURES / "attestation-valid.yaml").read_text(encoding="utf-8"),
++            replacements,
++        )
++        blobs = {
++            "memory://artifact.tar.gz": artifact,
++            "memory://release-attestation.yaml": attestation_text.encode("utf-8"),
++        }
++        return tmp, repo, release, blobs
++
++    def codes(self, repo, release, blobs):
++        findings = release_audit.audit_repository(
++            repo, "Homelab/ACP", FakeGiteaClient(release, blobs)
++        )
++        return {finding["code"] for finding in findings}
++
++    def mutate_attestation(self, blobs, mutator):
++        data = yaml.safe_load(blobs["memory://release-attestation.yaml"])
++        mutator(data)
++        blobs["memory://release-attestation.yaml"] = yaml.safe_dump(
++            data, sort_keys=False
++        ).encode("utf-8")
++
++    def test_valid_release_binding_passes(self):
++        tmp, repo, release, blobs = self.build_fixture()
++        self.addCleanup(tmp.cleanup)
++        self.assertEqual(set(), self.codes(repo, release, blobs))
++
++    def test_missing_release_is_rejected(self):
++        tmp, repo, _, blobs = self.build_fixture()
++        self.addCleanup(tmp.cleanup)
++        self.assertIn("RELEASE_MISSING", self.codes(repo, None, blobs))
++
++    def test_release_referring_to_another_tag_is_rejected(self):
++        tmp, repo, release, blobs = self.build_fixture()
++        self.addCleanup(tmp.cleanup)
++        release["tag_name"] = "v1.2.4"
++        self.assertIn("RELEASE_TAG_MISMATCH", self.codes(repo, release, blobs))
++
++    def test_missing_or_empty_release_notes_are_rejected(self):
++        tmp, repo, release, blobs = self.build_fixture()
++        self.addCleanup(tmp.cleanup)
++        release["body"] = "   \n"
++        self.assertIn("RELEASE_NOTES_EMPTY", self.codes(repo, release, blobs))
++
++    def test_release_target_drift_is_rejected(self):
++        tmp, repo, release, blobs = self.build_fixture()
++        self.addCleanup(tmp.cleanup)
++        release["target_commitish"] = "f" * 40
++        self.assertIn("RELEASE_TARGET_MISMATCH", self.codes(repo, release, blobs))
++
++    def test_attestation_peeled_commit_drift_is_rejected(self):
++        tmp, repo, release, blobs = self.build_fixture()
++        self.addCleanup(tmp.cleanup)
++        self.mutate_attestation(
++            blobs,
++            lambda data: data.update({"peeled_target_commit_id": "f" * 40}),
++        )
++        self.assertIn("ATTESTATION_PEELED_COMMIT_MISMATCH",
++                      self.codes(repo, release, blobs))
++
++    def test_release_notes_hash_mismatch_is_rejected(self):
++        tmp, repo, release, blobs = self.build_fixture()
++        self.addCleanup(tmp.cleanup)
++        self.mutate_attestation(
++            blobs, lambda data: data.update({"release_notes_hash": "f" * 64})
++        )
++        self.assertIn("RELEASE_NOTES_HASH_MISMATCH",
++                      self.codes(repo, release, blobs))
++
++    def test_wrong_evidence_model_version_is_rejected(self):
++        tmp, repo, release, blobs = self.build_fixture()
++        self.addCleanup(tmp.cleanup)
++        self.mutate_attestation(
++            blobs,
++            lambda data: data.update({"evidence_model_version": 1}),
++        )
++        self.assertIn("ATTESTATION_MODEL_VERSION_MISMATCH",
++                      self.codes(repo, release, blobs))
++
++    def test_asset_hash_mismatch_is_rejected(self):
++        tmp, repo, release, blobs = self.build_fixture()
++        self.addCleanup(tmp.cleanup)
++        blobs["memory://artifact.tar.gz"] = b"drifted artifact\n"
++        self.assertIn("ASSET_HASH_MISMATCH", self.codes(repo, release, blobs))
++
++    def test_missing_pre_publication_evidence_is_rejected(self):
++        tmp, repo, release, blobs = self.build_fixture()
++        self.addCleanup(tmp.cleanup)
++        self.mutate_attestation(
++            blobs,
++            lambda data: data.update({
++                "pre_publication_evidence_path":
++                    "releases/v1.2.3/missing-evidence.yaml"
++            }),
++        )
++        self.assertIn("PREPUBLICATION_EVIDENCE_MISSING",
++                      self.codes(repo, release, blobs))
++
++    def test_attestation_self_reference_is_rejected(self):
++        tmp, repo, release, blobs = self.build_fixture()
++        self.addCleanup(tmp.cleanup)
++
++        def add_self_reference(data):
++            data["assets"].append({
++                "name": "release-attestation.yaml",
++                "sha256": "f" * 64,
++            })
++
++        self.mutate_attestation(blobs, add_self_reference)
++        self.assertIn("ATTESTATION_SELF_REFERENCE",
++                      self.codes(repo, release, blobs))
++
++    def test_attestation_created_before_release_is_rejected(self):
++        tmp, repo, release, blobs = self.build_fixture()
++        self.addCleanup(tmp.cleanup)
++        self.mutate_attestation(
++            blobs,
++            lambda data: data.update({
++                "creation_timestamp": "2029-12-31T23:59:59Z"
++            }),
++        )
++        self.assertIn("ATTESTATION_CREATED_TOO_EARLY",
++                      self.codes(repo, release, blobs))
++
++    def test_no_stable_tags_is_not_a_failure(self):
++        with tempfile.TemporaryDirectory() as td:
++            repo = Path(td)
++            git(repo, "init", "-q")
++            findings = release_audit.audit_repository(
++                repo, "Homelab/ACP", FakeGiteaClient(None, {})
++            )
++            self.assertEqual([], findings)
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/DECISIONS/003-post-publication-release-audit.md b/DECISIONS/003-post-publication-release-audit.md
+new file mode 100644
+index 0000000..23ec7fb
+--- /dev/null
++++ b/DECISIONS/003-post-publication-release-audit.md
+@@ -0,0 +1,61 @@
++# ADR-003: Post-Publication Release Binding Audit
++
++**Status:** Proposed
++**Date:** 2026-07-25
++
++## Context
++
++ACP Issue #11 requires every stable annotated tag to have a published Gitea
++release with non-empty notes and the same peeled target commit. The prior
++single-stage evidence model could not bind a release-preparation commit to its
++own unknown SHA. Canonical governance Issue #42 resolved that contradiction by
++adopting committed pre-publication evidence and a separate post-publication
++attestation.
++
++The release audit needs authenticated read access to Gitea, while pull-request
++CI must remain deterministic and credential-free. Runtime deployment state is
++also independent of release publication and must not be inferred by this audit.
++
++## Decision
++
++1. Run deterministic release-audit fixtures in normal ACP pull-request CI.
++2. Run the authenticated audit on a daily schedule, with a manual dispatch
++   immediately after the attestation asset upload and for later re-checks. Do
++   not use `release: published`: the attestation can only be produced after the
++   release exists, so that event can race ahead of the required asset.
++3. Enumerate stable tags from a full local Git checkout and require annotated
++   tag objects.
++4. Require the Gitea release `tag_name` and full `target_commitish` to equal the
++   local tag name and peeled commit. Moving branch names are not valid targets.
++5. Download `release-attestation.yaml` from the release and verify its binding
++   to the tag object, peeled commit, release URL, release-notes hash, payload
++   asset names and hashes, pre-publication evidence, and publication order.
++6. Exclude the attestation from its own `assets` list. It remains a release
++   asset but cannot hash itself.
++7. Use a dedicated repository secret containing a token with only
++   `read:repository`. Code, logs, and review artifacts never contain the token.
++8. Evaluate runtime-consumer pins separately; publication success does not
++   assert deployment.
++
++## Consequences
++
++**Easier:**
++
++- Release/tag drift becomes a deterministic CI failure.
++- The two-stage governance model is directly executable by ACP.
++- Pull-request tests need no network or credentials.
++- Every stable release can be re-audited without changing release objects.
++
++**Harder:**
++
++- The repository owner must provision and rotate a least-privilege token before
++  the first stable release.
++- Stable releases must upload the attestation and every declared payload asset
++  before the audit can pass.
++- Gitea release targets must be immutable full commit SHAs, not `main`.
++
++## References
++
++- Issue: `Homelab/ACP#11`
++- Governance decision: `yeraziael/ai-governance#42`
++- Governance implementation: `yeraziael/ai-governance#43`
+diff --git a/DECISIONS/README.md b/DECISIONS/README.md
+index d15927d..cb38078 100644
+--- a/DECISIONS/README.md
++++ b/DECISIONS/README.md
+@@ -25,3 +25,4 @@ Each decision follows a lightweight ADR (Architecture Decision Record) format:
+ |---|---|---|---|---|
+ | 001 | 2026-07-25 | Execution and Trigger Contracts for ACP v0.2 | Proposed | F-57-001, F-57-002, F-57-003, F-57-006 |
+ | 002 | 2026-07-25 | Review Provenance and Self-Verification Semantics | Accepted | — |
++| 003 | 2026-07-25 | Post-Publication Release Binding Audit | Proposed | ACP #11 |
+diff --git a/README.md b/README.md
+index 505956a..ec09fb4 100644
+--- a/README.md
++++ b/README.md
+@@ -47,6 +47,9 @@ with the `-draft` suffix is not a stable release. The release inventory and
+ blocked publication conditions are recorded in
+ [`docs/release-audit-2026-07-25.md`](docs/release-audit-2026-07-25.md). Every
+ release must satisfy [`RELEASE.md`](RELEASE.md); merging a PR is not a release.
++Post-publication binding is verified by `CONFORMANCE/release_audit.py`; its
++read-only credential and operator runbook are documented in
++[`docs/release-audit-operations.md`](docs/release-audit-operations.md).
+ 
+ ## License
+ 
+diff --git a/RELEASE.md b/RELEASE.md
+index 0349c27..6a63728 100644
+--- a/RELEASE.md
++++ b/RELEASE.md
+@@ -29,18 +29,21 @@ the intended commit:
+    recorded as durable release evidence.
+ 6. A post-merge audit has no unresolved blocking finding. Follow-ups from older
+    audits must be re-checked rather than copied forward.
+-7. The release-evidence format can bind the tag and its peeled commit without
+-   a self-referential commit-SHA claim. The current cross-repository policy
+-   needs an explicit resolution for this format before ACP's first stable
+-   release.
++7. The release-preparation commit contains pre-publication evidence without a
++   self-referential target SHA. After publication, `release-attestation.yaml`
++   binds the annotated tag object, peeled commit, Gitea release, release notes,
++   payload assets and pre-publication evidence according to the canonical
++   two-stage governance model.
+ 
+ ## Publication And Verification
+ 
+ 1. Create the annotated `vMAJOR.MINOR.PATCH` tag only after all gates pass.
+ 2. Publish the Gitea release from that tag, never from `main` or another moving
+    branch.
+-3. Re-read the tag object, peeled commit, release target, title, notes, and
+-   assets. Record the result in the release evidence.
++3. Upload `release-attestation.yaml`, then run the post-publication audit to
++   re-read the tag object, peeled commit, release target, title, notes, payload
++   assets and pre-publication evidence. The attestation is excluded from its
++   own `assets` list.
+ 4. Confirm every declared runtime consumer is pinned to the released version or
+    is explicitly documented as using a draft. A runtime skill checksum alone is
+    not a protocol release pin.
+@@ -49,9 +52,10 @@ the intended commit:
+ 
+ ## Automation Requirements
+ 
+-The protected CI contract must reject a version/documentation mismatch. A
+-post-publication release-audit job must authenticate to Gitea and fail when a
+-stable tag lacks a published release, when the release target differs from the
+-peeled tag commit, or when release notes are empty. This job is intentionally
+-not enabled until its least-privilege credential and the evidence-binding
+-format are defined and reviewed.
++The protected CI contract rejects version/documentation mismatch and runs
++credential-free release-audit fixtures. The separate post-publication workflow
++authenticates read-only to Gitea and fails when a stable tag lacks a published
++release, when the release target differs from the peeled tag commit, when
++release notes are empty, or when the two-stage attestation binding is invalid.
++Credential scope and provisioning are defined in
++[`docs/release-audit-operations.md`](docs/release-audit-operations.md).
+diff --git a/docs/release-audit-operations.md b/docs/release-audit-operations.md
+new file mode 100644
+index 0000000..d584bee
+--- /dev/null
++++ b/docs/release-audit-operations.md
+@@ -0,0 +1,93 @@
++# ACP Post-Publication Release Audit
++
++## Purpose
++
++`CONFORMANCE/release_audit.py` verifies every stable ACP tag against the
++published Gitea release and its two-stage evidence. It is read-only: it never
++creates, edits, deletes, or republishes a tag, release, asset, or secret.
++
++The audit runs daily and can be started through `workflow_dispatch` immediately
++after the attestation asset is uploaded. It deliberately does not use the
++Gitea `release: published` event: the attestation is produced after the release
++exists, so that event can run before the required asset upload. Normal
++pull-request CI runs only the deterministic fixtures in
++`CONFORMANCE/test_release_audit.py`.
++
++## Verified Bindings
++
++For every tag matching `vMAJOR.MINOR.PATCH`, the audit requires:
++
++1. an annotated Git tag object;
++2. exactly one Gitea release for that tag;
++3. a non-draft, non-prerelease release with non-empty notes;
++4. `target_commitish` equal to the full peeled tag commit;
++5. exactly one `release-attestation.yaml` release asset;
++6. matching repository, version, tag-object ID, peeled commit and release URL;
++7. the SHA-256 of the published release notes;
++8. the exact set and SHA-256 hashes of all payload assets;
++9. pre-publication evidence present in the peeled target commit;
++10. an attestation timestamp after both tag creation and release publication;
++11. no `attestation_hash` and no attestation entry in its own `assets` list.
++
++Platform-generated source archives are not Gitea release assets and therefore
++are outside the explicit asset-set comparison.
++
++## Credential Contract
++
++The workflow reads the repository secret `ACP_RELEASE_AUDIT_TOKEN`. Gitea
++rejects secret names beginning with its reserved `GITEA_` prefix, so the name
++must not be changed to `GITEA_RELEASE_AUDIT_TOKEN`.
++
++Required scope:
++
++- `read:repository`
++
++Prohibited scopes:
++
++- all write scopes;
++- `write:user` or administrative scopes;
++- package, organization, issue, or release mutation permissions.
++
++Use a dedicated audit token owned by an identity with read access to
++`Homelab/ACP`. The token is stored only as a Gitea Actions repository secret.
++It must not be committed, included in review packages, passed as a command-line
++argument, or printed.
++
++## Operator Provisioning
++
++Credential creation and repository-secret mutation are explicit operator
++actions and are not performed by this implementation PR.
++
++1. Create a dedicated token with only `read:repository`.
++2. Add its raw value to the `Homelab/ACP` Actions repository secret named
++   `ACP_RELEASE_AUDIT_TOKEN`.
++3. Manually dispatch `ACP Post-Publication Release Audit` after provisioning
++   and after each stable release has its attestation asset.
++4. Confirm the `credential-preflight` and `post-publication-audit` steps pass.
++5. Rotate by replacing the secret value, then revoke the previous token.
++
++The workflow uses the LAN API endpoint configured in
++`.gitea/workflows/release-audit.yaml`; the endpoint is non-secret.
++
++## Local Deterministic Verification
++
++```bash
++python3 CONFORMANCE/test_release_audit.py
++```
++
++The local suite does not contact Gitea and uses no credential. The authenticated
++adapter can be invoked manually only when the read-only token is already in the
++environment:
++
++```bash
++export GITEA_API_URL=http://192.168.2.30:3000/api/v1
++# ACP_RELEASE_AUDIT_TOKEN must already exist in the process environment.
++python3 CONFORMANCE/release_audit.py --repository Homelab/ACP \
++  --token-env ACP_RELEASE_AUDIT_TOKEN --json
++```
++
++## Runtime Boundary
++
++This audit proves publication binding only. It does not prove that any runtime
++consumer is deployed, synchronized, or pinned to the release. Runtime-consumer
++state remains a separate release gate and evidence record.

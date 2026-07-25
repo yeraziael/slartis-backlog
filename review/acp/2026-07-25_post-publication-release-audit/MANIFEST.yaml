@@ -1,0 +1,43 @@
+manifest_version: v2
+project: acp
+repository: Homelab/ACP
+canonical_pr: 15
+base_commit: b65a9ad1f26fea74e53013c430eeddb98d3d73e7
+head_commit: 38baaf19568766e3911f63edd1509c8997030eab
+author: slarti
+change_request: "Homelab/ACP#11"
+
+statistics:
+  files_changed: 13
+  insertions: 930
+  deletions: 12
+
+review_scope:
+  architecture: true
+  implementation: true
+  governance: true
+  security: true
+  compatibility: true
+  documentation: true
+
+integrity:
+  changeset_sha256: "f1d4d90218e570a361c5537f04a14f57feff0e8c3630c904285509c9af7704e3"
+  review_verdict_sha256: "c53474f065b19ffab0e088b3ebc21221d3ffb8244529644e36e44a0bf6a52fc4"
+
+generated:
+  timestamp: "2026-07-25T21:54:23+01:00"
+  tool: opencode/github-review-skill
+
+review_verdict:
+  schema: acp.review-verdict.v2
+  reviewed_commit: 38baaf19568766e3911f63edd1509c8997030eab
+  review_type: post-merge
+  review_basis: merge-commit
+  reviewer: slarti
+  verdict: post-merge-audit
+  blocking_findings: []
+  remaining_followups:
+    - "The first stable ACP release must provide a real attestation and pass the audit with a non-empty stable-tag inventory."
+    - "Runtime consumers must record release pins separately from publication evidence."
+  supersedes_review: "https://github.com/yeraziael/slartis-backlog/pull/93"
+  review_timestamp: "2026-07-25T21:54:23+01:00"
