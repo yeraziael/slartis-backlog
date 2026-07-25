@@ -1,0 +1,1410 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 42f55f5..227b6a2 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,17 @@
+ # Changelog
+ 
++## v0.2.0-draft
++
++- Added `SPEC/execution-contract.md` — Execution Contract specification
++- Added `SPEC/trigger-contract.md` — Trigger Contract specification
++- Added `SCHEMAS/execution-contract.json` — JSON Schema for Execution Contracts
++- Added `SCHEMAS/trigger-contract.json` — JSON Schema for Trigger Contracts
++- Added `EXAMPLES/execution-contract-valid.json` — valid Execution Contract example
++- Added `EXAMPLES/execution-contract-invalid.json` — 5 invalid Execution Contract examples
++- Added `EXAMPLES/trigger-contract-valid.json` — valid Trigger Contract example
++- Added `EXAMPLES/trigger-contract-invalid.json` — 4 invalid Trigger Contract examples
++- Added `DECISIONS/001-execution-trigger-contracts.md` — ADR-001 for this change
++
+ ## v0.1.0-draft
+ 
+ - Initial repository setup
+diff --git a/DECISIONS/001-execution-trigger-contracts.md b/DECISIONS/001-execution-trigger-contracts.md
+new file mode 100644
+index 0000000..e3d128a
+--- /dev/null
++++ b/DECISIONS/001-execution-trigger-contracts.md
+@@ -0,0 +1,99 @@
++# ADR-001: Execution and Trigger Contracts for ACP v0.2
++
++**Status:** Proposed
++**Date:** 2026-07-25
++
++## Context
++
++Issue `yeraziael/slartis-backlog#88` identified that the existing ACP (`v0.1.0-draft`)
++lacked formal contracts for two critical interactions:
++
++1. **Execution Contract** between Slarti (Principal) and Lydia (Executor) —
++   what must be provided for deterministic, non-interpretive execution.
++2. **Trigger Contract** between Slarti, Eddie (Orchestrator), and Lydia —
++   how Eddie triggers registered actions without containing execution logic.
++
++Pilot 57 (`FINDINGS/PILOT-57.md`) produced four ACP-level findings (F-57-001
++through F-57-003, F-57-006) that directly demand normative content. The SPEC/
++directory was empty at v0.1.0-draft.
++
++The analysis of `lydia/home-repo` showed multiple implicit contracts:
++- `envelope.schema.json` (message envelope)
++- `worker_schema.json` (ephemeral worker contract)
++- `task_contract.sh` (task state machine, `lydia-task/v1`)
++- Eddie's executor registration (`name`, `endpoint`, `capabilities`, `concurrency`)
++
++These are implementation-specific. ACP must define transport-agnostic,
++provider-independent contracts that can be realised by any executor.
++
++## Decision
++
++Add two normative specifications to ACP v0.2.0-draft:
++
++1. **Execution Contract** (`SPEC/execution-contract.md`):
++   - Defines what a Principal must provide for a single deterministic action.
++   - 7 lifecycle states: SUBMITTED → VALIDATED → APPROVED/REJECTED → EXECUTING → COMPLETED/FAILED
++   - Required fields: `acp_version`, `execution_id`, `action`, `version`,
++     `provenance`, `parameters`, `evidence`
++   - Optional but defined: `preconditions`, `security`, `constraints`,
++     `rollback`, `success_criteria`, `failure_handling`
++   - Normative principles: Executor interprets nothing, rejects incomplete
++     contracts, Principal responsible for tool availability.
++
++2. **Trigger Contract** (`SPEC/trigger-contract.md`):
++   - Defines how a Principal registers a trigger with Orchestrator (Eddie).
++   - 5 lifecycle states: REGISTERED → VALIDATED → ACTIVE/REJECTED → DISABLED/EXPIRED
++   - 6 trigger types: `schedule`, `cron`, `event`, `webhook`, `manual`, `condition`
++   - Required fields: `acp_version`, `trigger_id`, `action_ref`, `provenance`,
++     `trigger_type`, `parameters`
++   - Includes: retry policy, deduplication, concurrency, deadline, notifications, activation
++   - Normative principles: Eddie triggers only registered actions, contains no
++     execution logic, trigger changes require new version.
++
++3. **JSON Schemas** (`SCHEMAS/execution-contract.json`, `SCHEMAS/trigger-contract.json`):
++   - Draft-07 JSON Schema for machine validation of both contracts.
++
++4. **Examples** (`EXAMPLES/`):
++   - 1 valid + 5 invalid examples for Execution Contract
++   - 1 valid + 4 invalid examples for Trigger Contract
++
++## Consequences
++
++**Easier:**
++- Slarti can formally specify what Lydia must execute, with structured rejection
++  on missing or invalid fields.
++- Eddie can validate trigger registrations against executor capabilities before
++  activation.
++- New executors (Vekling workers, external services) can implement the same
++  contract interface.
++- Governance (`yeraziael/ai-governance`) can reference ACP contract versions
++  for its rules on authority boundaries.
++
++**Harder:**
++- Existing bash-based task handlers (`task_contract.sh`, `task_handlers.sh`)
++  need adapters to produce and consume ACP contracts.
++- Eddie's executor registration currently lacks `version` and `action` granularity
++  (capabilities is a flat string list).
++- Lydia's `executor_server.py` handles `callback_url` ad-hoc; the ACP contract
++  formalizes this.
++
++## Relation to Existing Mechanisms
++
++| Existing | ACP v0.2 | Mapping |
++|----------|----------|---------|
++| Task contract (`lydia-task/v1`) | Execution Contract | `task_id` → `execution_id`, `task_type` → `action`, `payload` → `parameters` |
++| Worker contract (`worker_schema.json`) | Execution Contract | `task` → resolved parameters, `acceptance` → `success_criteria` |
++| Eddie executor registration | Trigger Contract resolution | `Capabilities` → `action_ref` resolution |
++| Eddie cron/scheduler | Trigger Contract `trigger_type: cron` | Same concept, formalized |
++| Eddie dispatcher retry | Trigger Contract `retry` | Same mechanism, formalized |
++
++## References
++
++- Issue: `yeraziael/slartis-backlog#88`
++- Pilot 57: `FINDINGS/PILOT-57.md`
++- Existing task contract: `lydia/home-repo/runtime/dispatch/task_contract.sh`
++- Existing worker schema: `lydia/home-repo/runtime/dispatch/worker_schema.json`
++- Eddie executor contract: `lydia/home-repo/runtime/eddie/server/executors.go`
++- Eddie dispatcher: `lydia/home-repo/runtime/eddie/dispatcher/dispatcher.go`
++- Lydia executor: `lydia/home-repo/runtime/processor/executor_server.py`
++- Architecture: `Homelab/Architecture/docs/ARCHITECTURE.md`
+diff --git a/DECISIONS/README.md b/DECISIONS/README.md
+index a985abc..99710d4 100644
+--- a/DECISIONS/README.md
++++ b/DECISIONS/README.md
+@@ -23,4 +23,4 @@ Each decision follows a lightweight ADR (Architecture Decision Record) format:
+ 
+ | # | Date | Title | Status | Related Findings |
+ |---|---|---|---|---|
+-| — | — | — | — | — |
++| 001 | 2026-07-25 | Execution and Trigger Contracts for ACP v0.2 | Proposed | F-57-001, F-57-002, F-57-003, F-57-006 |
+diff --git a/EXAMPLES/execution-contract-invalid.json b/EXAMPLES/execution-contract-invalid.json
+new file mode 100644
+index 0000000..ffd4037
+--- /dev/null
++++ b/EXAMPLES/execution-contract-invalid.json
+@@ -0,0 +1,119 @@
++[
++  {
++    "scenario": "Missing required fields (acp_version, execution_id, action)",
++    "contract": {
++      "version": "1.0.0",
++      "provenance": {
++        "principal": "slarti",
++        "trace_id": "trace-missing-fields",
++        "created_at": "2026-07-25T12:00:00Z"
++      },
++      "parameters": {
++        "command": "ls -la"
++      },
++      "evidence": {
++        "require_output": true
++      }
++    },
++    "expected_rejection": "schema",
++    "reason": "Missing required top-level fields: acp_version, execution_id, action"
++  },
++  {
++    "scenario": "Unknown action (not in executor registry)",
++    "contract": {
++      "acp_version": "0.2.0-draft",
++      "execution_id": "exec-invalid-action-001",
++      "action": "nonexistent.operation",
++      "version": "9.9.9",
++      "provenance": {
++        "principal": "slarti",
++        "trace_id": "trace-unknown-action",
++        "created_at": "2026-07-25T12:00:00Z"
++      },
++      "parameters": {
++        "target": "/etc/passwd"
++      },
++      "evidence": {
++        "require_output": true
++      }
++    },
++    "expected_rejection": "execution",
++    "reason": "Action 'nonexistent.operation:9.9.9' is not registered with any executor"
++  },
++  {
++    "scenario": "Precondition failure: tool version mismatch",
++    "contract": {
++      "acp_version": "0.2.0-draft",
++      "execution_id": "exec-version-mismatch-002",
++      "action": "fileops.copy",
++      "version": "2.0.0",
++      "provenance": {
++        "principal": "slarti",
++        "trace_id": "trace-version-mismatch",
++        "created_at": "2026-07-25T12:00:00Z"
++      },
++      "parameters": {
++        "source": "/tmp/source.txt",
++        "dest": "/tmp/dest.txt"
++      },
++      "preconditions": [
++        {
++          "type": "tool_available",
++          "target": "fileops.copy:2.0.0",
++          "message": "fileops.copy v2.0.0 must be registered"
++        }
++      ],
++      "evidence": {
++        "require_output": true
++      }
++    },
++    "expected_rejection": "precondition",
++    "reason": "Only fileops.copy v1.3.0 is registered, not v2.0.0"
++  },
++  {
++    "scenario": "Missing parameters for action",
++    "contract": {
++      "acp_version": "0.2.0-draft",
++      "execution_id": "exec-missing-params-003",
++      "action": "issue.create",
++      "version": "1.0.0",
++      "provenance": {
++        "principal": "slarti",
++        "trace_id": "trace-missing-params",
++        "created_at": "2026-07-25T12:00:00Z"
++      },
++      "parameters": {},
++      "evidence": {
++        "require_output": true
++      }
++    },
++    "expected_rejection": "schema",
++    "reason": "issue.create requires 'repo', 'title', and 'body' parameters; none provided"
++  },
++  {
++    "scenario": "Insufficient permissions: path outside allowed_paths",
++    "contract": {
++      "acp_version": "0.2.0-draft",
++      "execution_id": "exec-permission-denied-004",
++      "action": "fileops.read",
++      "version": "1.0.0",
++      "provenance": {
++        "principal": "slarti",
++        "trace_id": "trace-permission-denied",
++        "created_at": "2026-07-25T12:00:00Z"
++      },
++      "parameters": {
++        "path": "/etc/shadow"
++      },
++      "security": {
++        "allowed_paths": ["/home/lydia/workspace/"],
++        "requires_approval": false
++      },
++      "evidence": {
++        "require_output": true
++      }
++    },
++    "expected_rejection": "permission",
++    "reason": "Path '/etc/shadow' is outside allowed_paths ['/home/lydia/workspace/']"
++  }
++]
+diff --git a/EXAMPLES/execution-contract-valid.json b/EXAMPLES/execution-contract-valid.json
+new file mode 100644
+index 0000000..51cdd03
+--- /dev/null
++++ b/EXAMPLES/execution-contract-valid.json
+@@ -0,0 +1,69 @@
++{
++  "acp_version": "0.2.0-draft",
++  "execution_id": "exec-20260725-ollama-prompt-a1b2c3d4",
++  "action": "ollama.prompt",
++  "version": "1.2.0",
++  "provenance": {
++    "principal": "slarti",
++    "session_id": "session-gh-88",
++    "trace_id": "trace-a1b2c3d4e5f6",
++    "created_at": "2026-07-25T12:00:00Z"
++  },
++  "parameters": {
++    "model": "qwen3.5:4b",
++    "prompt": "Explain the ACP Execution Contract in one sentence.",
++    "stream": false
++  },
++  "preconditions": [
++    {
++      "type": "tool_available",
++      "target": "ollama.prompt:1.2.0",
++      "message": "Ollama prompt action must be registered"
++    },
++    {
++      "type": "network_reachable",
++      "target": "192.168.2.211:11434",
++      "message": "Ollama host must be reachable"
++    },
++    {
++      "type": "resource_free",
++      "target": "gpu",
++      "message": "GPU must not be locked by another process"
++    }
++  ],
++  "security": {
++    "allowed_hosts": ["192.168.2.211:11434"],
++    "requires_approval": false
++  },
++  "constraints": {
++    "timeout_seconds": 120,
++    "max_retries": 2,
++    "concurrency_key": "gpu",
++    "idempotency_key": "exec-20260725-ollama-prompt-a1b2c3d4"
++  },
++  "rollback": {
++    "strategy": "none",
++    "action": "",
++    "parameters": {}
++  },
++  "success_criteria": [
++    {
++      "type": "exit_code",
++      "target": "0"
++    },
++    {
++      "type": "output_match",
++      "target": ".*success.*"
++    }
++  ],
++  "evidence": {
++    "require_output": true,
++    "require_artifacts": false,
++    "require_logs": true
++  },
++  "failure_handling": {
++    "error_classes": ["timeout", "execution", "permission"],
++    "notify_on": ["failure"],
++    "escalate_after": 3
++  }
++}
+diff --git a/EXAMPLES/trigger-contract-invalid.json b/EXAMPLES/trigger-contract-invalid.json
+new file mode 100644
+index 0000000..93f6677
+--- /dev/null
++++ b/EXAMPLES/trigger-contract-invalid.json
+@@ -0,0 +1,80 @@
++[
++  {
++    "scenario": "Unregistered action_ref",
++    "contract": {
++      "acp_version": "0.2.0-draft",
++      "trigger_id": "trigger-invalid-action-001",
++      "action_ref": "nonexistent.operation:1.0.0",
++      "provenance": {
++        "principal": "slarti",
++        "trace_id": "trace-invalid-action",
++        "created_at": "2026-07-25T12:00:00Z"
++      },
++      "trigger_type": "cron",
++      "schedule": {
++        "cron": "0 0 * * *"
++      },
++      "parameters": {}
++    },
++    "expected_rejection": "resolution",
++    "reason": "No executor registered for 'nonexistent.operation:1.0.0'"
++  },
++  {
++    "scenario": "Missing schedule for cron trigger type",
++    "contract": {
++      "acp_version": "0.2.0-draft",
++      "trigger_id": "trigger-missing-schedule-002",
++      "action_ref": "ops.backup.paperless:1.0.0",
++      "provenance": {
++        "principal": "slarti",
++        "trace_id": "trace-missing-schedule",
++        "created_at": "2026-07-25T12:00:00Z"
++      },
++      "trigger_type": "cron",
++      "parameters": {}
++    },
++    "expected_rejection": "validation",
++    "reason": "Trigger type 'cron' requires a 'schedule' object with a 'cron' field"
++  },
++  {
++    "scenario": "Invalid cron expression",
++    "contract": {
++      "acp_version": "0.2.0-draft",
++      "trigger_id": "trigger-bad-cron-003",
++      "action_ref": "ops.health.pi:1.0.0",
++      "provenance": {
++        "principal": "slarti",
++        "trace_id": "trace-bad-cron",
++        "created_at": "2026-07-25T12:00:00Z"
++      },
++      "trigger_type": "cron",
++      "schedule": {
++        "cron": "every day at noon"
++      },
++      "parameters": {}
++    },
++    "expected_rejection": "validation",
++    "reason": "Invalid cron expression: 'every day at noon' does not match 5-field cron format"
++  },
++  {
++    "scenario": "Eddie contains execution logic (normative violation)",
++    "contract": {
++      "acp_version": "0.2.0-draft",
++      "trigger_id": "trigger-eddie-logic-004",
++      "action_ref": "custom.script:1.0.0",
++      "provenance": {
++        "principal": "slarti",
++        "trace_id": "trace-eddie-logic",
++        "created_at": "2026-07-25T12:00:00Z"
++      },
++      "trigger_type": "cron",
++      "schedule": {
++        "cron": "0 0 * * *"
++      },
++      "parameters": {},
++      "_violation": "Trigger contract tries to embed a shell command instead of referencing a registered action. Eddie must reject anything that is not a valid action_ref."
++    },
++    "expected_rejection": "resolution",
++    "reason": "Trigger contracts must reference registered actions via action_ref. Shell commands, script paths, and inline logic are not valid action_ref values."
++  }
++]
+diff --git a/EXAMPLES/trigger-contract-valid.json b/EXAMPLES/trigger-contract-valid.json
+new file mode 100644
+index 0000000..e5f637d
+--- /dev/null
++++ b/EXAMPLES/trigger-contract-valid.json
+@@ -0,0 +1,50 @@
++{
++  "acp_version": "0.2.0-draft",
++  "trigger_id": "trigger-backup-paperless-daily",
++  "action_ref": "ops.backup.paperless:1.0.0",
++  "provenance": {
++    "principal": "slarti",
++    "trace_id": "trace-backup-policy-v2",
++    "created_at": "2026-07-25T06:00:00Z"
++  },
++  "trigger_type": "cron",
++  "schedule": {
++    "cron": "0 3 * * *",
++    "timezone": "Europe/Berlin",
++    "start_date": "2026-07-26T03:00:00+02:00",
++    "max_firings": 365
++  },
++  "parameters": {
++    "target": "paperless",
++    "compress": true
++  },
++  "retry": {
++    "max_retries": 3,
++    "backoff_strategy": "exponential",
++    "backoff_seconds": 60,
++    "max_backoff_seconds": 3600
++  },
++  "deduplication": {
++    "idempotency_key_source": "trigger_id + date",
++    "dedup_window_seconds": 86400
++  },
++  "concurrency": {
++    "max_concurrent": 1,
++    "lock_key": "backup-paperless",
++    "queue_on_conflict": false
++  },
++  "deadline": {
++    "missed_run_action": "skip",
++    "max_execution_seconds": 1800
++  },
++  "notifications": {
++    "on_success": [],
++    "on_failure": ["telegram"],
++    "on_missed": ["telegram"],
++    "escalate_after": 3
++  },
++  "activation": {
++    "enabled": true,
++    "version": "1.0.0"
++  }
++}
+diff --git a/README.md b/README.md
+index 83b450b..e745eee 100644
+--- a/README.md
++++ b/README.md
+@@ -6,9 +6,10 @@ This repository is the **authoritative source** for the Agent Coordination
+ Protocol (ACP) — a provider-, model-, transport- and platform-independent
+ protocol for agent collaboration, review, and handoff.
+ 
+-ACP defines the formal state machine, review package schema, verdict format, and
+-conformance requirements for coordinating Planer, Implementerer, Reviewer, and
+-Eddie across heterogeneous agent systems.
++ACP defines the formal state machine, review package schema, verdict format,
++execution contract, trigger contract, and conformance requirements for
++coordinating Planer, Implementerer, Reviewer, Eddie, and Executors across
++heterogeneous agent systems.
+ 
+ ## Authoritative Source Rule
+ 
+diff --git a/SCHEMAS/execution-contract.json b/SCHEMAS/execution-contract.json
+new file mode 100644
+index 0000000..0d56e14
+--- /dev/null
++++ b/SCHEMAS/execution-contract.json
+@@ -0,0 +1,137 @@
++{
++  "$schema": "http://json-schema.org/draft-07/schema#",
++  "$id": "https://gitea.hl.maier.wtf/Homelab/ACP/SCHEMAS/execution-contract.json",
++  "title": "ACP Execution Contract",
++  "description": "Formal contract between a Principal (Slarti/Operator) and an Executor (Lydia). Version 0.2.0-draft.",
++  "type": "object",
++  "properties": {
++    "acp_version": {
++      "type": "string",
++      "const": "0.2.0-draft"
++    },
++    "execution_id": {
++      "type": "string",
++      "pattern": "^[A-Za-z0-9._~-]{1,128}$"
++    },
++    "action": {
++      "type": "string",
++      "pattern": "^[a-z][a-z0-9._-]{2,63}$"
++    },
++    "version": {
++      "type": "string",
++      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
++    },
++    "provenance": {
++      "type": "object",
++      "properties": {
++        "principal": { "type": "string", "minLength": 1 },
++        "session_id": { "type": "string" },
++        "trace_id": { "type": "string", "minLength": 1 },
++        "created_at": { "type": "string", "format": "date-time" }
++      },
++      "required": ["principal", "trace_id", "created_at"],
++      "additionalProperties": false
++    },
++    "parameters": {
++      "type": "object",
++      "minProperties": 1
++    },
++    "preconditions": {
++      "type": "array",
++      "items": {
++        "type": "object",
++        "properties": {
++          "type": {
++            "type": "string",
++            "enum": ["file_exists", "path_accessible", "tool_available", "network_reachable", "resource_free", "custom"]
++          },
++          "target": { "type": "string", "minLength": 1 },
++          "message": { "type": "string" }
++        },
++        "required": ["type", "target"],
++        "additionalProperties": false
++      }
++    },
++    "security": {
++      "type": "object",
++      "properties": {
++        "allowed_paths": { "type": "array", "items": { "type": "string" } },
++        "requires_approval": { "type": "boolean" },
++        "allowed_hosts": { "type": "array", "items": { "type": "string" } }
++      },
++      "additionalProperties": false
++    },
++    "constraints": {
++      "type": "object",
++      "properties": {
++        "timeout_seconds": { "type": "integer", "minimum": 1 },
++        "max_retries": { "type": "integer", "minimum": 0 },
++        "concurrency_key": { "type": "string" },
++        "idempotency_key": { "type": "string" }
++      },
++      "additionalProperties": false
++    },
++    "rollback": {
++      "type": "object",
++      "properties": {
++        "strategy": {
++          "type": "string",
++          "enum": ["revert", "compensating_action", "manual", "none"]
++        },
++        "action": { "type": "string" },
++        "parameters": { "type": "object" }
++      },
++      "required": ["strategy"],
++      "additionalProperties": false
++    },
++    "success_criteria": {
++      "type": "array",
++      "items": {
++        "type": "object",
++        "properties": {
++          "type": {
++            "type": "string",
++            "enum": ["exit_code", "output_match", "file_exists", "custom"]
++          },
++          "target": { "type": "string", "minLength": 1 }
++        },
++        "required": ["type", "target"],
++        "additionalProperties": false
++      }
++    },
++    "evidence": {
++      "type": "object",
++      "properties": {
++        "require_output": { "type": "boolean" },
++        "require_artifacts": { "type": "boolean" },
++        "require_logs": { "type": "boolean" }
++      },
++      "additionalProperties": false
++    },
++    "failure_handling": {
++      "type": "object",
++      "properties": {
++        "error_classes": {
++          "type": "array",
++          "items": { "type": "string" }
++        },
++        "notify_on": {
++          "type": "array",
++          "items": { "type": "string" }
++        },
++        "escalate_after": { "type": "integer", "minimum": 0 }
++      },
++      "additionalProperties": false
++    }
++  },
++  "required": [
++    "acp_version",
++    "execution_id",
++    "action",
++    "version",
++    "provenance",
++    "parameters",
++    "evidence"
++  ],
++  "additionalProperties": false
++}
+diff --git a/SCHEMAS/trigger-contract.json b/SCHEMAS/trigger-contract.json
+new file mode 100644
+index 0000000..59d74d3
+--- /dev/null
++++ b/SCHEMAS/trigger-contract.json
+@@ -0,0 +1,158 @@
++{
++  "$schema": "http://json-schema.org/draft-07/schema#",
++  "$id": "https://gitea.hl.maier.wtf/Homelab/ACP/SCHEMAS/trigger-contract.json",
++  "title": "ACP Trigger Contract",
++  "description": "Formal contract between a Principal (Slarti/Operator) and an Orchestrator (Eddie). Version 0.2.0-draft.",
++  "type": "object",
++  "properties": {
++    "acp_version": {
++      "type": "string",
++      "const": "0.2.0-draft"
++    },
++    "trigger_id": {
++      "type": "string",
++      "pattern": "^[A-Za-z0-9._~-]{1,128}$"
++    },
++    "action_ref": {
++      "type": "string",
++      "pattern": "^[a-z][a-z0-9._/-]{2,63}(:[0-9]+\\.[0-9]+\\.[0-9]+)?$"
++    },
++    "provenance": {
++      "type": "object",
++      "properties": {
++        "principal": { "type": "string", "minLength": 1 },
++        "trace_id": { "type": "string", "minLength": 1 },
++        "created_at": { "type": "string", "format": "date-time" }
++      },
++      "required": ["principal", "trace_id", "created_at"],
++      "additionalProperties": false
++    },
++    "trigger_type": {
++      "type": "string",
++      "enum": ["schedule", "cron", "event", "webhook", "manual", "condition"]
++    },
++    "schedule": {
++      "type": "object",
++      "properties": {
++        "cron": { "type": "string" },
++        "interval_seconds": { "type": "integer", "minimum": 1 },
++        "timezone": { "type": "string" },
++        "start_date": { "type": "string", "format": "date-time" },
++        "end_date": { "type": "string", "format": "date-time" },
++        "max_firings": { "type": "integer", "minimum": 1 }
++      },
++      "additionalProperties": false
++    },
++    "event_filter": {
++      "type": "object",
++      "properties": {
++        "event_type": { "type": "string", "minLength": 1 },
++        "source": { "type": "string" },
++        "condition": { "type": "string" }
++      },
++      "required": ["event_type"],
++      "additionalProperties": false
++    },
++    "webhook": {
++      "type": "object",
++      "properties": {
++        "path": { "type": "string", "minLength": 1 },
++        "method": { "type": "string", "default": "POST" },
++        "secret": { "type": "string" }
++      },
++      "required": ["path"],
++      "additionalProperties": false
++    },
++    "parameters": {
++      "type": "object"
++    },
++    "retry": {
++      "type": "object",
++      "properties": {
++        "max_retries": { "type": "integer", "minimum": 0 },
++        "backoff_strategy": {
++          "type": "string",
++          "enum": ["fixed", "exponential", "linear"]
++        },
++        "backoff_seconds": { "type": "integer", "minimum": 1 },
++        "max_backoff_seconds": { "type": "integer", "minimum": 1 }
++      },
++      "additionalProperties": false
++    },
++    "deduplication": {
++      "type": "object",
++      "properties": {
++        "idempotency_key_source": { "type": "string" },
++        "dedup_window_seconds": { "type": "integer", "minimum": 0 }
++      },
++      "additionalProperties": false
++    },
++    "concurrency": {
++      "type": "object",
++      "properties": {
++        "max_concurrent": { "type": "integer", "minimum": 1 },
++        "lock_key": { "type": "string" },
++        "queue_on_conflict": { "type": "boolean" }
++      },
++      "additionalProperties": false
++    },
++    "deadline": {
++      "type": "object",
++      "properties": {
++        "missed_run_action": {
++          "type": "string",
++          "enum": ["skip", "catch_up", "error"]
++        },
++        "max_execution_seconds": { "type": "integer", "minimum": 1 }
++      },
++      "additionalProperties": false
++    },
++    "notifications": {
++      "type": "object",
++      "properties": {
++        "on_success": { "type": "array", "items": { "type": "string" } },
++        "on_failure": { "type": "array", "items": { "type": "string" } },
++        "on_missed": { "type": "array", "items": { "type": "string" } },
++        "escalate_after": { "type": "integer", "minimum": 1 }
++      },
++      "additionalProperties": false
++    },
++    "activation": {
++      "type": "object",
++      "properties": {
++        "enabled": { "type": "boolean" },
++        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
++      },
++      "additionalProperties": false
++    }
++  },
++  "required": [
++    "acp_version",
++    "trigger_id",
++    "action_ref",
++    "provenance",
++    "trigger_type",
++    "parameters"
++  ],
++  "allOf": [
++    {
++      "if": {
++        "properties": { "trigger_type": { "enum": ["schedule", "cron"] } }
++      },
++      "then": { "required": ["schedule"] }
++    },
++    {
++      "if": {
++        "properties": { "trigger_type": { "const": "event" } }
++      },
++      "then": { "required": ["event_filter"] }
++    },
++    {
++      "if": {
++        "properties": { "trigger_type": { "const": "webhook" } }
++      },
++      "then": { "required": ["webhook"] }
++    }
++  ],
++  "additionalProperties": false
++}
+diff --git a/SPEC/execution-contract.md b/SPEC/execution-contract.md
+new file mode 100644
+index 0000000..4433f4b
+--- /dev/null
++++ b/SPEC/execution-contract.md
+@@ -0,0 +1,258 @@
++# Execution Contract (ACP v0.2)
++
++**Version:** 0.2.0-draft
++**Status:** Draft
++**Supersedes:** Implicit execution conventions in `lydia/home-repo`
++
++## Purpose
++
++The Execution Contract defines the formal agreement between a **Principal**
++(Slarti, Operator) and an **Executor** (Lydia, Execution Plane) for a single
++deterministic action. It ensures that the Executor receives everything it needs
++to execute without interpretation, inference, or tool selection.
++
++## Normative Principles
++
++1. **The Executor interprets nothing.** Every parameter, precondition, timeout,
++   and success criterion is explicit in the contract. The Executor may not infer
++   missing values, select tools autonomously, or supplement the action.
++
++2. **The Executor rejects incomplete contracts.** Any missing required field,
++   unresolved reference, or unfulfillable precondition causes a structured
++   rejection before any execution attempt.
++
++3. **The Principal is responsible for tool availability.** The action,
++   referenced by `action` + `version`, must be registered and versioned in the
++   Executor's handler or plugin registry before the contract is submitted.
++
++4. **The contract is immutable after submission.** The Principal may not modify
++   a submitted contract while it is in `pending` or `running` state. A new
++   contract with a new `execution_id` is required for changes.
++
++## Lifecycle
++
++```
++                    ┌──────────────────┐
++                    │   SUBMITTED      │
++                    │ (Principal sends │
++                    │  contract)       │
++                    └────────┬─────────┘
++                             │
++                             ▼
++                    ┌──────────────────┐
++              ┌────│   VALIDATED      │────┐
++              │    │ (Executor checks │    │
++              │    │  preconditions)  │    │
++              │    └────────┬─────────┘    │
++              │             │              │
++              ▼             ▼              ▼
++     ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
++     │  REJECTED   │ │  APPROVED   │ │  REJECTED   │
++     │ (precond.   │ │             │ │ (schema     │
++     │  failure)   │ │             │ │  failure)   │
++     └─────────────┘ └──────┬──────┘ └─────────────┘
++                            │
++                            ▼
++                   ┌──────────────────┐
++                   │   EXECUTING      │
++                   │                  │
++                   └────────┬─────────┘
++                            │
++                    ┌───────┴───────┐
++                    │               │
++                    ▼               ▼
++           ┌──────────────┐ ┌──────────────┐
++           │  COMPLETED   │ │   FAILED     │
++           │ (with output │ │ (with error  │
++           │  + evidence) │ │  + evidence) │
++           └──────────────┘ └──────────────┘
++```
++
++### Transitions
++
++- `SUBMITTED → VALIDATED`: Executor has received and parsed the contract
++- `VALIDATED → APPROVED`: Preconditions met, action registered, schema valid
++- `VALIDATED → REJECTED`: Schema validation or precondition failure
++- `APPROVED → EXECUTING`: Executor has started the action
++- `EXECUTING → COMPLETED`: Action finished with success criteria met
++- `EXECUTING → FAILED`: Action finished with error or timeout
++
++## Fields
++
++### `acp_version`
++- **Type:** `string` (const)
++- **Required:** yes
++- **Value:** `"0.2.0-draft"`
++- **Description:** ACP specification version to which this contract conforms.
++
++### `execution_id`
++- **Type:** `string`
++- **Required:** yes
++- **Pattern:** `^[A-Za-z0-9._~-]{1,128}$`
++- **Description:** Globally unique identifier for this execution. Used for
++  idempotency, deduplication, and tracing. Must be stable across retries of the
++  same logical action.
++
++### `action`
++- **Type:** `string`
++- **Required:** yes
++- **Pattern:** `^[a-z][a-z0-9._-]{2,63}$`
++- **Description:** Registered action name in the Executor's handler or plugin
++  registry. Example: `ollama.prompt`, `fileops.copy`, `issue.create`.
++  Corresponds to the `capability` name from Eddie executor registration or the
++  handler ID from Lydia's task dispatch registry.
++
++### `version`
++- **Type:** `string`
++- **Required:** yes
++- **Pattern:** `^[0-9]+\.[0-9]+\.[0-9]+$`
++- **Description:** Semantic version of the action/tool that the Principal has
++  verified as available, tested, and compatible. The Executor MUST reject the
++  contract if the requested version is not available.
++
++### `provenance`
++- **Type:** `object`
++- **Required:** yes
++- **Description:** Who created this contract and how to trace it.
++
++| Field | Type | Required | Description |
++|-------|------|----------|-------------|
++| `principal` | `string` | yes | Identity of the contract creator (e.g. `slarti`, `operator`) |
++| `session_id` | `string` | no | Session or ticket identifier for traceability |
++| `trace_id` | `string` | yes | Correlation ID propagated across hops |
++| `created_at` | `string` (ISO 8601) | yes | Timestamp of contract creation |
++
++### `parameters`
++- **Type:** `object`
++- **Required:** yes
++- **Description:** Typed parameters matching the action's schema. The Executor
++  MUST validate parameters against the registered action schema before
++  execution. Unknown or invalid parameters cause structured rejection.
++
++### `preconditions`
++- **Type:** `array` of `object`
++- **Required:** no
++- **Description:** Conditions that MUST be true before execution. Each
++  precondition is evaluated by the Executor; any failure rejects the contract.
++
++Each precondition object:
++
++| Field | Type | Required | Description |
++|-------|------|----------|-------------|
++| `type` | `string` | yes | One of: `file_exists`, `path_accessible`, `tool_available`, `network_reachable`, `resource_free`, `custom` |
++| `target` | `string` | yes | Target of the precondition (path, host, resource name, tool name) |
++| `message` | `string` | no | Human-readable description of the precondition |
++
++### `security`
++- **Type:** `object`
++- **Required:** no
++- **Description:** Security requirements that constrain execution.
++
++| Field | Type | Required | Default | Description |
++|-------|------|----------|---------|-------------|
++| `allowed_paths` | `array` of `string` | no | `[]` | Paths the action may read or write |
++| `requires_approval` | `boolean` | no | `false` | Whether operator approval is required before execution |
++| `allowed_hosts` | `array` of `string` | no | `[]` | Network targets the action may contact |
++
++### `constraints`
++- **Type:** `object`
++- **Required:** no
++- **Description:** Execution boundaries.
++
++| Field | Type | Required | Default | Description |
++|-------|------|----------|---------|-------------|
++| `timeout_seconds` | `integer` | no | `300` | Maximum execution time |
++| `max_retries` | `integer` | no | `0` | Number of automatic retries on failure |
++| `concurrency_key` | `string` | no | `null` | Prevents concurrent executions with the same key |
++| `idempotency_key` | `string` | no | `execution_id` | Key for idempotent re-execution (defaults to `execution_id`) |
++
++### `rollback`
++- **Type:** `object`
++- **Required:** no
++- **Description:** Rollback strategy for failures. If absent, no automatic
++  rollback is available.
++
++| Field | Type | Required | Description |
++|-------|------|----------|-------------|
++| `strategy` | `string` | yes | One of: `revert`, `compensating_action`, `manual`, `none` |
++| `action` | `string` | no | Action name for `compensating_action` strategy |
++| `parameters` | `object` | no | Parameters for the compensation action |
++
++### `success_criteria`
++- **Type:** `array` of `object`
++- **Required:** no
++- **Description:** Explicit criteria that define success. If absent, a
++  non-zero exit status or error response constitutes failure.
++
++Each criterion object:
++
++| Field | Type | Required | Description |
++|-------|------|----------|-------------|
++| `type` | `string` | yes | One of: `exit_code`, `output_match`, `file_exists`, `custom` |
++| `target` | `string` | yes | Expected value (exit code `0`, regex pattern, file path) |
++
++### `evidence`
++- **Type:** `object`
++- **Required:** yes
++- **Description:** What constitutes proof of execution.
++
++| Field | Type | Required | Description |
++|-------|------|----------|-------------|
++| `require_output` | `boolean` | no | Whether stdout/stderr must be captured |
++| `require_artifacts` | `boolean` | no | Whether output files must be listed |
++| `require_logs` | `boolean` | no | Whether execution logs must be retained |
++
++### `failure_handling`
++- **Type:** `object`
++- **Required:** no
++- **Description:** Structured error handling.
++
++| Field | Type | Required | Default | Description |
++|-------|------|----------|---------|-------------|
++| `error_classes` | `array` of `string` | no | `["timeout", "precondition", "execution", "permission"]` | Expected error classes |
++| `notify_on` | `array` of `string` | no | `["failure"]` | When to notify (`failure`, `success`, `all`) |
++| `escalate_after` | `integer` | no | `0` | Number of failures before escalation |
++
++## Return Value
++
++The Executor MUST return a structured response:
++
++```json
++{
++  "execution_id": "...",
++  "status": "completed" | "failed" | "rejected",
++  "output": {
++    "stdout": "...",
++    "stderr": "...",
++    "exit_code": 0
++  },
++  "artifacts": ["path/to/output.ext"],
++  "evidence": {
++    "logs": "...",
++    "started_at": "2026-07-25T12:00:00Z",
++    "completed_at": "2026-07-25T12:00:05Z"
++  },
++  "error": {
++    "class": "execution" | "precondition" | "permission" | "timeout" | "schema",
++    "message": "...",
++    "details": {}
++  }
++}
++```
++
++## Alignment With Existing Architecture
++
++| ACP Term | Lydia/home-repo mapping |
++|----------|------------------------|
++| `action` | Handler ID (`_TASK_HANDLERS` key) or Eddie executor capability |
++| `version` | Tool/plugin version in `init.sh` or CI manifest |
++| `parameters` | Task contract `payload` field |
++| `preconditions` | Execution gate `confinement_check`, `policy_guard`, `path_sanitizer` |
++| `security.allowed_paths` | Handler policy `allowed_paths` (`policy_guard.sh`) |
++| `security.requires_approval` | Approval store (`approvals.py`) |
++| `constraints.timeout_seconds` | Eddie job `timeout` field |
++| `constraints.concurrency_key` | Task lock (`task_lock.sh`) |
++| `constraints.idempotency_key` | Idempotency state (`idempotency.sh`) |
++| `rollback` | Not yet formalized in existing code |
++| `evidence` | Task contract `result.artifacts` |
++| `failure_handling` | Task contract `result.failure_reason`, `result.escalation_required` |
+diff --git a/SPEC/trigger-contract.md b/SPEC/trigger-contract.md
+new file mode 100644
+index 0000000..db8d966
+--- /dev/null
++++ b/SPEC/trigger-contract.md
+@@ -0,0 +1,329 @@
++# Trigger Contract (ACP v0.2)
++
++**Version:** 0.2.0-draft
++**Status:** Draft
++**Supersedes:** Eddie's implicit cron definitions and ad-hoc webhook registrations
++
++## Purpose
++
++The Trigger Contract defines the formal agreement between a **Principal**
++(Slarti, Operator) and an **Orchestrator** (Eddie) regarding when and how to
++invoke an Execution Contract. The Orchestrator triggers but does not define or
++modify the execution. Eddie contains no execution logic.
++
++## Normative Principles
++
++1. **Eddie triggers registered actions only.** Every trigger references an
++   `action_ref` that matches a registered action in the Execution Contract
++   space. Eddie never constructs, modifies, or infers action parameters.
++
++2. **Eddie contains no execution logic.** Eddie does not translate, transform,
++   or supplement the action definition. Its sole responsibility is to produce
++   valid Execution Contracts from trigger definitions and submit them to the
++   appropriate executor.
++
++3. **Trigger changes require a new version.** A trigger definition is immutable
++   after activation. Parameter changes, schedule changes, or action changes
++   require a new trigger version.
++
++4. **Missed runs are Eddie's accountability.** Eddie must handle scheduling
++   gaps, retries, and deadline violations according to the contract without
++   requiring operator intervention for routine misses.
++
++## Lifecycle
++
++```
++                    ┌──────────────────┐
++                    │   REGISTERED     │
++                    │ (Principal       │
++                    │  registers       │
++                    │  trigger def.)   │
++                    └────────┬─────────┘
++                             │
++                             ▼
++                    ┌──────────────────┐
++                    │   VALIDATED      │
++                    │ (Eddie checks    │
++                    │  action_ref,     │
++                    │  executor avail.)│
++                    └────────┬─────────┘
++                             │
++                    ┌────────┴────────┐
++                    │                 │
++                    ▼                 ▼
++            ┌──────────────┐ ┌──────────────┐
++            │   ACTIVE     │ │   REJECTED   │
++            │ (firing on   │ │ (validation  │
++            │  schedule)   │ │  failure)    │
++            └──────┬───────┘ └──────────────┘
++                   │
++          ┌────────┴────────┐
++          │                 │
++          ▼                 ▼
++   ┌──────────────┐ ┌──────────────┐
++   │  DISABLED    │ │  EXPIRED     │
++   │ (manual)     │ │ (end_date    │
++   │              │ │  reached)    │
++   └──────────────┘ └──────────────┘
++```
++
++### Transitions
++
++- `REGISTERED → VALIDATED`: Eddie received the trigger definition
++- `VALIDATED → ACTIVE`: All validations passed, trigger begins firing
++- `VALIDATED → REJECTED`: Validation failed (unknown action, unresolvable
++  executor, invalid schedule)
++- `ACTIVE → DISABLED`: Principal or operator manually disables the trigger
++- `ACTIVE → EXPIRED`: `end_date` or `max_firings` reached
++- `DISABLED → ACTIVE`: Re-enabled by Principal or operator
++
++## Fields
++
++### `acp_version`
++- **Type:** `string` (const)
++- **Required:** yes
++- **Value:** `"0.2.0-draft"`
++
++### `trigger_id`
++- **Type:** `string`
++- **Required:** yes
++- **Pattern:** `^[A-Za-z0-9._~-]{1,128}$`
++- **Description:** Globally unique identifier for this trigger definition.
++  Used for idempotent registration: registering the same `trigger_id` again
++  MUST update the existing definition, not create a duplicate.
++
++### `action_ref`
++- **Type:** `string`
++- **Required:** yes
++- **Pattern:** `^[a-z][a-z0-9._/-]{2,63}(:[0-9]+\.[0-9]+\.[0-9]+)?$`
++- **Description:** Reference to a registered action with optional version
++  suffix. Format: `<action>[:<version>]`. Example: `ollama.prompt:1.2.0`.
++  Eddie MUST resolve this against the executor's registered capabilities and
++  reject the trigger if no executor provides the action.
++
++### `provenance`
++- **Type:** `object`
++- **Required:** yes
++- **Description:** Origin of the trigger definition.
++
++| Field | Type | Required | Description |
++|-------|------|----------|-------------|
++| `principal` | `string` | yes | Creator identity (e.g. `slarti`, `operator`) |
++| `trace_id` | `string` | yes | Correlation ID |
++| `created_at` | `string` (ISO 8601) | yes | When the trigger was defined |
++
++### `trigger_type`
++- **Type:** `string`
++- **Required:** yes
++- **Enum:** `"schedule"`, `"cron"`, `"event"`, `"webhook"`, `"manual"`,
++  `"condition"`
++- **Description:** The type of trigger.
++
++| Type | Description |
++|------|-------------|
++| `schedule` | One-shot or interval-based (every N seconds/minutes/hours) |
++| `cron` | Standard cron expression with timezone |
++| `event` | Fires on a specific event type from Eddie's event router |
++| `webhook` | Fires on an external HTTP POST to a webhook URL |
++| `manual` | Fires only on explicit operator invocation |
++| `condition` | Fires when a boolean condition evaluates to true |
++
++### `schedule` (required when `trigger_type` is `schedule` or `cron`)
++- **Type:** `object`
++- **Required:** conditional
++
++| Field | Type | Required | Description |
++|-------|------|----------|-------------|
++| `cron` | `string` | for `cron` | Standard 5-field cron expression |
++| `interval_seconds` | `integer` | for `schedule` | Interval in seconds |
++| `timezone` | `string` | no | IANA timezone (default: `UTC`) |
++| `start_date` | `string` (ISO 8601) | no | When to start firing |
++| `end_date` | `string` (ISO 8601) | no | When to stop firing |
++| `max_firings` | `integer` | no | Maximum number of firings before auto-expire |
++
++### `event_filter` (required when `trigger_type` is `event`)
++- **Type:** `object`
++- **Required:** conditional
++
++| Field | Type | Required | Description |
++|-------|------|----------|-------------|
++| `event_type` | `string` | yes | Event type to match (e.g. `gitea.issue.created`, `paperless.document.received`) |
++| `source` | `string` | no | Event source filter |
++| `condition` | `string` | no | JSONPath or JMESPath expression to filter event payload |
++
++### `webhook` (required when `trigger_type` is `webhook`)
++- **Type:** `object`
++- **Required:** conditional
++
++| Field | Type | Required | Description |
++|-------|------|----------|-------------|
++| `path` | `string` | yes | URL path suffix (e.g. `/webhooks/my-trigger`) |
++| `method` | `string` | no | HTTP method to accept (default: `POST`) |
++| `secret` | `string` (reference) | no | Reference to a shared secret for HMAC validation |
++
++### `parameters`
++- **Type:** `object`
++- **Required:** yes
++- **Description:** Static or template parameters to include in every Execution
++  Contract produced by this trigger. These are merged with any dynamic
++  parameters from the event payload.
++
++### `retry`
++- **Type:** `object`
++- **Required:** no
++- **Description:** Retry policy for failed executions.
++
++| Field | Type | Required | Default | Description |
++|-------|------|----------|---------|-------------|
++| `max_retries` | `integer` | no | `3` | Maximum retry attempts |
++| `backoff_strategy` | `string` | no | `exponential` | One of: `fixed`, `exponential`, `linear` |
++| `backoff_seconds` | `integer` | no | `5` | Base backoff interval in seconds |
++| `max_backoff_seconds` | `integer` | no | `300` | Maximum backoff interval |
++
++### `deduplication`
++- **Type:** `object`
++- **Required:** no
++- **Description:** Deduplication and idempotency strategy.
++
++| Field | Type | Required | Default | Description |
++|-------|------|----------|---------|-------------|
++| `idempotency_key_source` | `string` | no | `trigger_id + timestamp` | Strategy for generating idempotency keys: `trigger_id`, `event_id`, `custom` |
++| `dedup_window_seconds` | `integer` | no | `0` | Time window in seconds for deduplication (0 = disabled) |
++
++### `concurrency`
++- **Type:** `object`
++- **Required:** no
++- **Description:** Concurrency and locking behavior.
++
++| Field | Type | Required | Default | Description |
++|-------|------|----------|---------|-------------|
++| `max_concurrent` | `integer` | no | `1` | Maximum concurrent executions from this trigger |
++| `lock_key` | `string` | no | `trigger_id` | Key for locking across triggers |
++| `queue_on_conflict` | `boolean` | no | `false` | Whether to queue execution if at concurrency limit |
++
++### `deadline`
++- **Type:** `object`
++- **Required:** no
++- **Description:** Deadline and missed-run behavior.
++
++| Field | Type | Required | Default | Description |
++|-------|------|----------|---------|-------------|
++| `missed_run_action` | `string` | no | `skip` | One of: `skip`, `catch_up`, `error` |
++| `max_execution_seconds` | `integer` | no | `300` | Per-execution timeout (overrides the Execution Contract default) |
++
++### `notifications`
++- **Type:** `object`
++- **Required:** no
++- **Description:** Notification and escalation rules.
++
++| Field | Type | Required | Default | Description |
++|-------|------|----------|---------|-------------|
++| `on_success` | `array` of `string` | no | `[]` | Notification channels on success |
++| `on_failure` | `array` of `string` | no | `["default"]` | Notification channels on failure |
++| `on_missed` | `array` of `string` | no | `[]` | Notification channels on missed run |
++| `escalate_after` | `integer` | no | `3` | Consecutive failures before escalation |
++
++### `activation`
++- **Type:** `object`
++- **Required:** no
++- **Description:** Activation controls.
++
++| Field | Type | Required | Default | Description |
++|-------|------|----------|---------|-------------|
++| `enabled` | `boolean` | no | `true` | Whether the trigger is active on registration |
++| `version` | `string` | no | `"1.0.0"` | Trigger definition version for change tracking |
++
++## Return Value (Trigger Registration)
++
++Eddie MUST respond to trigger registration requests:
++
++```json
++{
++  "trigger_id": "...",
++  "status": "active" | "rejected",
++  "action_ref": "...",
++  "trigger_type": "...",
++  "schedule_summary": "...",
++  "created_at": "2026-07-25T12:00:00Z",
++  "error": {
++    "class": "validation" | "resolution",
++    "message": "..."
++  }
++}
++```
++
++## Sequence: Slarti → Eddie → Lydia → Result
++
++```
++Slarti                        Eddie                         Lydia
++  │                             │                             │
++  │  1. register trigger ──────→│                             │
++  │     (Trigger Contract)     │                             │
++  │                             │                             │
++  │                             │  2. validate action_ref     │
++  │                             │     resolve executor        │
++  │                             │                             │
++  │                             │  3. on schedule/event:      │
++  │                             │     create Execution        │
++  │                             │     Contract                │
++  │                             │                             │
++  │                             │  4. dispatch ──────────────→│
++  │                             │     (Execution Contract)    │
++  │                             │                             │
++  │                             │                             │  5. validate preconditions
++  │                             │                             │     start execution
++  │                             │                             │
++  │                             │                             │  6. ── COMPLETED/FAILED ──
++  │                             │←──── callback ─────────────│
++  │                             │     (status + evidence)     │
++  │                             │                             │
++  │                             │  7. retry/notify/escalate   │
++  │                             │                             │
++  │  8. result notification ────│                             │
++  │     (evidence summary)      │                             │
++```
++
++### Sequence Steps
++
++1. **Slarti registers a Trigger Contract** with Eddie (via HTTP API or Gitea
++   Issue with `trigger` label). The contract specifies `action_ref`,
++   `trigger_type`, `parameters`, retry and notification policies.
++
++2. **Eddie validates** the trigger: resolves `action_ref` against registered
++   executor capabilities, checks that at least one executor provides the action,
++   validates schedule/event syntax.
++
++3. **On schedule tick or event match**, Eddie constructs an Execution Contract
++   by copying `parameters` from the trigger definition and adding runtime
++   fields (`execution_id`, `provenance.trace_id`).
++
++4. **Eddie dispatches** the Execution Contract to the appropriate executor
++   (identified during step 2) via the executor's registered endpoint.
++
++5. **Lydia validates** preconditions, acquires locks, and executes the action.
++
++6. **Lydia returns** the result synchronously (or via callback for async
++   actions) with status, output, and evidence.
++
++7. **Eddie processes** the result: marks success, schedules retry on failure,
++   escalates if retries exhausted, sends notifications.
++
++8. **Eddie notifies** Slarti (or the configured notification target) with
++   the execution result and evidence summary.
++
++## Alignment With Existing Architecture
++
++| ACP Term | Eddie/Lydia/home-repo mapping |
++|----------|-------------------------------|
++| `trigger_id` | Eddie job `id` or scheduler entry key |
++| `action_ref` | `RegisterExecutorRequest.Capabilities` + action versioning |
++| `trigger_type: cron` | Eddie scheduler `cron.go` |
++| `trigger_type: event` | Eddie event router (`POST /api/v1/events`) |
++| `trigger_type: webhook` | Eddie webhooks (`server/webhooks.go`) |
++| `trigger_type: manual` | Eddie job API (`POST /api/v1/jobs`) |
++| `parameters` | `DispatchRequest.Params` → executor `params` |
++| `retry` | Eddie dispatcher `retryFailed()`, `retryDelay()` |
++| `concurrency` | Eddie executor `Concurrency` field, `ActiveCount` tracking |
++| `deduplication` | Task contract duplicate check (`task_contract_create` return 2) |
++| `notifications` | Not yet formalized; currently via `callback_url` + outgoing/ |
++| `deadline` | Eddie dispatcher `checkTimeouts()` |
+diff --git a/VERSION b/VERSION
+index 3e56aee..9618463 100644
+--- a/VERSION
++++ b/VERSION
+@@ -1 +1 @@
+-0.1.0-draft
++0.2.0-draft
