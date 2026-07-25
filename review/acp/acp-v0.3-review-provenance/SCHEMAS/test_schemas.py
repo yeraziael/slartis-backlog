@@ -14,6 +14,12 @@ def load(path):
         return json.load(f)
 
 
+def extract_payload(entry):
+    if "verdict" in entry:
+        return entry["verdict"]
+    return entry.get("contract", {})
+
+
 def validate_invalid_examples(schema, examples_path):
     errors = []
     try:
@@ -23,14 +29,17 @@ def validate_invalid_examples(schema, examples_path):
 
     for i, entry in enumerate(examples):
         scenario = entry.get("scenario", f"entry-{i}")
-        contract = entry.get("contract", {})
+        contract = extract_payload(entry)
         expected_rejection = entry.get("expected_rejection", "")
+        expected_constraint = entry.get("expected_constraint", "")
 
         try:
             jsonschema.validate(contract, schema)
             passed = True
-        except jsonschema.ValidationError:
+            error_msg = ""
+        except jsonschema.ValidationError as e:
             passed = False
+            error_msg = e.message
 
         if expected_rejection == "schema":
             if passed:
@@ -38,7 +47,15 @@ def validate_invalid_examples(schema, examples_path):
                     f"  FAIL [{scenario}]: expected schema rejection but contract passed validation"
                 )
             else:
-                print(f"  OK [{scenario}]: correctly rejected by schema")
+                if expected_constraint and expected_constraint not in error_msg:
+                    errors.append(
+                        f"  FAIL [{scenario}]: rejected but for wrong constraint.\n"
+                        f"         Expected: {expected_constraint}\n"
+                        f"         Got: {error_msg}"
+                    )
+                else:
+                    constraint_ok = f" (constraint: {expected_constraint})" if expected_constraint else ""
+                    print(f"  OK [{scenario}]: correctly rejected by schema{constraint_ok}")
         elif expected_rejection == "validation":
             if not passed:
                 print(f"  OK [{scenario}]: schema also catches this validation case")
