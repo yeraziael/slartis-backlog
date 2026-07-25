@@ -139,9 +139,25 @@
   "allOf": [
     {
       "if": {
-        "properties": { "trigger_type": { "enum": ["schedule", "cron"] } }
+        "properties": { "trigger_type": { "const": "cron" } }
       },
-      "then": { "required": ["schedule"] }
+      "then": {
+        "required": ["schedule"],
+        "properties": {
+          "schedule": { "required": ["cron"] }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "trigger_type": { "const": "schedule" } }
+      },
+      "then": {
+        "required": ["schedule"],
+        "properties": {
+          "schedule": { "required": ["interval_seconds"] }
+        }
+      }
     },
     {
       "if": {
