@@ -86,7 +86,7 @@ modify the execution. Eddie contains no execution logic.
 ### `acp_version`
 - **Type:** `string` (const)
 - **Required:** yes
-- **Value:** `"0.2.0-draft"`
+- **Value:** `"0.2.1-draft"`
 
 ### `trigger_id`
 - **Type:** `string`
@@ -166,7 +166,7 @@ modify the execution. Eddie contains no execution logic.
 |-------|------|----------|-------------|
 | `path` | `string` | yes | URL path suffix (e.g. `/webhooks/my-trigger`) |
 | `method` | `string` | no | HTTP method to accept (default: `POST`) |
-| `secret` | `string` (reference) | no | Reference to a shared secret for HMAC validation |
+| `secret_ref` | `string` | no | Reference to a shared secret for HMAC validation. Format: `secret:<name>` or `vault:<path>`. Eddie MUST resolve the reference to a concrete secret value before registration succeeds. An unresolvable reference MUST cause a `resolution` rejection. |
 
 ### `parameters`
 - **Type:** `object`
