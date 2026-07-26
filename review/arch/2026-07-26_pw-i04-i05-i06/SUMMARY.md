@@ -26,7 +26,7 @@ tickets after PW-I03.
   prerequisite checks
 - Post-run artifact verification harness (`verify-artifacts.sh`) with
   screenshot and trace validation
-- 117 static bootstrap tests (up from 90)
+- 118 static bootstrap tests (up from 90)
 
 ## Not in Scope
 
@@ -42,3 +42,4 @@ tickets after PW-I03.
 - Homelab/Architecture#89 (PW-I06 fix: artifact verification harness, merged)
 - Homelab/Architecture#90 (PW-I06 fix: trace hard failure, merged)
 - Homelab/Architecture#91 (PW-I06 fix: structural ZIP integrity, merged)
+- Homelab/Architecture#92 (PW-I06 fix: fail closed on no validator, merged)

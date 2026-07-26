@@ -4,7 +4,7 @@
 python3 tests/test_playwright_bootstrap.py
 ```
 
-All 117 pass. Test categories:
+All 118 pass. Test categories:
 
 | Category | Count |
 |----------|-------|
@@ -21,7 +21,7 @@ All 117 pass. Test categories:
 | run.sh subcommand (PW-I03) | 5 |
 | Evidence manifest (PW-I04) | 15 |
 | Prerequisite checks (PW-I05) | 18 |
-| Failure-only artifacts (PW-I06) | 9 |
+| Failure-only artifacts (PW-I06) | 10 |
 
 ## Playwright Self-Tests
 
@@ -44,12 +44,13 @@ The harness:
 4. Checks for screenshot PNGs (valid 89 50 4E 47 header)
 5. Checks for trace ZIPs (valid 50 4B 03 04 header)
 6. Exits 0 only when all checks pass; both screenshot and trace are mandatory
+7. Fails closed when neither `unzip` nor `python3` is available for structural ZIP validation
 
 ## CI Status
 
 - All Gitea Actions runs green for PR #86 (I04), PR #87 (I05), PR #88 (I06),
   PR #89 (I06-fix: artifact harness), PR #90 (I06-fix: trace hard failure),
-  and PR #91 (I06-fix: structural ZIP integrity)
+  PR #91 (I06-fix: structural ZIP integrity), and PR #92 (I06-fix: fail closed on no validator)
 - All six PRs merged into main (b1b34b8)
 
 ## Known Gaps

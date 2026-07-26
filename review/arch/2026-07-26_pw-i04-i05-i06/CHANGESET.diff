@@ -24,10 +24,10 @@ index 0000000..ab6e3fc
 +});
 diff --git a/tests/playwright/evidence/artifacts/verify-artifacts.sh b/tests/playwright/evidence/artifacts/verify-artifacts.sh
 new file mode 100755
-index 0000000..04e82f9
+index 0000000..c758a97
 --- /dev/null
 +++ b/tests/playwright/evidence/artifacts/verify-artifacts.sh
-@@ -0,0 +1,136 @@
+@@ -0,0 +1,137 @@
 +#!/usr/bin/env bash
 +# PW-I06: verify-artifacts.sh — Post-run artifact verification harness.
 +# Runs @pass, @fail, and @fixture Playwright suites on clean result
@@ -152,7 +152,8 @@ index 0000000..04e82f9
 +        CHECKS_FAILED=1
 +      fi
 +    else
-+      echo "PW-I06: WARNING — no ZIP validator (unzip/python3) available, header check only" >&2
++      echo "PW-I06: FAIL — no ZIP validator (unzip/python3) available, cannot verify structural integrity" >&2
++      CHECKS_FAILED=1
 +    fi
 +  done
 +fi
@@ -1318,7 +1319,7 @@ index 650ef9e..b9ba5de 100755
 +
 +exit "$FINAL_EXIT"
 diff --git a/tests/test_playwright_bootstrap.py b/tests/test_playwright_bootstrap.py
-index b3c0b3a..d98020d 100644
+index b3c0b3a..cc7723d 100644
 --- a/tests/test_playwright_bootstrap.py
 +++ b/tests/test_playwright_bootstrap.py
 @@ -15,11 +15,17 @@ import tempfile
@@ -1339,7 +1340,7 @@ index b3c0b3a..d98020d 100644
  GITIGNORE = os.path.join(REPO_ROOT, ".gitignore")
  
  FIXED_IMAGE = "mcr.microsoft.com/playwright:v1.61.1-noble@sha256:cf0daee9b994042e011bc29f20cdff1a9f682a039b43fcd738f7d8a9d3bcd9d6"
-@@ -817,6 +823,366 @@ def test_run_sh_grep_filter_in_test_cmd():
+@@ -817,6 +823,380 @@ def test_run_sh_grep_filter_in_test_cmd():
          assert "custom.test.pattern" in calls, "Custom grep filter not passed to docker"
  
  
@@ -1703,10 +1704,24 @@ index b3c0b3a..d98020d 100644
 +    assert mode & stat.S_IXUSR, f"{path} is not executable"
 +
 +
++def test_verify_artifacts_sh_fails_closed_no_validator():
++    path = os.path.join(ARTIFACTS_DIR, "verify-artifacts.sh")
++    env = os.environ.copy()
++    env["PATH"] = "/does/not/exist"
++    result = subprocess.run(
++        ["bash", "-n", path], capture_output=True, text=True
++    )
++    assert result.returncode == 0, f"syntax error in {path}: {result.stderr}"
++    content = open(path).read()
++    assert "CHECKS_FAILED=1" in content, (
++        f"{path} must fail closed when no validator is available"
++    )
++
++
  # ---------------------------------------------------------------------------
  # Test runner
  # ---------------------------------------------------------------------------
-@@ -898,6 +1264,48 @@ if __name__ == "__main__":
+@@ -898,6 +1278,49 @@ if __name__ == "__main__":
          test_run_sh_forced_pass_subcommand,
          test_run_sh_forced_fail_subcommand,
          test_run_sh_grep_filter_in_test_cmd,
@@ -1752,6 +1767,7 @@ index b3c0b3a..d98020d 100644
 +        test_artifact_self_test_no_in_process_checks,
 +        test_verify_artifacts_sh_exists,
 +        test_verify_artifacts_sh_executable,
++        test_verify_artifacts_sh_fails_closed_no_validator,
      ]
      failures = 0
      for t in tests:

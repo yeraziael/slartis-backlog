@@ -16,7 +16,7 @@
 | `tests/playwright/playwright.config.ts` | modified | Capture settings |
 | `tests/playwright/runner/run.sh` | modified | Manifest + prereq integration |
 | `tests/playwright/evidence/artifacts/verify-artifacts.sh` | new → modified | Post-run harness; trace hard-fail (PR #90); structural ZIP validation via `unzip -t` / `python3 zipfile.testzip()` (PR #91) |
-| `tests/test_playwright_bootstrap.py` | modified | +310 lines, 117 tests total |
+| `tests/test_playwright_bootstrap.py` | modified | +325 lines, 118 tests total |
 
 ## Semantic Summary
 
