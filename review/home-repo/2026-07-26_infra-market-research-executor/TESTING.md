@@ -50,9 +50,10 @@ The `set +e` / `set -e` wrapper preserves the code for logging.
 
 ```bash
 # Trigger Eddie dispatch (from Pi5)
-curl -X POST http://127.0.0.1:8081/dispatch \
+# Executor API: POST /execute with field "type" (not "job_type")
+curl -X POST http://127.0.0.1:8081/execute \
   -H "Content-Type: application/json" \
-  -d '{"job_id":"test-001","job_type":"infra.market.research","callback_url":"http://127.0.0.1:8081/callback"}'
+  -d '{"job_id":"test-001","type":"infra.market.research","callback_url":"http://127.0.0.1:8081/callback/test-001"}'
 
 # Check executor logs
 tail -f /tmp/eddie-executor.log
