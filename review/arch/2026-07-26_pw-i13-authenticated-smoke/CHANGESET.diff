@@ -1,0 +1,197 @@
+diff --git a/tests/playwright/services/audiobookshelf/pages/library.page.ts b/tests/playwright/services/audiobookshelf/pages/library.page.ts
+new file mode 100644
+index 0000000..694069e
+--- /dev/null
++++ b/tests/playwright/services/audiobookshelf/pages/library.page.ts
+@@ -0,0 +1,40 @@
++import { Page } from "@playwright/test";
++
++export class LibraryPage {
++  readonly page: Page;
++  readonly mainSelector = '[role="main"]';
++  readonly navSelector = '[role="navigation"]';
++  readonly libraryListSelector = '[data-testid="library-list"], ul[aria-label="Library"]';
++
++  constructor(page: Page) {
++    this.page = page;
++  }
++
++  async waitForLoad(): Promise<void> {
++    await this.page.waitForSelector(this.mainSelector, { timeout: 15_000 });
++  }
++
++  async hasLibraryList(): Promise<boolean> {
++    const count = await this.page.locator(this.libraryListSelector).count();
++    return count > 0;
++  }
++
++  async hasNavLink(label: string): Promise<boolean> {
++    const link = this.page.getByRole("link", { name: label });
++    return (await link.count()) > 0;
++  }
++
++  async isLoginPage(): Promise<boolean> {
++    const url = this.page.url();
++    return url.includes("/login") || url.includes("/auth/openid");
++  }
++
++  async getCurrentHref(): Promise<string> {
++    return this.page.url();
++  }
++
++  async hasNoMediaItems(): Promise<boolean> {
++    const items = this.page.locator('[data-testid="audiobook"], [data-testid="media"]');
++    return (await items.count()) === 0;
++  }
++}
+\ No newline at end of file
+diff --git a/tests/playwright/services/audiobookshelf/pages/oidc.page.ts b/tests/playwright/services/audiobookshelf/pages/oidc.page.ts
+new file mode 100644
+index 0000000..a3afb31
+--- /dev/null
++++ b/tests/playwright/services/audiobookshelf/pages/oidc.page.ts
+@@ -0,0 +1,49 @@
++import { Page } from "@playwright/test";
++
++export class OidcPage {
++  readonly page: Page;
++  readonly loginUrl: string;
++  readonly logoutUrl: string;
++  readonly callbackUrl: string;
++
++  constructor(page: Page) {
++    this.page = page;
++    this.loginUrl = "https://audiobookshelf.hl.maier.wtf/";
++    this.logoutUrl =
++      "https://auth.hl.maier.wtf/realms/homelab/protocol/openid-connect/logout";
++    this.callbackUrl = "https://audiobookshelf.hl.maier.wtf/auth/openid/callback";
++  }
++
++  async navigateToLogin(): Promise<void> {
++    await this.page.goto(this.loginUrl, { waitUntil: "networkidle" });
++  }
++
++  async clickKeycloakLogin(): Promise<void> {
++    const keycloakButton = this.page.getByRole("button", {
++      name: /keycloak|log in with keycloak/i,
++    });
++    await keycloakButton.click();
++  }
++
++  async fillKeycloakCredentials(username: string, password: string): Promise<void> {
++    await this.page.fill('input[name="username"]', username);
++    await this.page.fill('input[name="password"]', password);
++    await this.page.getByRole("button", { name: /sign in/i }).click();
++  }
++
++  async waitForCallback(): Promise<void> {
++    await this.page.waitForURL(this.callbackUrl, { timeout: 15_000 });
++  }
++
++  async redirectToLogout(): Promise<void> {
++    await this.page.goto(this.logoutUrl, { waitUntil: "networkidle" });
++  }
++
++  async performRpInitiatedLogout(): Promise<void> {
++    const logoutLink = this.page.getByRole("link", { name: /logout/i });
++    if ((await logoutLink.count()) > 0) {
++      await logoutLink.click();
++      await this.page.waitForURL(/logout|login/, { timeout: 10_000 });
++    }
++  }
++}
+\ No newline at end of file
+diff --git a/tests/playwright/services/audiobookshelf/smoke-authenticated.spec.ts b/tests/playwright/services/audiobookshelf/smoke-authenticated.spec.ts
+new file mode 100644
+index 0000000..3600393
+--- /dev/null
++++ b/tests/playwright/services/audiobookshelf/smoke-authenticated.spec.ts
+@@ -0,0 +1,87 @@
++import { test, expect } from "@playwright/test";
++import { OidcPage } from "./pages/oidc.page";
++import { LibraryPage } from "./pages/library.page";
++
++const ABS_BASE = "https://audiobookshelf.hl.maier.wtf";
++const ABS_LOGIN = "https://audiobookshelf.hl.maier.wtf/login";
++
++test.describe("PW-I13: Audiobookshelf authenticated login and logout smoke", () => {
++  let oidc: OidcPage;
++  let library: LibraryPage;
++
++  test.beforeEach(async ({ page }) => {
++    oidc = new OidcPage(page);
++    library = new LibraryPage(page);
++  });
++
++  test("login success redirects to library landing", async ({ page }) => {
++    const username = process.env.PW_E2E_ABS_USER ?? "";
++    const password = process.env.PW_E2E_ABS_PASSWORD ?? "";
++
++    await oidc.navigateToLogin();
++    await oidc.clickKeycloakLogin();
++    await oidc.fillKeycloakCredentials(username, password);
++    await oidc.waitForCallback();
++
++    await library.waitForLoad();
++    const url = page.url();
++    expect(url).not.toContain("/login");
++    expect(url).not.toContain("/auth/openid");
++  });
++
++  test("login callback failure stays on login page", async ({ page }) => {
++    await oidc.navigateToLogin();
++    await oidc.clickKeycloakLogin();
++
++    await page.waitForURL("**/login**", { timeout: 10_000 }).catch(() => {
++    });
++
++    const url = page.url();
++    expect(
++      url.includes("/login") || url.includes("/auth/openid"),
++    ).toBeTruthy();
++  });
++
++  test("logout terminates local session and redirects", async ({ page }) => {
++    const username = process.env.PW_E2E_ABS_USER ?? "";
++    const password = process.env.PW_E2E_ABS_PASSWORD ?? "";
++
++    await oidc.navigateToLogin();
++    await oidc.clickKeycloakLogin();
++    await oidc.fillKeycloakCredentials(username, password);
++    await oidc.waitForCallback();
++    await library.waitForLoad();
++
++    await oidc.performRpInitiatedLogout();
++
++    await page.waitForURL(/logout|login/, { timeout: 10_000 }).catch(() => {
++    });
++    const url = page.url();
++    expect(
++      url.includes("/login") || url.includes("/logout"),
++    ).toBeTruthy();
++  });
++
++  test("post-logout reload remains unauthenticated", async ({ page }) => {
++    const username = process.env.PW_E2E_ABS_USER ?? "";
++    const password = process.env.PW_E2E_ABS_PASSWORD ?? "";
++
++    await oidc.navigateToLogin();
++    await oidc.clickKeycloakLogin();
++    await oidc.fillKeycloakCredentials(username, password);
++    await oidc.waitForCallback();
++    await library.waitForLoad();
++
++    await oidc.performRpInitiatedLogout();
++    await page.waitForURL(/logout|login/, { timeout: 10_000 }).catch(() => {
++    });
++
++    await page.reload();
++    await page.waitForLoadState("networkidle");
++
++    const url = page.url();
++    expect(
++      url.includes("/login") || url.includes("/auth/openid"),
++    ).toBeTruthy();
++  });
++});
+\ No newline at end of file
