@@ -1,0 +1,945 @@
+diff --git a/tests/playwright/README.md b/tests/playwright/README.md
+index e271598..3997f89 100644
+--- a/tests/playwright/README.md
++++ b/tests/playwright/README.md
+@@ -27,3 +27,17 @@ bash tests/playwright/runner/run.sh platform
+ - `playwright.config.ts` — Chromium-only Playwright config
+ - `platform/self-test.spec.ts` — Chromium startup and browser-state isolation tests
+ - `platform/fixtures/local-page.html` — Controlled local page for self-tests
++
++## Evidence Bundles
++
++Only evidence accepted by `evidence/sanitisation/sanitise.sh` may enter a
++publication bundle. Assemble and validate an evidence directory with:
++
++```bash
++python3 tests/playwright/evidence/bundle/bundle-assemble.py <input-dir> <bundle-dir>
++python3 tests/playwright/evidence/bundle/bundle-validate.py <bundle-dir>
++```
++
++Bundles contain `manifest.json`, `junit.xml`, allowed PNG/ZIP artifacts, and
++`inventory.json`. Pass bundles retain no artifacts and carry a 7-day class;
++fail, prerequisite-error, and error bundles carry a 30-day class.
+diff --git a/tests/playwright/evidence/bundle/.gitignore b/tests/playwright/evidence/bundle/.gitignore
+new file mode 100644
+index 0000000..c18dd8d
+--- /dev/null
++++ b/tests/playwright/evidence/bundle/.gitignore
+@@ -0,0 +1 @@
++__pycache__/
+diff --git a/tests/playwright/evidence/bundle/bundle-assemble.py b/tests/playwright/evidence/bundle/bundle-assemble.py
+new file mode 100644
+index 0000000..b40fcbe
+--- /dev/null
++++ b/tests/playwright/evidence/bundle/bundle-assemble.py
+@@ -0,0 +1,106 @@
++#!/usr/bin/env python3
++"""PW-I08 deterministic evidence bundle assembler.
++
++Usage: bundle-assemble.py <sanitised-input-dir> <bundle-dir>
++"""
++import hashlib
++import json
++import shutil
++import subprocess
++import sys
++from pathlib import Path
++
++
++ALLOWED_ARTIFACT_SUFFIXES = {".png", ".zip"}
++REQUIRED_FILES = {"manifest.json", "junit.xml"}
++RETENTION_DAYS = {"pass": 7, "fail": 30, "prerequisite_error": 30, "error": 30}
++
++
++def fail(message: str) -> None:
++    print(f"PW-I08: FAIL - {message}", file=sys.stderr)
++    raise SystemExit(2)
++
++
++def sha256(path: Path) -> str:
++    digest = hashlib.sha256()
++    with path.open("rb") as handle:
++        for chunk in iter(lambda: handle.read(65536), b""):
++            digest.update(chunk)
++    return digest.hexdigest()
++
++
++def main() -> None:
++    if len(sys.argv) != 3:
++        fail("USAGE: bundle-assemble.py <sanitised-input-dir> <bundle-dir>")
++
++    input_dir = Path(sys.argv[1]).resolve()
++    bundle_dir = Path(sys.argv[2]).resolve()
++    if not input_dir.is_dir():
++        fail(f"input directory not found: {input_dir}")
++
++    sanitise = Path(__file__).resolve().parents[1] / "sanitisation" / "sanitise.sh"
++    scan = subprocess.run(["bash", str(sanitise), str(input_dir)], capture_output=True, text=True)
++    if scan.returncode != 0:
++        print("PW-I08: FAIL - sanitisation gate rejected input", file=sys.stderr)
++        raise SystemExit(1)
++
++    missing = [name for name in REQUIRED_FILES if not (input_dir / name).is_file()]
++    if missing:
++        fail(f"missing required input: {', '.join(sorted(missing))}")
++
++    try:
++        manifest = json.loads((input_dir / "manifest.json").read_text())
++        result = manifest["result"]
++    except (json.JSONDecodeError, KeyError) as exc:
++        fail(f"invalid manifest: {exc}")
++    if result not in RETENTION_DAYS:
++        fail(f"unsupported result: {result}")
++
++    allowed_input = set(REQUIRED_FILES)
++    artifacts = []
++    for path in sorted(input_dir.rglob("*")):
++        if not path.is_file() or path.name in REQUIRED_FILES:
++            continue
++        if path.suffix not in ALLOWED_ARTIFACT_SUFFIXES:
++            fail(f"forbidden input file: {path.relative_to(input_dir)}")
++        artifacts.append(path)
++
++    if result == "pass" and artifacts:
++        fail("pass bundle must not include artifacts")
++    if result == "fail":
++        suffixes = {path.suffix for path in artifacts}
++        if not {".png", ".zip"}.issubset(suffixes):
++            fail("fail bundle requires both PNG screenshot and ZIP trace")
++
++    if bundle_dir.exists():
++        shutil.rmtree(bundle_dir)
++    bundle_dir.mkdir(parents=True)
++    shutil.copy2(input_dir / "manifest.json", bundle_dir / "manifest.json")
++    shutil.copy2(input_dir / "junit.xml", bundle_dir / "junit.xml")
++    for artifact in artifacts:
++        target = bundle_dir / "artifacts" / artifact.relative_to(input_dir)
++        target.parent.mkdir(parents=True, exist_ok=True)
++        shutil.copy2(artifact, target)
++
++    inventory_files = []
++    for path in sorted(bundle_dir.rglob("*")):
++        if path.is_file():
++            inventory_files.append({
++                "path": str(path.relative_to(bundle_dir)),
++                "sha256": sha256(path),
++                "bytes": path.stat().st_size,
++            })
++    inventory = {
++        "inventory_version": 1,
++        "result": result,
++        "retention_days": RETENTION_DAYS[result],
++        "files": inventory_files,
++    }
++    (bundle_dir / "inventory.json").write_text(
++        json.dumps(inventory, indent=2, sort_keys=True) + "\n"
++    )
++    print(f"PW-I08: BUNDLE ASSEMBLED - {result}, retention {RETENTION_DAYS[result]} days", file=sys.stderr)
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/tests/playwright/evidence/bundle/bundle-self-test.py b/tests/playwright/evidence/bundle/bundle-self-test.py
+new file mode 100644
+index 0000000..bd04b2e
+--- /dev/null
++++ b/tests/playwright/evidence/bundle/bundle-self-test.py
+@@ -0,0 +1,91 @@
++#!/usr/bin/env python3
++"""PW-I08 blackbox fixtures for deterministic evidence bundling."""
++import json
++import shutil
++import subprocess
++import sys
++import tempfile
++import zipfile
++from pathlib import Path
++
++
++HERE = Path(__file__).resolve().parent
++ASSEMBLE = HERE / "bundle-assemble.py"
++VALIDATE = HERE / "bundle-validate.py"
++
++
++def manifest(result: str) -> dict:
++    return {
++        "manifest_version": 1,
++        "source_repository": "Homelab/Architecture",
++        "source_commit": "0" * 40,
++        "architecture_repository": "Homelab/Architecture",
++        "architecture_commit": "0" * 40,
++        "service_name": "playwright-platform",
++        "service_version": "self-test",
++        "service_version_source": "runner_image",
++        "runner_image": "example/playwright@sha256:" + "0" * 64,
++        "environment": "local",
++        "suite": "platform",
++        "result": result,
++        "exit_code": {"pass": 0, "fail": 1, "prerequisite_error": 2}[result],
++        "duration_seconds": 0,
++        "timestamp": "2026-07-26T00:00:00Z",
++        "tests": {"total": 1, "passed": result == "pass", "failed": result == "fail", "prerequisite_errors": result == "prerequisite_error", "skipped": 0},
++        "runtime": {"runner_containers": []},
++        "outcomes": [],
++    }
++
++
++def write_input(path: Path, result: str, extra: bool = False) -> None:
++    path.mkdir()
++    (path / "manifest.json").write_text(json.dumps(manifest(result)) + "\n")
++    (path / "junit.xml").write_text("<testsuite/>\n")
++    if result == "fail":
++        (path / "screenshot.png").write_bytes(b"\x89PNG\r\n\x1a\n")
++        with zipfile.ZipFile(path / "trace.zip", "w") as archive:
++            archive.writestr("trace.txt", "clean trace")
++    if extra:
++        (path / "forbidden.bin").write_bytes(b"not publishable")
++
++
++def run(*args: str, expected: int = 0) -> subprocess.CompletedProcess:
++    result = subprocess.run([sys.executable, *args], capture_output=True, text=True)
++    if result.returncode != expected:
++        raise AssertionError(f"{args[0]} returned {result.returncode}: {result.stderr}")
++    return result
++
++
++def main() -> None:
++    with tempfile.TemporaryDirectory() as temp:
++        root = Path(temp)
++        for result in ("pass", "fail", "prerequisite_error"):
++            source = root / f"{result}-input"
++            bundle = root / f"{result}-bundle"
++            write_input(source, result)
++            run(str(ASSEMBLE), str(source), str(bundle))
++            run(str(VALIDATE), str(bundle))
++
++        source = root / "deterministic-input"
++        first = root / "first"
++        second = root / "second"
++        write_input(source, "fail")
++        run(str(ASSEMBLE), str(source), str(first))
++        run(str(ASSEMBLE), str(source), str(second))
++        if (first / "inventory.json").read_bytes() != (second / "inventory.json").read_bytes():
++            raise AssertionError("identical input produced different inventories")
++
++        missing = root / "missing-input"
++        missing.mkdir()
++        (missing / "manifest.json").write_text(json.dumps(manifest("pass")))
++        run(str(ASSEMBLE), str(missing), str(root / "missing-bundle"), expected=2)
++
++        unsafe = root / "unsafe-input"
++        write_input(unsafe, "pass", extra=True)
++        run(str(ASSEMBLE), str(unsafe), str(root / "unsafe-bundle"), expected=2)
++
++    print("PW-I08: BUNDLE SELF-TEST PASSED")
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/tests/playwright/evidence/bundle/bundle-validate.py b/tests/playwright/evidence/bundle/bundle-validate.py
+new file mode 100644
+index 0000000..81ce207
+--- /dev/null
++++ b/tests/playwright/evidence/bundle/bundle-validate.py
+@@ -0,0 +1,85 @@
++#!/usr/bin/env python3
++"""PW-I08 deterministic evidence bundle validator.
++
++Usage: bundle-validate.py <bundle-dir>
++"""
++import hashlib
++import json
++import sys
++from pathlib import Path
++
++
++RETENTION_DAYS = {"pass": 7, "fail": 30, "prerequisite_error": 30, "error": 30}
++REQUIRED_FILES = {"manifest.json", "junit.xml", "inventory.json"}
++ALLOWED_ARTIFACT_SUFFIXES = {".png", ".zip"}
++
++
++def fail(message: str) -> None:
++    print(f"PW-I08: INVALID BUNDLE - {message}", file=sys.stderr)
++    raise SystemExit(1)
++
++
++def sha256(path: Path) -> str:
++    digest = hashlib.sha256()
++    with path.open("rb") as handle:
++        for chunk in iter(lambda: handle.read(65536), b""):
++            digest.update(chunk)
++    return digest.hexdigest()
++
++
++def main() -> None:
++    if len(sys.argv) != 2:
++        print("PW-I08: USAGE: bundle-validate.py <bundle-dir>", file=sys.stderr)
++        raise SystemExit(2)
++
++    bundle_dir = Path(sys.argv[1]).resolve()
++    if not bundle_dir.is_dir():
++        fail(f"bundle directory not found: {bundle_dir}")
++
++    actual_files = {
++        str(path.relative_to(bundle_dir))
++        for path in bundle_dir.rglob("*") if path.is_file()
++    }
++    if not REQUIRED_FILES.issubset(actual_files):
++        fail("missing manifest.json, junit.xml, or inventory.json")
++
++    for name in actual_files - REQUIRED_FILES:
++        if not name.startswith("artifacts/") or Path(name).suffix not in ALLOWED_ARTIFACT_SUFFIXES:
++            fail(f"forbidden bundle file: {name}")
++
++    try:
++        manifest = json.loads((bundle_dir / "manifest.json").read_text())
++        inventory = json.loads((bundle_dir / "inventory.json").read_text())
++        result = manifest["result"]
++    except (json.JSONDecodeError, KeyError) as exc:
++        fail(f"invalid manifest or inventory: {exc}")
++
++    if result not in RETENTION_DAYS:
++        fail(f"unsupported result: {result}")
++    if inventory.get("result") != result:
++        fail("inventory result does not match manifest")
++    if inventory.get("retention_days") != RETENTION_DAYS[result]:
++        fail("incorrect retention class")
++
++    artifact_files = {name for name in actual_files if name.startswith("artifacts/")}
++    if result == "pass" and artifact_files:
++        fail("pass bundle contains artifacts")
++    if result == "fail":
++        suffixes = {Path(name).suffix for name in artifact_files}
++        if not {".png", ".zip"}.issubset(suffixes):
++            fail("fail bundle lacks screenshot or trace")
++
++    expected = {item.get("path"): item for item in inventory.get("files", [])}
++    checked_files = actual_files - {"inventory.json"}
++    if set(expected) != checked_files:
++        fail("inventory file list does not match bundle")
++    for name, item in expected.items():
++        path = bundle_dir / name
++        if item.get("sha256") != sha256(path) or item.get("bytes") != path.stat().st_size:
++            fail(f"checksum mismatch: {name}")
++
++    print("PW-I08: BUNDLE VALID", file=sys.stderr)
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/tests/playwright/evidence/sanitisation/fixtures/clean/junit-results-clean.xml b/tests/playwright/evidence/sanitisation/fixtures/clean/junit-results-clean.xml
+new file mode 100644
+index 0000000..d93de99
+--- /dev/null
++++ b/tests/playwright/evidence/sanitisation/fixtures/clean/junit-results-clean.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<testsuite name="playwright" tests="1" failures="0" errors="0">
++  <testcase name="clean passes" classname="sanitisation" time="0.001"/>
++</testsuite>
+diff --git a/tests/playwright/evidence/sanitisation/fixtures/clean/manifest-clean.json b/tests/playwright/evidence/sanitisation/fixtures/clean/manifest-clean.json
+new file mode 100644
+index 0000000..eb417b3
+--- /dev/null
++++ b/tests/playwright/evidence/sanitisation/fixtures/clean/manifest-clean.json
+@@ -0,0 +1,10 @@
++{
++  "schema_version": "v1",
++  "run_id": "pw-i07-self-test-00000000-0000-0000-0000-000000000000",
++  "suite": "clean",
++  "result": "pass",
++  "timestamp": "2026-07-26T12:00:00Z",
++  "commit": "0000000000000000000000000000000000000000",
++  "container_id": "self-test",
++  "artifacts": []
++}
+diff --git a/tests/playwright/evidence/sanitisation/fixtures/clean/screenshot-clean.png b/tests/playwright/evidence/sanitisation/fixtures/clean/screenshot-clean.png
+new file mode 100644
+index 0000000..62a5f8f
+Binary files /dev/null and b/tests/playwright/evidence/sanitisation/fixtures/clean/screenshot-clean.png differ
+diff --git a/tests/playwright/evidence/sanitisation/fixtures/clean/trace-clean.zip b/tests/playwright/evidence/sanitisation/fixtures/clean/trace-clean.zip
+new file mode 100644
+index 0000000..3e9f1d5
+Binary files /dev/null and b/tests/playwright/evidence/sanitisation/fixtures/clean/trace-clean.zip differ
+diff --git a/tests/playwright/evidence/sanitisation/fixtures/leak/junit-leak-password.xml b/tests/playwright/evidence/sanitisation/fixtures/leak/junit-leak-password.xml
+new file mode 100644
+index 0000000..86334d6
+--- /dev/null
++++ b/tests/playwright/evidence/sanitisation/fixtures/leak/junit-leak-password.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<testsuite name="playwright" tests="1" failures="1" errors="0">
++  <testcase name="SYNTHETIC_LEAK_DO_NOT_USE password" classname="sanitisation" time="0.001">
++    <failure message="SYNTHETIC_LEAK_DO_NOT_USE: password=sup3rS3cur3P@ss!" type="AssertionError"/>
++  </testcase>
++</testsuite>
+diff --git a/tests/playwright/evidence/sanitisation/fixtures/leak/manifest-leak-bearer.json b/tests/playwright/evidence/sanitisation/fixtures/leak/manifest-leak-bearer.json
+new file mode 100644
+index 0000000..6eb54f3
+--- /dev/null
++++ b/tests/playwright/evidence/sanitisation/fixtures/leak/manifest-leak-bearer.json
+@@ -0,0 +1,11 @@
++{
++  "schema_version": "v1",
++  "run_id": "SYNTHETIC_LEAK_DO_NOT_USE-00000000-0000-0000-0000-000000000000",
++  "authorization": "Bearer SYNTHETIC_LEAK_DO_NOT_USE_abcdefghijklmnopqrstuvwxyz",
++  "suite": "leak-bearer",
++  "result": "fail",
++  "timestamp": "2026-07-26T12:00:00Z",
++  "commit": "0000000000000000000000000000000000000000",
++  "container_id": "self-test",
++  "artifacts": []
++}
+diff --git a/tests/playwright/evidence/sanitisation/fixtures/leak/screenshot-leak-auth.png b/tests/playwright/evidence/sanitisation/fixtures/leak/screenshot-leak-auth.png
+new file mode 100644
+index 0000000..f471251
+Binary files /dev/null and b/tests/playwright/evidence/sanitisation/fixtures/leak/screenshot-leak-auth.png differ
+diff --git a/tests/playwright/evidence/sanitisation/fixtures/leak/trace-leak-auth.zip b/tests/playwright/evidence/sanitisation/fixtures/leak/trace-leak-auth.zip
+new file mode 100644
+index 0000000..a76ca88
+Binary files /dev/null and b/tests/playwright/evidence/sanitisation/fixtures/leak/trace-leak-auth.zip differ
+diff --git a/tests/playwright/evidence/sanitisation/sanitisation-spec.spec.ts b/tests/playwright/evidence/sanitisation/sanitisation-spec.spec.ts
+new file mode 100644
+index 0000000..65207a0
+--- /dev/null
++++ b/tests/playwright/evidence/sanitisation/sanitisation-spec.spec.ts
+@@ -0,0 +1,74 @@
++import { test, expect } from '@playwright/test';
++import { execSync } from 'child_process';
++import * as path from 'path';
++import * as fs from 'fs';
++
++const SANITISATION_DIR = path.resolve(__dirname);
++const SANITISE_SH = path.join(SANITISATION_DIR, 'sanitise.sh');
++const FIXTURES_DIR = path.join(SANITISATION_DIR, 'fixtures');
++
++test.describe('PW-I07: sanitisation gate', () => {
++
++  test('@clean clean manifest passes sanitisation', () => {
++    const cleanDir = path.join(FIXTURES_DIR, 'clean');
++    const result = execSync(`bash "${SANITISE_SH}" "${cleanDir}"`, {
++      encoding: 'utf-8',
++    });
++    expect(result).toContain('SANITISATION GATE PASSED');
++  });
++
++  test('@leak_manifest leaky manifest is rejected', () => {
++    const leakDir = path.join(FIXTURES_DIR, 'leak');
++    const result = execSync(`bash "${SANITISE_SH}" "${leakDir}"`, {
++      encoding: 'utf-8',
++      stdio: ['pipe', 'pipe', 'pipe'],
++    }).toString();
++    expect(result).toContain('SANITISATION GATE FAILED');
++  });
++
++  test('@leak_junit leaky junit XML is rejected', () => {
++    const leakDir = path.join(FIXTURES_DIR, 'leak');
++    const result = execSync(`bash "${SANITISE_SH}" "${leakDir}"`, {
++      encoding: 'utf-8',
++    });
++    expect(result).toContain('SANITISATION GATE FAILED');
++  });
++
++  test('@leak_trace leaky trace ZIP is rejected', () => {
++    const leakDir = path.join(FIXTURES_DIR, 'leak');
++    const result = execSync(`bash "${SANITISE_SH}" "${leakDir}"`, {
++      encoding: 'utf-8',
++    });
++    expect(result).toContain('SANITISATION GATE FAILED');
++  });
++
++  test('@leak_screenshot leaky PNG is rejected', () => {
++    const leakDir = path.join(FIXTURES_DIR, 'leak');
++    const result = execSync(`bash "${SANITISE_SH}" "${leakDir}"`, {
++      encoding: 'utf-8',
++    });
++    expect(result).toContain('SANITISATION GATE FAILED');
++  });
++
++  test('@scanner_output scanner never reproduces matched values', () => {
++    const leakDir = path.join(FIXTURES_DIR, 'leak');
++    const result = execSync(`bash "${SANITISE_SH}" "${leakDir}"`, {
++      encoding: 'utf-8',
++    });
++    // Must not contain the actual synthetic leak value
++    expect(result).not.toContain('SYNTHETIC_LEAK_DO_NOT_USE_abcdefghijklmnopqrstuvwxyz');
++    expect(result).not.toContain('sup3rS3cur3P@ss!');
++  });
++
++  test('@missing_dir missing directory exits 2', () => {
++    expect(() => {
++      execSync(`bash "${SANITISE_SH}" "/nonexistent/path"`, { encoding: 'utf-8' });
++    }).toThrow();
++  });
++
++  test('@no_args missing argument exits 2', () => {
++    expect(() => {
++      execSync(`bash "${SANITISE_SH}"`, { encoding: 'utf-8' });
++    }).toThrow();
++  });
++});
+diff --git a/tests/playwright/evidence/sanitisation/sanitise-patterns.txt b/tests/playwright/evidence/sanitisation/sanitise-patterns.txt
+new file mode 100644
+index 0000000..2ff1f59
+--- /dev/null
++++ b/tests/playwright/evidence/sanitisation/sanitise-patterns.txt
+@@ -0,0 +1,36 @@
++# PW-I07: Prohibited patterns for evidence sanitisation gate.
++# Each line is a case-insensitive extended regex (grep -iE).
++# Lines starting with # are ignored. Empty lines are ignored.
++
++# Authorization tokens
++bearer\s+[a-zA-Z0-9_\-\.]{20,}
++authorization:\s*(basic|bearer|digest)\s
++basic\s+[a-zA-Z0-9+/=]{20,}
++
++# API keys and secrets
++api[_-]?key[=:\s]+[a-zA-Z0-9_\-]{16,}
++apikey[=:\s]+[a-zA-Z0-9_\-]{16,}
++x-api-key[=:\s]+[a-zA-Z0-9_\-]{16,}
++secret[=:\s]+[a-zA-Z0-9_\-]{16,}
++token[=:\s]+[a-zA-Z0-9_\-\.]{16,}
++
++# Session cookies
++set-cookie:\s+\S+=\S+
++connect.sid[=:\s]+\S+
++session[=:\s]+\S+
++
++# Password fields (form data, JSON, config)
++"password"\s*:\s*"[^"]+"
++password[=:\s]+\S+
++passwd[=:\s]+\S+
++
++# JWT tokens (three base64url segments)
++eyJ[a-zA-Z0-9_\-]{10,}\.[a-zA-Z0-9_\-]{10,}\.[a-zA-Z0-9_\-]{10,}
++
++# SSH private keys (header line)
++-----BEGIN\s+(RSA|DSA|EC|OPENSSH)\s+PRIVATE\s+KEY-----
++
++# Generic credential patterns in JSON/config files
++"access_token"\s*:\s*"[^"]+"
++"refresh_token"\s*:\s*"[^"]+"
++"client_secret"\s*:\s*"[^"]+"
+diff --git a/tests/playwright/evidence/sanitisation/sanitise.sh b/tests/playwright/evidence/sanitisation/sanitise.sh
+new file mode 100755
+index 0000000..c8e3900
+--- /dev/null
++++ b/tests/playwright/evidence/sanitisation/sanitise.sh
+@@ -0,0 +1,113 @@
++#!/usr/bin/env bash
++# PW-I07: sanitise.sh — Evidence sanitisation publication gate.
++# Inspects publishable evidence files for prohibited patterns.
++# Fails closed: any match blocks publication.
++# Never reproduces matched values in output.
++#
++# Usage: sanitise.sh <evidence-dir>
++# Exit: 0 = clean, 1 = prohibited content detected, 2 = scan error
++
++set -euo pipefail
++
++if [ $# -lt 1 ]; then
++  echo "PW-I07: USAGE: sanitise.sh <evidence-dir>" >&2
++  exit 2
++fi
++
++EVIDENCE_DIR="$1"
++if [ ! -d "$EVIDENCE_DIR" ]; then
++  echo "PW-I07: FAIL — evidence directory not found: $EVIDENCE_DIR" >&2
++  exit 2
++fi
++
++SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
++PATTERNS_FILE="$SCRIPT_DIR/sanitise-patterns.txt"
++
++if [ ! -f "$PATTERNS_FILE" ]; then
++  echo "PW-I07: FAIL — patterns file not found: $PATTERNS_FILE" >&2
++  exit 2
++fi
++
++CHECKS_FAILED=0
++TMPDIR="$(mktemp -p "${TMPDIR:-/tmp}" -d sanitise.XXXXXX 2>/dev/null || mktemp -d)"
++PATTERNS_TMP="$TMPDIR/patterns.txt"
++cleanup() { rm -rf "$TMPDIR"; }
++trap cleanup EXIT
++
++# Strip comment/blank lines from patterns file for grep
++grep -v '^#' "$PATTERNS_FILE" | grep -v '^[[:space:]]*$' > "$PATTERNS_TMP" || true
++
++if [ ! -s "$PATTERNS_TMP" ]; then
++  echo "PW-I07: FAIL — no active patterns in $PATTERNS_FILE" >&2
++  exit 2
++fi
++
++sanitise_file() {
++  local file="$1"
++  local relpath="${file#$EVIDENCE_DIR/}"
++
++  # Determine how to inspect based on file extension/content
++  case "$file" in
++    *.json|*.xml|*.txt|*.md|*.log|*.env|*.yml|*.yaml|*.html|*.htm|*.js|*.ts)
++      # Text files: direct grep
++      if grep -qiEf "$PATTERNS_TMP" "$file" > /dev/null 2>&1; then
++        echo "PW-I07: BLOCKED — '$relpath' matches prohibited pattern" >&2
++        CHECKS_FAILED=1
++      fi
++      ;;
++    *.zip)
++      # ZIP files: extract text content, scan without writing
++      if command -v unzip >/dev/null 2>&1; then
++        if unzip -p "$file" 2>/dev/null | grep -qiEf "$PATTERNS_TMP" > /dev/null 2>&1; then
++          echo "PW-I07: BLOCKED — '$relpath' contains prohibited pattern in archived content" >&2
++          CHECKS_FAILED=1
++        fi
++      elif command -v python3 >/dev/null 2>&1; then
++        if python3 "$SCRIPT_DIR/sanitise_zip.py" "$file" "$PATTERNS_TMP" >/dev/null 2>&1; then
++          : # clean
++        else
++          echo "PW-I07: BLOCKED — '$relpath' contains prohibited pattern in archived content" >&2
++          CHECKS_FAILED=1
++        fi
++      else
++        echo "PW-I07: FAIL — no unzip or python3 available to scan '$relpath'" >&2
++        CHECKS_FAILED=1
++      fi
++      ;;
++    *.png|*.jpg|*.jpeg|*.gif)
++      # Images: check file metadata for embedded text
++      if command -v python3 >/dev/null 2>&1; then
++        if python3 "$SCRIPT_DIR/sanitise_image.py" "$file" "$PATTERNS_TMP" >/dev/null 2>&1; then
++          : # clean
++        else
++          echo "PW-I07: BLOCKED — '$relpath' contains prohibited pattern in image metadata" >&2
++          CHECKS_FAILED=1
++        fi
++      else
++        echo "PW-I07: WARNING — cannot scan image metadata in '$relpath' (no python3)" >&2
++      fi
++      ;;
++    *)
++      # Unknown type: skip binary files safely
++      if file "$file" | grep -qi "text" > /dev/null 2>&1; then
++        if grep -qiEf "$PATTERNS_TMP" "$file" > /dev/null 2>&1; then
++          echo "PW-I07: BLOCKED — '$relpath' matches prohibited pattern" >&2
++          CHECKS_FAILED=1
++        fi
++      fi
++      ;;
++  esac
++}
++
++# Scan all files in evidence directory recursively
++while IFS= read -r -d '' f; do
++  sanitise_file "$f"
++done < <(find "$EVIDENCE_DIR" -type f -print0 2>/dev/null || true)
++
++if [ $CHECKS_FAILED -ne 0 ]; then
++  echo "PW-I07: SANITISATION GATE FAILED — prohibited content detected" >&2
++  exit 1
++fi
++
++echo "PW-I07: SANITISATION GATE PASSED — evidence clean" >&2
++exit 0
+diff --git a/tests/playwright/evidence/sanitisation/sanitise_image.py b/tests/playwright/evidence/sanitisation/sanitise_image.py
+new file mode 100644
+index 0000000..50b271e
+--- /dev/null
++++ b/tests/playwright/evidence/sanitisation/sanitise_image.py
+@@ -0,0 +1,57 @@
++#!/usr/bin/env python3
++"""Check image file metadata for prohibited patterns.
++Usage: sanitise_image.py <image_file> <patterns_file>
++Exit: 0 = clean, 1 = prohibited content detected, 2 = error
++"""
++import re
++import sys
++
++def main():
++    if len(sys.argv) < 3:
++        print("USAGE: sanitise_image.py <image_file> <patterns_file>", file=sys.stderr)
++        sys.exit(2)
++
++    image_path = sys.argv[1]
++    patterns_path = sys.argv[2]
++
++    with open(patterns_path) as f:
++        raw_patterns = [l.strip() for l in f if l.strip() and not l.startswith("#")]
++
++    compiled = []
++    for p in raw_patterns:
++        try:
++            compiled.append(re.compile(p, re.IGNORECASE))
++        except re.error:
++            pass
++
++    if not compiled:
++        print("ERROR: no valid patterns", file=sys.stderr)
++        sys.exit(2)
++
++    try:
++        with open(image_path, "rb") as f:
++            data = f.read()
++
++        strings = []
++        cur = []
++        for b in data:
++            if b == 0:
++                if len(cur) > 4:
++                    strings.append(bytes(cur).decode("utf-8", errors="replace"))
++                cur = []
++            else:
++                cur.append(b)
++        if len(cur) > 4:
++            strings.append(bytes(cur).decode("utf-8", errors="replace"))
++
++        for s in strings:
++            for pattern in compiled:
++                if pattern.search(s):
++                    sys.exit(1)
++        sys.exit(0)
++    except Exception as e:
++        print(f"ERROR: {e}", file=sys.stderr)
++        sys.exit(2)
++
++if __name__ == "__main__":
++    main()
+diff --git a/tests/playwright/evidence/sanitisation/sanitise_zip.py b/tests/playwright/evidence/sanitisation/sanitise_zip.py
+new file mode 100644
+index 0000000..299c509
+--- /dev/null
++++ b/tests/playwright/evidence/sanitisation/sanitise_zip.py
+@@ -0,0 +1,48 @@
++#!/usr/bin/env python3
++"""Check ZIP file contents against prohibited patterns.
++Usage: sanitise_zip.py <zipfile> <patterns_file>
++Exit: 0 = clean, 1 = prohibited content detected, 2 = error
++"""
++import re
++import sys
++import zipfile
++
++def main():
++    if len(sys.argv) < 3:
++        print("USAGE: sanitise_zip.py <zipfile> <patterns_file>", file=sys.stderr)
++        sys.exit(2)
++
++    zip_path = sys.argv[1]
++    patterns_path = sys.argv[2]
++
++    with open(patterns_path) as f:
++        raw_patterns = [l.strip() for l in f if l.strip() and not l.startswith("#")]
++
++    compiled = []
++    for p in raw_patterns:
++        try:
++            compiled.append(re.compile(p, re.IGNORECASE))
++        except re.error:
++            pass
++
++    if not compiled:
++        print("ERROR: no valid patterns", file=sys.stderr)
++        sys.exit(2)
++
++    try:
++        with zipfile.ZipFile(zip_path) as z:
++            for name in z.namelist():
++                try:
++                    content = z.read(name).decode("utf-8", errors="replace")
++                except Exception:
++                    continue
++                for pattern in compiled:
++                    if pattern.search(content):
++                        sys.exit(1)
++        sys.exit(0)
++    except Exception as e:
++        print(f"ERROR: {e}", file=sys.stderr)
++        sys.exit(2)
++
++if __name__ == "__main__":
++    main()
+diff --git a/tests/test_playwright_bootstrap.py b/tests/test_playwright_bootstrap.py
+index cc7723d..7be66aa 100644
+--- a/tests/test_playwright_bootstrap.py
++++ b/tests/test_playwright_bootstrap.py
+@@ -18,6 +18,8 @@ RUNNER_DIR = os.path.join(PLAYWRIGHT_DIR, "runner")
+ EVIDENCE_DIR = os.path.join(PLAYWRIGHT_DIR, "evidence")
+ PREREQ_DIR = os.path.join(PLAYWRIGHT_DIR, "prerequisites")
+ ARTIFACTS_DIR = os.path.join(EVIDENCE_DIR, "artifacts")
++SANITISATION_DIR = os.path.join(EVIDENCE_DIR, "sanitisation")
++BUNDLE_DIR = os.path.join(EVIDENCE_DIR, "bundle")
+ PACKAGE_JSON = os.path.join(PLAYWRIGHT_DIR, "package.json")
+ PLAYWRIGHT_CONFIG = os.path.join(PLAYWRIGHT_DIR, "playwright.config.ts")
+ RUN_SH = os.path.join(RUNNER_DIR, "run.sh")
+@@ -1197,6 +1199,147 @@ def test_verify_artifacts_sh_fails_closed_no_validator():
+     )
+ 
+ 
++# ---------------------------------------------------------------------------
++# PW-I07: Sanitisation gate
++# ---------------------------------------------------------------------------
++
++
++def test_sanitisation_dir_exists():
++    assert os.path.isdir(SANITISATION_DIR), f"Missing {SANITISATION_DIR}"
++
++
++def test_sanitise_sh_exists():
++    path = os.path.join(SANITISATION_DIR, "sanitise.sh")
++    assert os.path.isfile(path), f"Missing {path}"
++
++
++def test_sanitise_sh_executable():
++    path = os.path.join(SANITISATION_DIR, "sanitise.sh")
++    st = os.stat(path)
++    mode = stat.S_IMODE(st.st_mode)
++    assert mode & stat.S_IXUSR, f"{path} is not executable"
++
++
++def test_sanitise_patterns_txt_exists():
++    path = os.path.join(SANITISATION_DIR, "sanitise-patterns.txt")
++    assert os.path.isfile(path), f"Missing {path}"
++
++
++def test_sanitise_patterns_txt_has_patterns():
++    path = os.path.join(SANITISATION_DIR, "sanitise-patterns.txt")
++    content = open(path).read()
++    patterns = [l for l in content.splitlines() if l and not l.startswith("#")]
++    assert len(patterns) >= 10, f"{path} has only {len(patterns)} active patterns"
++
++
++def test_sanitisation_fixture_dirs_exist():
++    for d in ["clean", "leak"]:
++        p = os.path.join(SANITISATION_DIR, "fixtures", d)
++        assert os.path.isdir(p), f"Missing fixture dir {p}"
++
++
++def test_sanitisation_clean_dir_has_files():
++    p = os.path.join(SANITISATION_DIR, "fixtures", "clean")
++    files = [f for f in os.listdir(p) if os.path.isfile(os.path.join(p, f))]
++    assert len(files) >= 3, f"clean fixtures: expected >=3 files, got {len(files)}"
++
++
++def test_sanitisation_leak_dir_has_files():
++    p = os.path.join(SANITISATION_DIR, "fixtures", "leak")
++    files = [f for f in os.listdir(p) if os.path.isfile(os.path.join(p, f))]
++    assert len(files) >= 3, f"leak fixtures: expected >=3 files, got {len(files)}"
++
++
++def test_sanitise_sh_rejects_leak():
++    path = os.path.join(SANITISATION_DIR, "sanitise.sh")
++    leak_dir = os.path.join(SANITISATION_DIR, "fixtures", "leak")
++    result = subprocess.run(
++        ["bash", path, leak_dir], capture_output=True, text=True
++    )
++    assert result.returncode != 0, "sanitise.sh must reject leaky fixtures"
++    assert "SANITISATION GATE FAILED" in result.stderr, (
++        f"Expected failure message in stderr: {result.stderr}"
++    )
++
++
++def test_sanitise_sh_passes_clean():
++    path = os.path.join(SANITISATION_DIR, "sanitise.sh")
++    clean_dir = os.path.join(SANITISATION_DIR, "fixtures", "clean")
++    result = subprocess.run(
++        ["bash", path, clean_dir], capture_output=True, text=True
++    )
++    assert result.returncode == 0, (
++        f"sanitise.sh must pass clean fixtures: {result.stderr}"
++    )
++    assert "SANITISATION GATE PASSED" in result.stderr
++
++
++def test_sanitise_sh_no_value_leak():
++    path = os.path.join(SANITISATION_DIR, "sanitise.sh")
++    leak_dir = os.path.join(SANITISATION_DIR, "fixtures", "leak")
++    result = subprocess.run(
++        ["bash", path, leak_dir], capture_output=True, text=True
++    )
++    # Must not reproduce the synthetic leak value
++    assert "SYNTHETIC_LEAK_DO_NOT_USE_abcdefghijklmnopqrstuvwxyz" not in result.stdout + result.stderr
++    assert "sup3rS3cur3P@ss!" not in result.stdout + result.stderr
++
++
++def test_sanitisation_spec_exists():
++    path = os.path.join(SANITISATION_DIR, "sanitisation-spec.spec.ts")
++    assert os.path.isfile(path), f"Missing {path}"
++
++
++def test_sanitisation_spec_has_clean_tag():
++    path = os.path.join(SANITISATION_DIR, "sanitisation-spec.spec.ts")
++    content = open(path).read()
++    assert "@clean" in content, "spec missing @clean tag"
++
++
++def test_sanitisation_spec_has_leak_tags():
++    path = os.path.join(SANITISATION_DIR, "sanitisation-spec.spec.ts")
++    content = open(path).read()
++    for tag in ["@leak_manifest", "@leak_junit", "@leak_trace", "@leak_screenshot"]:
++        assert tag in content, f"spec missing {tag}"
++
++
++# ---------------------------------------------------------------------------
++# PW-I08: Evidence bundle and retention metadata
++# ---------------------------------------------------------------------------
++
++
++def test_bundle_dir_exists():
++    assert os.path.isdir(BUNDLE_DIR), f"Missing {BUNDLE_DIR}"
++
++
++def test_bundle_scripts_exist():
++    for name in ["bundle-assemble.py", "bundle-validate.py", "bundle-self-test.py"]:
++        path = os.path.join(BUNDLE_DIR, name)
++        assert os.path.isfile(path), f"Missing {path}"
++
++
++def test_bundle_assembler_requires_sanitisation():
++    path = os.path.join(BUNDLE_DIR, "bundle-assemble.py")
++    content = open(path).read()
++    assert "sanitise.sh" in content, "bundle assembler must invoke sanitisation gate"
++    assert "RETENTION_DAYS" in content, "bundle assembler lacks retention classes"
++    assert "sha256" in content, "bundle assembler lacks checksum inventory"
++
++
++def test_bundle_validator_checks_inventory():
++    path = os.path.join(BUNDLE_DIR, "bundle-validate.py")
++    content = open(path).read()
++    assert "inventory.json" in content, "bundle validator must require inventory"
++    assert "checksum mismatch" in content, "bundle validator must verify checksums"
++
++
++def test_bundle_self_test():
++    path = os.path.join(BUNDLE_DIR, "bundle-self-test.py")
++    result = subprocess.run([sys.executable, path], capture_output=True, text=True)
++    assert result.returncode == 0, f"bundle self-test failed: {result.stderr}"
++    assert "BUNDLE SELF-TEST PASSED" in result.stdout
++
++
+ # ---------------------------------------------------------------------------
+ # Test runner
+ # ---------------------------------------------------------------------------
+@@ -1321,6 +1464,25 @@ if __name__ == "__main__":
+         test_verify_artifacts_sh_exists,
+         test_verify_artifacts_sh_executable,
+         test_verify_artifacts_sh_fails_closed_no_validator,
++        test_sanitisation_dir_exists,
++        test_sanitise_sh_exists,
++        test_sanitise_sh_executable,
++        test_sanitise_patterns_txt_exists,
++        test_sanitise_patterns_txt_has_patterns,
++        test_sanitisation_fixture_dirs_exist,
++        test_sanitisation_clean_dir_has_files,
++        test_sanitisation_leak_dir_has_files,
++        test_sanitise_sh_rejects_leak,
++        test_sanitise_sh_passes_clean,
++        test_sanitise_sh_no_value_leak,
++        test_sanitisation_spec_exists,
++        test_sanitisation_spec_has_clean_tag,
++        test_sanitisation_spec_has_leak_tags,
++        test_bundle_dir_exists,
++        test_bundle_scripts_exist,
++        test_bundle_assembler_requires_sanitisation,
++        test_bundle_validator_checks_inventory,
++        test_bundle_self_test,
+     ]
+     failures = 0
+     for t in tests:
