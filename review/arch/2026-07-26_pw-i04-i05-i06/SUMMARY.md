@@ -24,7 +24,9 @@ tickets after PW-I03.
   and artifact self-tests (`artifact-self-test.spec.ts`)
 - Integration into `run.sh` for manifest generation and service-mode
   prerequisite checks
-- 114 static bootstrap tests (up from 90)
+- Post-run artifact verification harness (`verify-artifacts.sh`) with
+  screenshot and trace validation
+- 117 static bootstrap tests (up from 90)
 
 ## Not in Scope
 
@@ -36,4 +38,5 @@ tickets after PW-I03.
 
 - Homelab/Architecture#86 (PW-I04, merged)
 - Homelab/Architecture#87 (PW-I05, merged)
-- Homelab/Architecture#88 (PW-I06, open)
+- Homelab/Architecture#88 (PW-I06, merged)
+- Homelab/Architecture#89 (PW-I06 fix: artifact verification harness, merged)

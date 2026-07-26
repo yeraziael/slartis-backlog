@@ -24,10 +24,10 @@ index 0000000..ab6e3fc
 +});
 diff --git a/tests/playwright/evidence/artifacts/verify-artifacts.sh b/tests/playwright/evidence/artifacts/verify-artifacts.sh
 new file mode 100755
-index 0000000..d7717db
+index 0000000..c555d8a
 --- /dev/null
 +++ b/tests/playwright/evidence/artifacts/verify-artifacts.sh
-@@ -0,0 +1,119 @@
+@@ -0,0 +1,120 @@
 +#!/usr/bin/env bash
 +# PW-I06: verify-artifacts.sh — Post-run artifact verification harness.
 +# Runs @pass, @fail, and @fixture Playwright suites on clean result
@@ -124,7 +124,8 @@ index 0000000..d7717db
 +fi
 +
 +if [ -z "$FAIL_TRACES" ]; then
-+  echo "PW-I06: WARNING — no trace ZIP captured on failure (may be expected)" >&2
++  echo "PW-I06: FAIL — no trace ZIP captured on failure" >&2
++  CHECKS_FAILED=1
 +else
 +  echo "PW-I06: OK — fail run produced traces:" >&2
 +  echo "$FAIL_TRACES" >&2

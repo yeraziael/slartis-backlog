@@ -3,12 +3,12 @@ project: arch
 repository: Homelab/Architecture
 canonical_pr: 86
 base_commit: 3a4d341cdeafacb49902bd70a0dc7609af05e75a
-head_commit: cc54bb842ca653b82ebcf7d19541cb390923b66f
+head_commit: 5f2d04a9c4fe4d9d574003aec445b90136da7f03
 author: slarti
 change_request: "slarti/backlog#259, slarti/backlog#260, slarti/backlog#263"
 statistics:
   files_changed: 15
-  insertions: 1546
+  insertions: 1547
   deletions: 8
 review_scope:
   architecture: true
@@ -18,13 +18,13 @@ review_scope:
   compatibility: true
   documentation: true
 integrity:
-  changeset_sha256: 6d407362793cca7ea6dd58bef2b0b85e09b6aec142febc90913ecc4607d47d2c
+  changeset_sha256: 05c7b178a288c2ca8511b40f5fc441148ce2d5fdb0bc6e47d131a4e5cab9acca
 generated:
   timestamp: "2026-07-26T13:30:00+01:00"
   tool: "opencode/slarti"
 review_verdict:
   schema: acp.review-verdict.v2
-  reviewed_commit: cc54bb842ca653b82ebcf7d19541cb390923b66f
+  reviewed_commit: 5f2d04a9c4fe4d9d574003aec445b90136da7f03
   review_type: changeset-compliance
   review_basis: pull-request
   reviewer: slarti
@@ -32,5 +32,5 @@ review_verdict:
   blocking_findings: []
   remaining_followups:
     - "Real Docker platform test requires non-root Docker (rechenknecht)"
-  supersedes_review: null
-  review_timestamp: "2026-07-26T17:00:00+01:00"
+  supersedes_review: "yeraziael/slartis-backlog#97 (2026-07-26, head cc54bb8)"
+  review_timestamp: "2026-07-26T18:00:00+01:00"
