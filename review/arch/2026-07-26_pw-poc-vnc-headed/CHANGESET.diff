@@ -1,0 +1,830 @@
+diff --git a/.gitea/workflows/ci.yaml b/.gitea/workflows/ci.yaml
+index 90a0ebc..611ffa9 100644
+--- a/.gitea/workflows/ci.yaml
++++ b/.gitea/workflows/ci.yaml
+@@ -58,6 +58,8 @@ jobs:
+         run: bash pi/tests/test_audiobookshelf_proxy.sh
+       - name: playwright-bootstrap
+         run: python3 tests/test_playwright_bootstrap.py
++      - name: playwright-headed-contract
++        run: python3 tests/test_playwright_headed.py
+       - name: playwright-platform
+         if: false
+         run: bash tests/playwright/runner/run.sh
+diff --git a/.gitignore b/.gitignore
+index 7b02586..234aad2 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -2,4 +2,5 @@
+ *.token
+ *.log
+ /test-results/playwright/
++/test-results/playwright-headed/
+ /tests/playwright/node_modules/
+diff --git a/Makefile b/Makefile
+index 2b81fe9..037ea34 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,6 +1,6 @@
+ # Homelab Architecture – CI Checks (auto-generated from ci-manifest.yaml)
+ # shellcheck disable=all
+-.PHONY: check-compose check-git-diff check-links ci clean lint scan-secrets test test-all test-audiobookshelf-proxy test-checks test-ci-generator test-matrix-bridge-egress test-matrix-bridge-operations test-matrix-coturn test-matrix-hardening test-matrix-operations test-matrix-release-profile test-mautrix-facebook test-mautrix-instagram test-playwright-bootstrap test-playwright-platform test-synapse-active-appservices test-synapse-media-permissions
++.PHONY: check-compose check-git-diff check-links ci clean lint scan-secrets test test-all test-audiobookshelf-proxy test-checks test-ci-generator test-matrix-bridge-egress test-matrix-bridge-operations test-matrix-coturn test-matrix-hardening test-matrix-operations test-matrix-release-profile test-mautrix-facebook test-mautrix-instagram test-playwright-bootstrap test-playwright-headed-contract test-playwright-platform test-synapse-active-appservices test-synapse-media-permissions
+ 
+ check-compose:
+ 	bash scripts/check-compose.sh
+@@ -24,7 +24,7 @@ scan-secrets:
+ 	bash scripts/scan-secrets.sh
+ 
+ test:
+-	make test-checks test-ci-generator test-matrix-hardening test-synapse-media-permissions test-synapse-active-appservices test-matrix-coturn test-matrix-operations test-matrix-release-profile test-matrix-bridge-egress test-mautrix-facebook test-mautrix-instagram test-matrix-bridge-operations test-audiobookshelf-proxy test-playwright-bootstrap
++	make test-checks test-ci-generator test-matrix-hardening test-synapse-media-permissions test-synapse-active-appservices test-matrix-coturn test-matrix-operations test-matrix-release-profile test-matrix-bridge-egress test-mautrix-facebook test-mautrix-instagram test-matrix-bridge-operations test-audiobookshelf-proxy test-playwright-bootstrap test-playwright-headed-contract
+ 
+ test-all:
+ 	make lint test
+@@ -65,6 +65,9 @@ test-mautrix-instagram:
+ test-playwright-bootstrap:
+ 	python3 tests/test_playwright_bootstrap.py
+ 
++test-playwright-headed-contract:
++	python3 tests/test_playwright_headed.py
++
+ test-playwright-platform:
+ 	bash tests/playwright/runner/run.sh platform
+ 
+diff --git a/README.md b/README.md
+index bfa1277..2b8e29b 100644
+--- a/README.md
++++ b/README.md
+@@ -66,6 +66,16 @@ This repository documents every component of the Homelab system: services, agent
+ | Telegram Bot (Slarti) | `https://api.telegram.org/bot<TOKEN>/` |
+ | Signal CLI | `/opt/signal-cli/bin/signal-cli` |
+ 
++## Playwright Modes
++
++Playwright is available in two documented modes:
++
++- Headless CI/platform tests: `make test-playwright-platform`
++- Headed operator POC with Xvfb and VNC: `bash tools/playwright-headed/run.sh`
++
++Details and shutdown instructions are in
++`tests/playwright/README.md` and `tools/playwright-headed/README.md`.
++
+ ## Users
+ 
+ | User | UID | Role | Repos |
+diff --git a/ci-manifest.yaml b/ci-manifest.yaml
+index 1afb5d2..a5bffe8 100644
+--- a/ci-manifest.yaml
++++ b/ci-manifest.yaml
+@@ -175,6 +175,13 @@ stages:
+         timeout: 60s
+         tags: [playwright, bootstrap, contract]
+ 
++      - id: playwright-headed-contract
++        tool: python
++        target: tests/test_playwright_headed.py
++        quality_gate: exit_zero
++        timeout: 60s
++        tags: [playwright, headed, vnc, contract]
++
+       - id: playwright-platform
+         tool: bash
+         target: tests/playwright/runner/run.sh
+@@ -293,8 +300,9 @@ local_dev:
+     test-matrix-bridge-operations: bash pi/tests/test_matrix_bridge_operations.sh
+     test-audiobookshelf-proxy: bash pi/tests/test_audiobookshelf_proxy.sh
+     test-playwright-bootstrap: python3 tests/test_playwright_bootstrap.py
++    test-playwright-headed-contract: python3 tests/test_playwright_headed.py
+     test-playwright-platform: bash tests/playwright/runner/run.sh platform
+-    test: make test-checks test-ci-generator test-matrix-hardening test-synapse-media-permissions test-synapse-active-appservices test-matrix-coturn test-matrix-operations test-matrix-release-profile test-matrix-bridge-egress test-mautrix-facebook test-mautrix-instagram test-matrix-bridge-operations test-audiobookshelf-proxy test-playwright-bootstrap
++    test: make test-checks test-ci-generator test-matrix-hardening test-synapse-media-permissions test-synapse-active-appservices test-matrix-coturn test-matrix-operations test-matrix-release-profile test-matrix-bridge-egress test-mautrix-facebook test-mautrix-instagram test-matrix-bridge-operations test-audiobookshelf-proxy test-playwright-bootstrap test-playwright-headed-contract
+     test-all: make lint test
+     ci: make lint test
+     clean: rm -rf reports/ logs/
+diff --git a/docs/decisions/playwright/runner-bootstrap.md b/docs/decisions/playwright/runner-bootstrap.md
+index 271bb25..8c4e6fd 100644
+--- a/docs/decisions/playwright/runner-bootstrap.md
++++ b/docs/decisions/playwright/runner-bootstrap.md
+@@ -34,6 +34,14 @@ browsers.
+ The Gitea Actions runner and the Architecture workstation are linux/amd64. The
+ Pi5 is not a browser runner and is outside this decision.
+ 
++## Operator-Observable POC
++
++The headless runner remains the standard local/CI contract. The separate
++`tools/playwright-headed/` POC extends the same pinned base image with Xvfb and
++x11vnc so an operator can observe Chromium through a password-protected VNC
++connection. It is an ephemeral, explicitly started operator workflow, not a
++persistent browser service and not a replacement for the headless CI runner.
++
+ ## Decision Summary
+ 
+ | Concern | Decision |
+diff --git a/tests/playwright/README.md b/tests/playwright/README.md
+index 3997f89..8b159fb 100644
+--- a/tests/playwright/README.md
++++ b/tests/playwright/README.md
+@@ -19,6 +19,21 @@ Or directly:
+ bash tests/playwright/runner/run.sh platform
+ ```
+ 
++## Execution Modes
++
++The repository has two deliberate execution modes:
++
++| Mode | Entry point | Behavior |
++|---|---|---|
++| Headless test runner | `make test-playwright-platform` | Ephemeral Docker test run without a visible display; used by CI and platform tests. |
++| Headed operator POC | `bash tools/playwright-headed/run.sh` | Chromium on Xvfb with password-protected VNC; readiness is reported locally and through Telegram. |
++
++The headless mode is the default for `playwright.config.ts`. The headed POC is
++separate from the CI runner, uses the same pinned Playwright base image, and is
++intended for observable operator workflows. It is not a persistent production
++browser service. See `tools/playwright-headed/README.md` for VNC access,
++round-trip behavior, shutdown, and configuration.
++
+ ## Architecture
+ 
+ - `runner/run.sh` — Docker wrapper (dependency + test phases)
+@@ -27,6 +42,7 @@ bash tests/playwright/runner/run.sh platform
+ - `playwright.config.ts` — Chromium-only Playwright config
+ - `platform/self-test.spec.ts` — Chromium startup and browser-state isolation tests
+ - `platform/fixtures/local-page.html` — Controlled local page for self-tests
++- `../tools/playwright-headed/` — Operator-observable headed/VNC POC
+ 
+ ## Evidence Bundles
+ 
+diff --git a/tests/playwright/automation/repeat-endpoints.mjs b/tests/playwright/automation/repeat-endpoints.mjs
+new file mode 100644
+index 0000000..17579e4
+--- /dev/null
++++ b/tests/playwright/automation/repeat-endpoints.mjs
+@@ -0,0 +1,153 @@
++import { chromium } from "playwright";
++
++const DEFAULT_ENDPOINTS = [
++  "https://auth.hl.maier.wtf/",
++  "https://audiobookshelf.hl.maier.wtf/",
++  "https://cwa.hl.maier.wtf/",
++  "https://element.hl.maier.wtf/",
++  "https://gitea.hl.maier.wtf/",
++  "https://gitea-mcp.hl.maier.wtf/",
++  "https://matrix.hl.maier.wtf/",
++  "https://pprls.hl.maier.wtf/",
++  "https://pprlsf.hl.maier.wtf/",
++];
++
++const DISPLAY_SECONDS = Number.parseInt(
++  process.env.DISPLAY_SECONDS ?? "10",
++  10,
++);
++const ROUNDS = Number.parseInt(process.env.ENDPOINT_ROUNDS ?? "10", 10);
++const DISPLAY_MS = DISPLAY_SECONDS * 1000;
++const NAVIGATION_TIMEOUT_MS = Math.min(
++  8_000,
++  Math.max(1_000, DISPLAY_MS - 500),
++);
++const ENDPOINTS = (process.env.PUBLIC_ENDPOINTS ?? DEFAULT_ENDPOINTS.join("\n"))
++  .split(/\s+/)
++  .filter(Boolean)
++  .map((endpoint) => {
++    const url = new URL(endpoint);
++    if (url.protocol !== "https:" || !url.hostname.endsWith(".hl.maier.wtf")) {
++      throw new Error(`Endpoint is not a public Homelab HTTPS FQDN: ${endpoint}`);
++    }
++    return url.toString();
++  });
++
++if (!Number.isInteger(DISPLAY_SECONDS) || DISPLAY_SECONDS < 1) {
++  throw new Error("DISPLAY_SECONDS must be a positive integer");
++}
++if (!Number.isInteger(ROUNDS) || ROUNDS < 1) {
++  throw new Error("ENDPOINT_ROUNDS must be a positive integer");
++}
++if (ENDPOINTS.length === 0) {
++  throw new Error("PUBLIC_ENDPOINTS must contain at least one endpoint");
++}
++
++let stopping = false;
++let resolveStop;
++const stopRequested = new Promise((resolve) => {
++  resolveStop = resolve;
++});
++
++function requestStop(signal) {
++  if (stopping) {
++    return;
++  }
++  stopping = true;
++  console.log(`Stop signal ${signal} received; closing the browser.`);
++  resolveStop();
++}
++
++process.once("SIGTERM", () => requestStop("SIGTERM"));
++process.once("SIGINT", () => requestStop("SIGINT"));
++
++function escapeHtml(value) {
++  return value.replace(
++    /[&<>'"]/g,
++    (character) =>
++      ({
++        "&": "&amp;",
++        "<": "&lt;",
++        ">": "&gt;",
++        "'": "&#39;",
++        '"': "&quot;",
++      })[character],
++  );
++}
++
++async function waitForSlot(milliseconds) {
++  if (milliseconds <= 0) {
++    return;
++  }
++  await Promise.race([
++    new Promise((resolve) => setTimeout(resolve, milliseconds)),
++    stopRequested,
++  ]);
++}
++
++async function showEndpoint(context, page, endpoint, round, index) {
++  const slotStartedAt = Date.now();
++  console.log(
++    `Round ${round}/${ROUNDS}, endpoint ${index + 1}/${ENDPOINTS.length}: ${endpoint}`,
++  );
++
++  try {
++    await page.goto(endpoint, {
++      waitUntil: "domcontentloaded",
++      timeout: NAVIGATION_TIMEOUT_MS,
++    });
++    console.log(`Loaded ${await page.title()}`);
++  } catch (error) {
++    const message = error instanceof Error ? error.message : String(error);
++    console.error(`Endpoint failed: ${message}`);
++    const errorPage = `
++      <main style="font: 24px sans-serif; padding: 4rem">
++        <h1>Endpoint unavailable</h1>
++        <p>${escapeHtml(endpoint)}</p>
++        <pre>${escapeHtml(message)}</pre>
++      </main>
++    `;
++    try {
++      await page.close();
++      page = await context.newPage();
++      await page.setContent(errorPage);
++    } catch (renderError) {
++      console.error(`Could not render endpoint error page: ${renderError.message}`);
++    }
++  }
++
++  const remainingMs = DISPLAY_MS - (Date.now() - slotStartedAt);
++  await waitForSlot(remainingMs);
++  return page;
++}
++
++async function main() {
++  const browser = await chromium.launch({
++    headless: false,
++    args: ["--no-sandbox"],
++  });
++  const context = await browser.newContext({
++    locale: "de-DE",
++    viewport: { width: 1920, height: 1080 },
++  });
++  let page = await context.newPage();
++
++  try {
++    for (let round = 1; round <= ROUNDS && !stopping; round += 1) {
++      for (let index = 0; index < ENDPOINTS.length && !stopping; index += 1) {
++        page = await showEndpoint(context, page, ENDPOINTS[index], round, index);
++      }
++    }
++    if (!stopping) {
++      console.log(`Completed ${ROUNDS} endpoint rounds.`);
++    }
++  } finally {
++    await browser.close();
++    console.log("Playwright endpoint loop stopped.");
++  }
++}
++
++main().catch((error) => {
++  console.error(error);
++  process.exitCode = 1;
++});
+diff --git a/tests/playwright/playwright.config.ts b/tests/playwright/playwright.config.ts
+index 3ad0874..cc744cf 100644
+--- a/tests/playwright/playwright.config.ts
++++ b/tests/playwright/playwright.config.ts
+@@ -10,7 +10,7 @@ export default defineConfig({
+       name: "chromium",
+       use: {
+         channel: undefined,
+-        headless: true,
++        headless: process.env.PLAYWRIGHT_HEADLESS !== "false",
+         screenshot: "only-on-failure",
+         trace: "retain-on-failure",
+       },
+diff --git a/tests/test_playwright_headed.py b/tests/test_playwright_headed.py
+new file mode 100644
+index 0000000..e1c759e
+--- /dev/null
++++ b/tests/test_playwright_headed.py
+@@ -0,0 +1,120 @@
++#!/usr/bin/env python3
++"""Contract tests for the observable, repeating Playwright POC runner."""
++
++from pathlib import Path
++import subprocess
++
++
++REPO_ROOT = Path(__file__).resolve().parent.parent
++TOOL_DIR = REPO_ROOT / "tools" / "playwright-headed"
++RUNNER = TOOL_DIR / "run.sh"
++ENDPOINT_LOOP = REPO_ROOT / "tests" / "playwright" / "automation" / "repeat-endpoints.mjs"
++ENTRYPOINT = TOOL_DIR / "entrypoint.sh"
++README = TOOL_DIR / "README.md"
++PLATFORM_README = REPO_ROOT / "tests" / "playwright" / "README.md"
++ROOT_README = REPO_ROOT / "README.md"
++
++
++def read(path: Path) -> str:
++    return path.read_text(encoding="utf-8")
++
++
++def test_headed_image_contains_display_and_vnc_services():
++    dockerfile = read(TOOL_DIR / "Dockerfile")
++
++    assert "xvfb" in dockerfile
++    assert "x11vnc" in dockerfile
++    assert "EXPOSE 5900" in dockerfile
++
++
++def test_entrypoint_starts_virtual_display_and_forwards_signals():
++    entrypoint = read(ENTRYPOINT)
++
++    assert "Xvfb \"${DISPLAY}\"" in entrypoint
++    assert "x11vnc" in entrypoint
++    assert "VNC_ENABLED" in entrypoint
++    assert 'kill -TERM "${CHILD_PID}"' in entrypoint
++
++
++def test_endpoint_loop_contains_public_fqdns_and_round_contract():
++    endpoint_loop = read(ENDPOINT_LOOP)
++
++    for endpoint in (
++        "https://auth.hl.maier.wtf/",
++        "https://audiobookshelf.hl.maier.wtf/",
++        "https://cwa.hl.maier.wtf/",
++        "https://element.hl.maier.wtf/",
++        "https://gitea.hl.maier.wtf/",
++        "https://gitea-mcp.hl.maier.wtf/",
++        "https://matrix.hl.maier.wtf/",
++        "https://pprls.hl.maier.wtf/",
++        "https://pprlsf.hl.maier.wtf/",
++    ):
++        assert endpoint in endpoint_loop
++
++    assert "ENDPOINT_ROUNDS" in endpoint_loop
++    assert "for (let round = 1; round <= ROUNDS" in endpoint_loop
++    assert "waitForSlot" in endpoint_loop
++    assert 'process.once("SIGTERM"' in endpoint_loop
++    assert 'process.once("SIGINT"' in endpoint_loop
++    assert "headless: false" in endpoint_loop
++
++
++def test_runner_waits_for_vnc_and_notifies_telegram():
++    runner = read(RUNNER)
++
++    assert "docker run -d" in runner
++    assert "--name \"${CONTAINER_NAME}\"" in runner
++    assert "nc -z" in runner
++    assert "api.telegram.org/bot" in runner
++    assert "sendMessage" in runner
++    assert "VNC_HOST_PORT" in runner
++    assert "repeat-endpoints.mjs" in runner
++
++
++def test_runner_is_shellcheckable_and_documented():
++    result = subprocess.run(
++        ["bash", "-n", str(RUNNER), str(ENTRYPOINT)],
++        capture_output=True,
++        text=True,
++        check=False,
++    )
++
++    assert result.returncode == 0, result.stderr
++    documentation = read(README)
++    assert "docker stop playwright-headed-poc" in documentation
++    assert "Telegram" in documentation
++
++
++def test_documentation_describes_headless_and_vnc_modes():
++    platform_documentation = read(PLATFORM_README)
++    root_documentation = read(ROOT_README)
++
++    assert "make test-playwright-platform" in platform_documentation
++    assert "bash tools/playwright-headed/run.sh" in platform_documentation
++    assert "headless" in platform_documentation.lower()
++    assert "VNC" in platform_documentation
++    assert "tests/playwright/README.md" in root_documentation
++    assert "tools/playwright-headed/README.md" in root_documentation
++
++
++if __name__ == "__main__":
++    tests = [
++        test_headed_image_contains_display_and_vnc_services,
++        test_entrypoint_starts_virtual_display_and_forwards_signals,
++        test_endpoint_loop_contains_public_fqdns_and_round_contract,
++        test_runner_waits_for_vnc_and_notifies_telegram,
++        test_runner_is_shellcheckable_and_documented,
++        test_documentation_describes_headless_and_vnc_modes,
++    ]
++    failures = 0
++    for test in tests:
++        try:
++            test()
++            print(f"  PASS  {test.__name__}")
++        except Exception as error:  # noqa: BLE001 - keep the standalone harness simple
++            print(f"  FAIL  {test.__name__}: {error}")
++            failures += 1
++    if failures:
++        raise SystemExit(failures)
++    print(f"headed Playwright contract tests: ALL {len(tests)} PASS")
+diff --git a/tools/playwright-headed/Dockerfile b/tools/playwright-headed/Dockerfile
+new file mode 100644
+index 0000000..2c092db
+--- /dev/null
++++ b/tools/playwright-headed/Dockerfile
+@@ -0,0 +1,22 @@
++FROM mcr.microsoft.com/playwright:v1.61.1-noble@sha256:cf0daee9b994042e011bc29f20cdff1a9f682a039b43fcd738f7d8a9d3bcd9d6
++
++RUN apt-get update && apt-get install -y --no-install-recommends \
++    xvfb \
++    x11vnc \
++    && rm -rf /var/lib/apt/lists/*
++
++WORKDIR /opt/playwright
++COPY tests/playwright/package.json tests/playwright/package-lock.json ./
++RUN npm ci --ignore-scripts --no-audit --no-fund
++COPY tests/playwright/automation/repeat-endpoints.mjs ./repeat-endpoints.mjs
++
++ENV DISPLAY=:99
++ENV VNC_ENABLED=true
++ENV VNC_PORT=5900
++ENV VNC_PASSWORD=
++
++EXPOSE 5900
++
++COPY tools/playwright-headed/entrypoint.sh /entrypoint.sh
++
++ENTRYPOINT ["/entrypoint.sh"]
+diff --git a/tools/playwright-headed/README.md b/tools/playwright-headed/README.md
+new file mode 100644
+index 0000000..857467f
+--- /dev/null
++++ b/tools/playwright-headed/README.md
+@@ -0,0 +1,69 @@
++# Playwright Headed POC
++
++This POC runs Chromium in headed mode on Xvfb and exposes the virtual display
++through password-protected VNC. The default command cycles through these public
++Homelab HTTPS FQDNs, leaves each page visible for ten seconds, and completes
++ten full rounds:
++
++- `https://auth.hl.maier.wtf/`
++- `https://audiobookshelf.hl.maier.wtf/`
++- `https://cwa.hl.maier.wtf/`
++- `https://element.hl.maier.wtf/`
++- `https://gitea.hl.maier.wtf/`
++- `https://gitea-mcp.hl.maier.wtf/`
++- `https://matrix.hl.maier.wtf/`
++- `https://pprls.hl.maier.wtf/`
++- `https://pprlsf.hl.maier.wtf/`
++
++## Start
++
++From the repository root:
++
++```bash
++bash tools/playwright-headed/run.sh
++```
++
++The runner builds the pinned image when necessary, starts the container in the
++background, waits until the VNC TCP port accepts connections, and sends the
++connection details to the configured Telegram chat. It also prints the same
++details locally.
++
++Connect with a VNC client to the printed `vnc://` address. Stop the repeating
++task with:
++
++```bash
++docker stop playwright-headed-poc
++```
++
++Follow the browser task log with:
++
++```bash
++docker logs -f playwright-headed-poc
++```
++
++## Configuration
++
++- `VNC_ADVERTISE_HOST` - host shown in the VNC address; defaults to `192.168.2.211`
++- `VNC_BIND_IP` - host address to which Docker binds VNC; defaults to `192.168.2.211`
++- `VNC_HOST_PORT` - fixed host port; otherwise the first free port from 5900-5999
++- `VNC_PASSWORD` - password; otherwise an eight-character random password is generated
++- `DISPLAY_SECONDS` - display duration; defaults to `10`
++- `ENDPOINT_ROUNDS` - number of complete rounds; defaults to `10`
++- `PUBLIC_ENDPOINTS` - optional whitespace-separated HTTPS FQDN override
++- `TELEGRAM_TOKEN_FILE` - token path; defaults to `~/.creds/telegram_slarti.token`
++- `TELEGRAM_CHAT_ID` - destination chat; defaults to `163442721`
++- `FORCE_BUILD=true` - rebuild the image even when the tag already exists
++
++The Telegram token and VNC password are runtime inputs only and are not stored
++in the repository.
++
++## Headless Counterpart
++
++For CI and non-interactive platform tests, use the separate headless runner:
++
++```bash
++make test-playwright-platform
++```
++
++The headless runner is the standard test path. This directory adds only the
++operator-observable Xvfb/VNC path and does not replace the headless CI contract.
+diff --git a/tools/playwright-headed/entrypoint.sh b/tools/playwright-headed/entrypoint.sh
+new file mode 100755
+index 0000000..d22e1e1
+--- /dev/null
++++ b/tools/playwright-headed/entrypoint.sh
+@@ -0,0 +1,92 @@
++#!/usr/bin/env bash
++set -Eeuo pipefail
++
++DISPLAY="${DISPLAY:-:99}"
++VNC_ENABLED="${VNC_ENABLED:-true}"
++VNC_PORT="${VNC_PORT:-5900}"
++XVFB_SCREEN="${XVFB_SCREEN:-1920x1080x24}"
++
++XVFB_PID=""
++VNC_PID=""
++CHILD_PID=""
++PASSWORD_FILE=""
++
++cleanup() {
++    local status=$?
++    trap - EXIT INT TERM
++
++    if [[ -n "${VNC_PID}" ]] && kill -0 "${VNC_PID}" 2>/dev/null; then
++        kill "${VNC_PID}" 2>/dev/null || true
++        wait "${VNC_PID}" 2>/dev/null || true
++    fi
++    if [[ -n "${XVFB_PID}" ]] && kill -0 "${XVFB_PID}" 2>/dev/null; then
++        kill "${XVFB_PID}" 2>/dev/null || true
++        wait "${XVFB_PID}" 2>/dev/null || true
++    fi
++    if [[ -n "${PASSWORD_FILE}" ]]; then
++        rm -f "${PASSWORD_FILE}"
++    fi
++    exit "${status}"
++}
++
++forward_signal() {
++    if [[ -n "${CHILD_PID}" ]] && kill -0 "${CHILD_PID}" 2>/dev/null; then
++        kill -TERM "${CHILD_PID}" 2>/dev/null || true
++    fi
++}
++
++trap cleanup EXIT
++trap forward_signal INT TERM
++
++Xvfb "${DISPLAY}" -screen 0 "${XVFB_SCREEN}" -nolisten tcp &
++XVFB_PID=$!
++
++DISPLAY_NUMBER="${DISPLAY#:}"
++for _ in $(seq 1 20); do
++    if [[ -S "/tmp/.X11-unix/X${DISPLAY_NUMBER}" ]]; then
++        break
++    fi
++    if ! kill -0 "${XVFB_PID}" 2>/dev/null; then
++        echo "Xvfb exited before the display became ready" >&2
++        exit 1
++    fi
++    sleep 0.1
++done
++
++if [[ ! -S "/tmp/.X11-unix/X${DISPLAY_NUMBER}" ]]; then
++    echo "Display ${DISPLAY} did not become ready" >&2
++    exit 1
++fi
++
++if [[ "${VNC_ENABLED}" == "true" ]]; then
++    if [[ -z "${VNC_PASSWORD:-}" ]]; then
++        echo "VNC_PASSWORD is required when VNC_ENABLED=true" >&2
++        exit 2
++    fi
++
++    PASSWORD_FILE="$(mktemp)"
++    chmod 600 "${PASSWORD_FILE}"
++    printf '%s\n' "${VNC_PASSWORD}" > "${PASSWORD_FILE}"
++    x11vnc \
++        -display "${DISPLAY}" \
++        -rfbport "${VNC_PORT}" \
++        -passwdfile "${PASSWORD_FILE}" \
++        -forever \
++        -shared \
++        -noxdamage \
++        -quiet &
++    VNC_PID=$!
++fi
++
++if [[ "$#" -eq 0 ]]; then
++    echo "No container command supplied" >&2
++    exit 2
++fi
++
++"$@" &
++CHILD_PID=$!
++set +e
++wait "${CHILD_PID}"
++CHILD_STATUS=$?
++set -e
++exit "${CHILD_STATUS}"
+diff --git a/tools/playwright-headed/run.sh b/tools/playwright-headed/run.sh
+new file mode 100644
+index 0000000..02fb566
+--- /dev/null
++++ b/tools/playwright-headed/run.sh
+@@ -0,0 +1,168 @@
++#!/usr/bin/env bash
++set -Eeuo pipefail
++
++IMAGE_NAME="homelab/playwright-headed"
++IMAGE_TAG="v1.61.1-noble-poc"
++FULL_IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
++
++SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
++REPOSITORY_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
++RESULTS_DIR="${REPOSITORY_ROOT}/test-results/playwright-headed"
++
++CONTAINER_NAME="${PLAYWRIGHT_CONTAINER_NAME:-playwright-headed-poc}"
++VNC_ADVERTISE_HOST="${VNC_ADVERTISE_HOST:-192.168.2.211}"
++VNC_BIND_IP="${VNC_BIND_IP:-192.168.2.211}"
++VNC_CHECK_HOST="${VNC_CHECK_HOST:-${VNC_ADVERTISE_HOST}}"
++VNC_HOST_PORT="${VNC_HOST_PORT:-}"
++if [[ -z "${VNC_PASSWORD:-}" ]]; then
++    printf -v VNC_PASSWORD '%s' "$(openssl rand -hex 4)"
++fi
++DISPLAY_SECONDS="${DISPLAY_SECONDS:-10}"
++ENDPOINT_ROUNDS="${ENDPOINT_ROUNDS:-10}"
++TELEGRAM_TOKEN_FILE="${TELEGRAM_TOKEN_FILE:-${HOME}/.creds/telegram_slarti.token}"
++TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:-163442721}"
++
++die() {
++    echo "ERROR: $*" >&2
++    exit 1
++}
++
++build_image() {
++    if [[ "${FORCE_BUILD:-false}" != "true" ]] && docker image inspect "${FULL_IMAGE}" >/dev/null 2>&1; then
++        echo "Image ${FULL_IMAGE} existiert bereits"
++        return 0
++    fi
++    echo "Baue Image ${FULL_IMAGE} ..."
++    docker build -f "${SCRIPT_DIR}/Dockerfile" -t "${FULL_IMAGE}" "${REPOSITORY_ROOT}"
++}
++
++pick_port() {
++    local port listeners
++    for port in $(seq 5900 5999); do
++        listeners="$(ss -H -ltn "sport = :${port}" 2>/dev/null || true)"
++        if [[ -z "${listeners}" ]]; then
++            echo "${port}"
++            return 0
++        fi
++    done
++    die "Kein freier VNC-Port zwischen 5900 und 5999"
++}
++
++wait_for_vnc() {
++    local attempt state
++    for attempt in $(seq 1 30); do
++        if nc -z -w 1 "${VNC_CHECK_HOST}" "${VNC_HOST_PORT}" 2>/dev/null; then
++            return 0
++        fi
++        state="$(docker inspect --format '{{.State.Running}}' "${CONTAINER_NAME}" 2>/dev/null || true)"
++        if [[ "${state}" != "true" ]]; then
++            echo "Container ist vor VNC-Readiness beendet:" >&2
++            docker logs --tail 40 "${CONTAINER_NAME}" 2>&1 || true
++            return 1
++        fi
++        sleep 1
++    done
++    echo "VNC-Port ${VNC_CHECK_HOST}:${VNC_HOST_PORT} wurde nach ${attempt} Versuchen nicht bereit" >&2
++    docker logs --tail 40 "${CONTAINER_NAME}" 2>&1 || true
++    return 1
++}
++
++send_telegram() {
++    local message="$1" token response_file
++    if [[ ! -r "${TELEGRAM_TOKEN_FILE}" ]]; then
++        echo "WARN: Telegram-Token nicht lesbar: ${TELEGRAM_TOKEN_FILE}" >&2
++        return 0
++    fi
++    IFS= read -r token < "${TELEGRAM_TOKEN_FILE}" || true
++    if [[ -z "${token}" ]]; then
++        echo "WARN: Telegram-Token ist leer" >&2
++        return 0
++    fi
++    if ! command -v curl >/dev/null 2>&1; then
++        echo "WARN: curl fehlt; Telegram-Benachrichtigung uebersprungen" >&2
++        return 0
++    fi
++
++    response_file="$(mktemp)"
++    if ! curl --fail --silent --show-error --max-time 15 \
++        --url "https://api.telegram.org/bot${token}/sendMessage" \
++        --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
++        --data-urlencode "text=${message}" \
++        > "${response_file}"; then
++        echo "WARN: Telegram-Benachrichtigung konnte nicht gesendet werden" >&2
++    fi
++    rm -f "${response_file}"
++}
++
++command -v docker >/dev/null 2>&1 || die "docker fehlt"
++command -v nc >/dev/null 2>&1 || die "nc fehlt"
++command -v openssl >/dev/null 2>&1 || die "openssl fehlt"
++
++if docker container inspect "${CONTAINER_NAME}" >/dev/null 2>&1; then
++    die "Container ${CONTAINER_NAME} existiert bereits; zuerst docker stop ${CONTAINER_NAME} ausfuehren"
++fi
++
++if [[ -z "${VNC_HOST_PORT}" ]]; then
++    VNC_HOST_PORT="$(pick_port)"
++fi
++[[ "${VNC_HOST_PORT}" =~ ^[0-9]+$ ]] || die "VNC_HOST_PORT muss numerisch sein"
++
++mkdir -p "${RESULTS_DIR}"
++build_image
++
++ENV_FILE="$(mktemp)"
++chmod 600 "${ENV_FILE}"
++trap 'rm -f "${ENV_FILE}"' EXIT
++printf 'VNC_PASSWORD=%s\n' "${VNC_PASSWORD}" > "${ENV_FILE}"
++
++if [[ "$#" -eq 0 ]]; then
++    CONTAINER_COMMAND=(
++        node
++        /opt/playwright/repeat-endpoints.mjs
++    )
++else
++    CONTAINER_COMMAND=("$@")
++fi
++
++CONTAINER_ID="$(docker run -d --rm \
++    --name "${CONTAINER_NAME}" \
++    --init \
++    --shm-size=2g \
++    --platform linux/amd64 \
++    --network bridge \
++    --cap-drop ALL \
++    --security-opt no-new-privileges:true \
++    --tmpfs /tmp:rw,nosuid,nodev,size=512m,mode=1777 \
++    --mount "type=bind,src=${REPOSITORY_ROOT},dst=/workspace,readonly" \
++    --mount "type=bind,src=${RESULTS_DIR},dst=/results" \
++    --publish "${VNC_BIND_IP}:${VNC_HOST_PORT}:5900" \
++    --env-file "${ENV_FILE}" \
++    --env DISPLAY=:99 \
++    --env VNC_ENABLED=true \
++    --env VNC_PORT=5900 \
++    --env PLAYWRIGHT_HEADLESS=false \
++    --env DISPLAY_SECONDS="${DISPLAY_SECONDS}" \
++    --env ENDPOINT_ROUNDS="${ENDPOINT_ROUNDS}" \
++    --env PLAYWRIGHT_RESULTS_DIR=/results/out \
++    --workdir /workspace \
++    "${FULL_IMAGE}" \
++    "${CONTAINER_COMMAND[@]}")" || die "Container konnte nicht gestartet werden"
++
++if ! wait_for_vnc; then
++    docker stop "${CONTAINER_NAME}" >/dev/null 2>&1 || true
++    exit 1
++fi
++
++CONNECTION_MESSAGE="$(printf '%s\n%s\n%s\n%s\n%s\n%s' \
++    'Playwright Headed ist bereit.' \
++    "VNC: vnc://${VNC_ADVERTISE_HOST}:${VNC_HOST_PORT}" \
++    "Passwort: ${VNC_PASSWORD}" \
++    "Container: ${CONTAINER_NAME}" \
++    "Stoppen: docker stop ${CONTAINER_NAME}" \
++    "Der Endpoint-Loop zeigt jeden oeffentlichen FQDN ${DISPLAY_SECONDS} Sekunden und beendet sich nach ${ENDPOINT_ROUNDS} Runden.")"
++
++echo ""
++echo "${CONNECTION_MESSAGE}"
++echo "Container-ID: ${CONTAINER_ID}"
++echo "Logs: docker logs -f ${CONTAINER_NAME}"
++send_telegram "${CONNECTION_MESSAGE}"

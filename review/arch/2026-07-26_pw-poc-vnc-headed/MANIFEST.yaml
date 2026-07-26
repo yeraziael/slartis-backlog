@@ -1,0 +1,38 @@
+manifest_version: v2
+project: arch
+repository: Homelab/Architecture
+canonical_pr: 96
+base_commit: b9f1c7df832b1be1e75019ba4881d1a524a4aa5d
+head_commit: 6eb1a8117a0ecd7453a73de90d267e8547d4a782
+author: slarti
+change_request: Homelab/Architecture#96; follow-up #99
+statistics:
+  files_changed: 14
+  insertions: 676
+  deletions: 4
+review_scope:
+  architecture: true
+  implementation: true
+  governance: false
+  security: true
+  compatibility: true
+  documentation: true
+integrity:
+  changeset_sha256: f2cab16595c63581c50b3d2db5b30f8c76395e722ce69aac6caff9e0e02d11ef
+generated:
+  timestamp: '2026-07-26T20:31:00+01:00'
+  tool: opencode/slarti
+review_verdict:
+  schema: acp.review-verdict.v2
+  reviewed_commit: 6eb1a8117a0ecd7453a73de90d267e8547d4a782
+  review_type: self-verification
+  review_basis: working-copy
+  reviewer: slarti
+  verdict: consistency-verified
+  blocking_findings: []
+  remaining_followups:
+    - Independent review is still required; this self-verification has no external review authority.
+    - gitea-mcp.hl.maier.wtf returned a TLS error during the runtime smoke test.
+    - A full ten-round runtime run was not repeated after the final fresh-tab correction.
+  supersedes_review: null
+  review_timestamp: '2026-07-26T20:32:40+01:00'
