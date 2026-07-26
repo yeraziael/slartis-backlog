@@ -47,24 +47,24 @@ index 0000000..694069e
 \ No newline at end of file
 diff --git a/tests/playwright/services/audiobookshelf/pages/oidc.page.ts b/tests/playwright/services/audiobookshelf/pages/oidc.page.ts
 new file mode 100644
-index 0000000..a3afb31
+index 0000000..49ad584
 --- /dev/null
 +++ b/tests/playwright/services/audiobookshelf/pages/oidc.page.ts
-@@ -0,0 +1,49 @@
+@@ -0,0 +1,65 @@
 +import { Page } from "@playwright/test";
 +
 +export class OidcPage {
 +  readonly page: Page;
 +  readonly loginUrl: string;
 +  readonly logoutUrl: string;
-+  readonly callbackUrl: string;
++  readonly absHost: string;
 +
 +  constructor(page: Page) {
 +    this.page = page;
 +    this.loginUrl = "https://audiobookshelf.hl.maier.wtf/";
 +    this.logoutUrl =
 +      "https://auth.hl.maier.wtf/realms/homelab/protocol/openid-connect/logout";
-+    this.callbackUrl = "https://audiobookshelf.hl.maier.wtf/auth/openid/callback";
++    this.absHost = "https://audiobookshelf.hl.maier.wtf";
 +  }
 +
 +  async navigateToLogin(): Promise<void> {
@@ -84,8 +84,8 @@ index 0000000..a3afb31
 +    await this.page.getByRole("button", { name: /sign in/i }).click();
 +  }
 +
-+  async waitForCallback(): Promise<void> {
-+    await this.page.waitForURL(this.callbackUrl, { timeout: 15_000 });
++  async waitForAbsLanding(): Promise<void> {
++    await this.page.waitForURL(`${this.absHost}/**`, { timeout: 15_000 });
 +  }
 +
 +  async redirectToLogout(): Promise<void> {
@@ -94,25 +94,51 @@ index 0000000..a3afb31
 +
 +  async performRpInitiatedLogout(): Promise<void> {
 +    const logoutLink = this.page.getByRole("link", { name: /logout/i });
-+    if ((await logoutLink.count()) > 0) {
-+      await logoutLink.click();
-+      await this.page.waitForURL(/logout|login/, { timeout: 10_000 });
++    const count = await logoutLink.count();
++    if (count === 0) {
++      throw new Error(
++        "RP-initiated logout: no logout link found on current page. " +
++        "The session may not be authenticated or ABS logout UI has changed.",
++      );
 +    }
++    await logoutLink.click();
++    await this.page.waitForURL(/logout|login/, { timeout: 10_000 });
++  }
++
++  async isKeycloakErrorVisible(): Promise<boolean> {
++    const errorAlert = this.page.locator(
++      '[class*="error"], [class*="alert"], .kc-error-message, #kc-error-msg',
++    );
++    return (await errorAlert.count()) > 0;
++  }
++
++  async getCurrentHost(): Promise<string> {
++    return new URL(this.page.url()).host;
 +  }
 +}
-\ No newline at end of file
 diff --git a/tests/playwright/services/audiobookshelf/smoke-authenticated.spec.ts b/tests/playwright/services/audiobookshelf/smoke-authenticated.spec.ts
 new file mode 100644
-index 0000000..3600393
+index 0000000..fe23198
 --- /dev/null
 +++ b/tests/playwright/services/audiobookshelf/smoke-authenticated.spec.ts
-@@ -0,0 +1,87 @@
+@@ -0,0 +1,116 @@
 +import { test, expect } from "@playwright/test";
 +import { OidcPage } from "./pages/oidc.page";
 +import { LibraryPage } from "./pages/library.page";
 +
 +const ABS_BASE = "https://audiobookshelf.hl.maier.wtf";
-+const ABS_LOGIN = "https://audiobookshelf.hl.maier.wtf/login";
++
++function requireCredentials(): { username: string; password: string } {
++  const username = process.env.PW_E2E_ABS_USER;
++  const password = process.env.PW_E2E_ABS_PASSWORD;
++  if (!username || !password) {
++    throw new Error(
++      "PW_E2E_ABS_USER and PW_E2E_ABS_PASSWORD must be set " +
++      "for authenticated smoke tests. Skipping.",
++    );
++  }
++  return { username, password };
++}
 +
 +test.describe("PW-I13: Audiobookshelf authenticated login and logout smoke", () => {
 +  let oidc: OidcPage;
@@ -124,13 +150,12 @@ index 0000000..3600393
 +  });
 +
 +  test("login success redirects to library landing", async ({ page }) => {
-+    const username = process.env.PW_E2E_ABS_USER ?? "";
-+    const password = process.env.PW_E2E_ABS_PASSWORD ?? "";
++    const { username, password } = requireCredentials();
 +
 +    await oidc.navigateToLogin();
 +    await oidc.clickKeycloakLogin();
 +    await oidc.fillKeycloakCredentials(username, password);
-+    await oidc.waitForCallback();
++    await oidc.waitForAbsLanding();
 +
 +    await library.waitForLoad();
 +    const url = page.url();
@@ -138,33 +163,34 @@ index 0000000..3600393
 +    expect(url).not.toContain("/auth/openid");
 +  });
 +
-+  test("login callback failure stays on login page", async ({ page }) => {
++  test("invalid credentials stays on Keycloak login with error", async ({ page }) => {
 +    await oidc.navigateToLogin();
 +    await oidc.clickKeycloakLogin();
 +
-+    await page.waitForURL("**/login**", { timeout: 10_000 }).catch(() => {
-+    });
++    await page.waitForURL("**/realms/homelab/**", { timeout: 10_000 });
 +
-+    const url = page.url();
-+    expect(
-+      url.includes("/login") || url.includes("/auth/openid"),
-+    ).toBeTruthy();
++    await oidc.fillKeycloakCredentials("nonexistent-user-pw-i13", "definitely-wrong-password");
++
++    await page.waitForLoadState("networkidle");
++
++    const hasError = await oidc.isKeycloakErrorVisible();
++    const stillOnKeycloak = page.url().includes("/realms/homelab");
++
++    expect(hasError || stillOnKeycloak).toBeTruthy();
 +  });
 +
 +  test("logout terminates local session and redirects", async ({ page }) => {
-+    const username = process.env.PW_E2E_ABS_USER ?? "";
-+    const password = process.env.PW_E2E_ABS_PASSWORD ?? "";
++    const { username, password } = requireCredentials();
 +
 +    await oidc.navigateToLogin();
 +    await oidc.clickKeycloakLogin();
 +    await oidc.fillKeycloakCredentials(username, password);
-+    await oidc.waitForCallback();
++    await oidc.waitForAbsLanding();
 +    await library.waitForLoad();
 +
 +    await oidc.performRpInitiatedLogout();
 +
-+    await page.waitForURL(/logout|login/, { timeout: 10_000 }).catch(() => {
-+    });
++    await page.waitForURL(/logout|login/, { timeout: 10_000 });
 +    const url = page.url();
 +    expect(
 +      url.includes("/login") || url.includes("/logout"),
@@ -172,18 +198,16 @@ index 0000000..3600393
 +  });
 +
 +  test("post-logout reload remains unauthenticated", async ({ page }) => {
-+    const username = process.env.PW_E2E_ABS_USER ?? "";
-+    const password = process.env.PW_E2E_ABS_PASSWORD ?? "";
++    const { username, password } = requireCredentials();
 +
 +    await oidc.navigateToLogin();
 +    await oidc.clickKeycloakLogin();
 +    await oidc.fillKeycloakCredentials(username, password);
-+    await oidc.waitForCallback();
++    await oidc.waitForAbsLanding();
 +    await library.waitForLoad();
 +
 +    await oidc.performRpInitiatedLogout();
-+    await page.waitForURL(/logout|login/, { timeout: 10_000 }).catch(() => {
-+    });
++    await page.waitForURL(/logout|login/, { timeout: 10_000 });
 +
 +    await page.reload();
 +    await page.waitForLoadState("networkidle");
@@ -193,5 +217,24 @@ index 0000000..3600393
 +      url.includes("/login") || url.includes("/auth/openid"),
 +    ).toBeTruthy();
 +  });
++
++  test("revisit protected route after logout requires re-authentication", async ({ page }) => {
++    const { username, password } = requireCredentials();
++
++    await oidc.navigateToLogin();
++    await oidc.clickKeycloakLogin();
++    await oidc.fillKeycloakCredentials(username, password);
++    await oidc.waitForAbsLanding();
++    await library.waitForLoad();
++
++    await oidc.performRpInitiatedLogout();
++    await page.waitForURL(/logout|login/, { timeout: 10_000 });
++
++    await page.goto(ABS_BASE, { waitUntil: "networkidle" });
++
++    const url = page.url();
++    expect(
++      url.includes("/login") || url.includes("/auth/openid") || url.includes("/realms/"),
++    ).toBeTruthy();
++  });
 +});
-\ No newline at end of file

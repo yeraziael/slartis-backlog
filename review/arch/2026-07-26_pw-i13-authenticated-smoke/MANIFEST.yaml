@@ -3,12 +3,12 @@ project: arch
 repository: Homelab/Architecture
 canonical_pr: 103
 base_commit: 791c009140a7db47a436ee9eebba53d544ac3b78
-head_commit: 326ed2756de7c58169f0c9c77f22e5049b74fba0
+head_commit: a3ccaa91c4856ba4abd394747b2693499da478ff
 author: Slarti (OpenCode Agent)
 change_request: slarti/backlog#272
 statistics:
   files_changed: 3
-  insertions: 176
+  insertions: 221
   deletions: 0
 review_scope:
   architecture: true
@@ -18,13 +18,13 @@ review_scope:
   compatibility: true
   documentation: true
 integrity:
-  changeset_sha256: 210d24ac83c1d9311d6505ef0c9986b133e6883b0dbf00593496999b1f5a2770
+  changeset_sha256: 455939d68388cd18b2ce556826235b98bafa0507aec4c316228384f15a1a9aab
 generated:
-  timestamp: "2026-07-26T00:00:00Z"
+  timestamp: "2026-07-26T22:30:00Z"
   tool: Slarti github-review skill
 review_verdict:
   schema: acp.review-verdict.v2
-  reviewed_commit: 326ed2756de7c58169f0c9c77f22e5049b74fba0
+  reviewed_commit: a3ccaa91c4856ba4abd394747b2693499da478ff
   review_type: self-verification
   review_basis: pull-request
   reviewer: emissaryofyeraziael
@@ -35,8 +35,8 @@ review_verdict:
     - CI registration for smoke specs
     - Shared OIDC fixture (PW-I11)
     - Centralize ABS_BASE/Keycloak URLs into config
-  supersedes_review: null
-  review_timestamp: "2026-07-26T00:00:00Z"
+  supersedes_review: "bundle:2026-07-26_pw-i13-authenticated-smoke@326ed27"
+  review_timestamp: "2026-07-26T22:30:00Z"
   disclaimer: >-
     This is a self-verification by the implementation author. It demonstrates
     internal consistency but is not an independent review. Only an independent
