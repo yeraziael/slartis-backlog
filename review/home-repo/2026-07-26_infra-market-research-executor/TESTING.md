@@ -4,6 +4,8 @@
 
 - Eddie dispatch test: job `d68128ec` completed with exit 0
 - opencode ran as lydia on Pi5, produced research output
+- Exit status propagation fix: verified with `bash -n` syntax check
+- Fail-closed pull: verified script exits 1 on git pull failure
 
 ## Reproducible Commands
 

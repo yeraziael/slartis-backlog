@@ -1,9 +1,9 @@
 diff --git a/runtime/infra-market-research.sh b/runtime/infra-market-research.sh
 new file mode 100755
-index 0000000..c65fb0d
+index 0000000..6e6fb0f
 --- /dev/null
 +++ b/runtime/infra-market-research.sh
-@@ -0,0 +1,27 @@
+@@ -0,0 +1,31 @@
 +#!/bin/bash
 +set -euo pipefail
 +
@@ -21,12 +21,16 @@ index 0000000..c65fb0d
 +  git clone ssh://git@192.168.2.30:2222/yeraziael/infra.git "$REPO_DIR" >> "$LOG" 2>&1
 +  cd "$REPO_DIR"
 +}
-+git pull --ff-only origin main >> "$LOG" 2>/dev/null || true
++if ! git pull --ff-only origin main >> "$LOG" 2>&1; then
++  echo "ERROR: git pull failed (diverged or network error)" >> "$LOG"
++  exit 1
++fi
 +
 +echo "Running opencode headless..." >> "$LOG"
-+script -qc "/home/lydia/.opencode/bin/opencode run --auto --format json --dir /home/lydia/workspace/repos/infra \"Fuehre die taegliche Marktforschung fuer Issue #1 aus. Bearbeite nur rack_and_chassis. Preise an der Quelle verifizieren. Findings nach findings/current/. README.md Dashboard aktualisieren. Direkt auf main pushen.\"" /dev/null >> "$LOG" 2>&1
-+
++set +e
++script -qec "/home/lydia/.opencode/bin/opencode run --auto --format json --dir /home/lydia/workspace/repos/infra \"Fuehre die taegliche Marktforschung fuer Issue #1 aus. Bearbeite nur rack_and_chassis. Preise an der Quelle verifizieren. Findings nach findings/current/. README.md Dashboard aktualisieren. Direkt auf main pushen.\"" /dev/null >> "$LOG" 2>&1
 +OPENCODE_EXIT=$?
++set -e
 +echo "opencode exit: $OPENCODE_EXIT" >> "$LOG"
 +echo "=== infra-market-research finished at $(date -Iseconds) (exit: $OPENCODE_EXIT) ===" >> "$LOG"
 +

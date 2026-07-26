@@ -27,7 +27,8 @@ Enable Eddie to dispatch `infra.market.research` jobs that execute as `lydia` on
 
 ## References
 
-- Canonical PR: `lydia/home-repo#388` (Gitea)
+- Canonical PR: `lydia/home-repo#389` (Gitea)
+- Supersedes: PR #388 (exit status fix)
 - Issue: Eddie daily market research trigger
 - Base commit: `5ce6ecd`
-- Head commit: `7f22b15`
+- Head commit: `53012d8`
