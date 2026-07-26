@@ -70,3 +70,137 @@ index 14f3529..6fd59ce 100644
                      check=False,
                      capture_output=True,
                      text=True,
+diff --git a/runtime/processor/test_exit_status.py b/runtime/processor/test_exit_status.py
+new file mode 100644
+index 0000000..23cf004
+--- /dev/null
++++ b/runtime/processor/test_exit_status.py
+@@ -0,0 +1,128 @@
++#!/usr/bin/env python3
++"""Executor-level integration test for exit-status propagation.
++
++Starts the executor on a test port, sends a dispatch with a failing command,
++and verifies the callback receives "failed" status.
++"""
++
++import json
++import os
++import sys
++import threading
++import time
++import urllib.request
++from http.server import HTTPServer, BaseHTTPRequestHandler
++
++# Test configuration
++EXECUTOR_PORT = 18081
++CALLBACK_PORT = 18082
++CALLBACK_RECEIVED = []
++STUB_EXIT_CODE = 42
++
++
++class CallbackHandler(BaseHTTPRequestHandler):
++    """Mock Eddie callback server that captures status."""
++
++    def do_POST(self):
++        length = int(self.headers.get("Content-Length", 0))
++        body = self.rfile.read(length)
++        data = json.loads(body) if body else {}
++        CALLBACK_RECEIVED.append(data)
++        self.send_response(200)
++        self.send_header("Content-Type", "application/json")
++        self.end_headers()
++        self.wfile.write(json.dumps({"status": "ok"}).encode())
++
++    def log_message(self, format, *args):
++        pass  # Suppress logs
++
++
++def create_stub():
++    """Create a failing stub command."""
++    stub_path = "/tmp/test-failing-opencode.sh"
++    with open(stub_path, "w") as f:
++        f.write(f"#!/bin/bash\necho 'stub: simulating failure' >&2\nexit {STUB_EXIT_CODE}\n")
++    os.chmod(stub_path, 0o755)
++    return stub_path
++
++
++def run_executor():
++    """Start the executor server on test port."""
++    os.environ["EXECUTOR_LISTEN_PORT"] = str(EXECUTOR_PORT)
++    os.environ["EXECUTOR_LOG"] = "/tmp/test-executor.log"
++    os.environ["EDDIE_URL"] = f"http://127.0.0.1:{CALLBACK_PORT}"
++    os.environ["LYDIA_MESSAGES_INCOMING"] = "/tmp/test-incoming"
++    os.environ["LYDIA_MESSAGES_OUTGOING"] = "/tmp/test-outgoing"
++
++    # Create required directories
++    os.makedirs("/tmp/test-incoming", exist_ok=True)
++    os.makedirs("/tmp/test-outgoing", exist_ok=True)
++
++    # Import and modify OPS_COMMANDS to use stub
++    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
++    import executor_server as es
++
++    stub = create_stub()
++    es.OPS_COMMANDS["infra.market.research"] = stub
++    es.OPS_COMMANDS_USERS["infra.market.research"] = os.environ.get("USER", "root")
++
++    server = es.HTTPServer(("127.0.0.1", EXECUTOR_PORT), es.ExecutorHandler)
++    server.serve_forever()
++
++
++def main():
++    # Start callback server first
++    callback_server = HTTPServer(("127.0.0.1", CALLBACK_PORT), CallbackHandler)
++    callback_thread = threading.Thread(target=callback_server.serve_forever, daemon=True)
++    callback_thread.start()
++
++    # Start executor in background
++    executor_thread = threading.Thread(target=run_executor, daemon=True)
++    executor_thread.start()
++    time.sleep(1)  # Wait for servers to start
++
++    # Send dispatch
++    payload = json.dumps({
++        "job_id": "test-fail-001",
++        "type": "infra.market.research",
++        "callback_url": f"http://127.0.0.1:{CALLBACK_PORT}/callback/test-fail-001",
++    }).encode()
++
++    req = urllib.request.Request(
++        f"http://127.0.0.1:{EXECUTOR_PORT}/execute",
++        data=payload,
++        headers={"Content-Type": "application/json"},
++    )
++
++    try:
++        with urllib.request.urlopen(req, timeout=10) as resp:
++            print(f"Dispatch sent: {resp.status}")
++    except Exception as e:
++        print(f"ERROR: Dispatch failed: {e}")
++        sys.exit(1)
++
++    # Wait for callback
++    time.sleep(3)
++
++    # Check results
++    if not CALLBACK_RECEIVED:
++        print("ERROR: No callback received")
++        sys.exit(1)
++
++    result = CALLBACK_RECEIVED[-1]
++    status = result.get("status", "")
++    output = result.get("output", "")
++
++    print(f"Callback status: {status}")
++    print(f"Callback output: {output[:200]}")
++
++    if status == "failed":
++        print("PASS: Executor correctly propagated failure status")
++        sys.exit(0)
++    else:
++        print(f"FAIL: Expected 'failed', got '{status}'")
++        sys.exit(1)
++
++
++if __name__ == "__main__":
++    main()

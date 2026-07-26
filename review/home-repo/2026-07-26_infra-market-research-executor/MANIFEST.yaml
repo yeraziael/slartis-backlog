@@ -2,12 +2,12 @@ project: home-repo
 repository: lydia/home-repo
 canonical_pr: 389
 base_commit: 5ce6ecd29a6c468020c5d5480e9643ac9029d9bc
-head_commit: 1cd019cabe97b35ae60b15bc39b45658e6bb8ce9
+head_commit: 0a84af141ad14f2c24e7abbdae3c222d5f0e2c69
 author: Lydia
 change_request: Eddie daily market research trigger
 statistics:
-  files_changed: 2
-  insertions: 42
+  files_changed: 3
+  insertions: 170
   deletions: 2
 review_scope:
   architecture: true
@@ -17,7 +17,7 @@ review_scope:
   compatibility: true
   documentation: false
 integrity:
-  changeset_sha256: 9c18c9b9df503a2b2f67b4cb432112314ed585c5bf0633445bb82aedca259ad9
+  changeset_sha256: ef4f98b48f8d810d7981c7540672f989622913a2fd77547b4e03da8235a98a1d
 generated:
   timestamp: "2026-07-26T23:45:00Z"
   tool: Slarti (github-review skill)

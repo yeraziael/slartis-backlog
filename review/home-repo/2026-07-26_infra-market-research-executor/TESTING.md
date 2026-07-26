@@ -69,6 +69,7 @@ ls /home/lydia/workspace/repos/infra/findings/current/
 | opencode headless | ✅ Pass | Ran as lydia, wrote findings |
 | Log rotation | ✅ Pass | Unique per-run filenames |
 | Negative exit propagation | ✅ Pass | Stub exit 42 → script exit 42 |
+| Executor callback propagation | ✅ Pass | Stub exit 42 → callback status "failed" |
 | Fail-closed pull | ✅ Pass | Script exits 1 on git pull failure |
 
 ## CI Status

@@ -31,4 +31,4 @@ Enable Eddie to dispatch `infra.market.research` jobs that execute as `lydia` on
 - Supersedes: PR #388 (exit status fix)
 - Issue: Eddie daily market research trigger
 - Base commit: `5ce6ecd`
-- Head commit: `1cd019c`
+- Head commit: `0a84af1`
