@@ -1,0 +1,65 @@
+diff --git a/runtime/infra-market-research.sh b/runtime/infra-market-research.sh
+new file mode 100755
+index 0000000..c65fb0d
+--- /dev/null
++++ b/runtime/infra-market-research.sh
+@@ -0,0 +1,27 @@
++#!/bin/bash
++set -euo pipefail
++
++export HOME=/home/lydia
++export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/lydia/.opencode/bin
++
++REPO_DIR=/home/lydia/workspace/repos/infra
++LOG=/tmp/infra-market-research-$(date +%Y%m%d%H%M%S).log
++
++mkdir -p /tmp
++echo "=== infra-market-research started at $(date +%Y-%m-%dT%H:%M:%SZ) ===" > "$LOG"
++
++cd "$REPO_DIR" 2>/dev/null || {
++  echo "Cloning infra repo..." >> "$LOG"
++  git clone ssh://git@192.168.2.30:2222/yeraziael/infra.git "$REPO_DIR" >> "$LOG" 2>&1
++  cd "$REPO_DIR"
++}
++git pull --ff-only origin main >> "$LOG" 2>/dev/null || true
++
++echo "Running opencode headless..." >> "$LOG"
++script -qc "/home/lydia/.opencode/bin/opencode run --auto --format json --dir /home/lydia/workspace/repos/infra \"Fuehre die taegliche Marktforschung fuer Issue #1 aus. Bearbeite nur rack_and_chassis. Preise an der Quelle verifizieren. Findings nach findings/current/. README.md Dashboard aktualisieren. Direkt auf main pushen.\"" /dev/null >> "$LOG" 2>&1
++
++OPENCODE_EXIT=$?
++echo "opencode exit: $OPENCODE_EXIT" >> "$LOG"
++echo "=== infra-market-research finished at $(date -Iseconds) (exit: $OPENCODE_EXIT) ===" >> "$LOG"
++
++exit $OPENCODE_EXIT
+diff --git a/runtime/processor/executor_server.py b/runtime/processor/executor_server.py
+index 14f3529..6fd59ce 100644
+--- a/runtime/processor/executor_server.py
++++ b/runtime/processor/executor_server.py
+@@ -30,7 +30,11 @@ OPS_COMMANDS = {
+     "ops.backup.gitea": "/home/michael/backupGitea.sh",
+     "ops.backup.pi-boot": "/home/michael/backupPiBoot.sh",
+     "ops.health.pi": "/home/michael/pi-healthcheck.sh",
+-    "infra.market.research": "/home/michael/infra-market-research.sh",
++    "infra.market.research": "/home/lydia/bin/infra-market-research.sh",
++}
++
++OPS_COMMANDS_USERS = {
++    "infra.market.research": "lydia",
+ }
+ 
+ 
+@@ -117,11 +121,13 @@ class ExecutorHandler(BaseHTTPRequestHandler):
+ 
+     def _run_ops(self, job_id, job_type, callback_url):
+         command = ops_command(job_type)
++        run_as = OPS_COMMANDS_USERS.get(job_type, "michael")
+ 
+         def worker():
+             try:
++                cmd = ["sudo", "-n", "-u", run_as, command] if run_as != "lydia" else [command]
+                 result = subprocess.run(
+-                    ["sudo", "-n", "-u", "michael", command],
++                    cmd,
+                     check=False,
+                     capture_output=True,
+                     text=True,
