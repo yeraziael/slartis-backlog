@@ -1,0 +1,37 @@
+manifest_version: v2
+project: arch
+repository: Homelab/Architecture
+canonical_pr: 95
+base_commit: c958341edba186820d77101b61dfa759d772b232
+head_commit: 7f9c7252572a53cd6367d1d17f5a25b3683a4879
+author: slarti
+change_request: "slarti/backlog#264, slarti/backlog#265; GitHub review #100 findings"
+statistics:
+  files_changed: 19
+  insertions: 937
+  deletions: 0
+review_scope:
+  architecture: true
+  implementation: true
+  governance: false
+  security: true
+  compatibility: true
+  documentation: true
+integrity:
+  changeset_sha256: cc6edfa09ce3250a615666bd2e1a882ef62b9f2ddae338a0fbd29e5d59eeb011
+generated:
+  timestamp: "2026-07-26T18:06:43+01:00"
+  tool: "opencode/slarti"
+review_verdict:
+  schema: acp.review-verdict.v2
+  reviewed_commit: 7f9c7252572a53cd6367d1d17f5a25b3683a4879
+  review_type: self-verification
+  review_basis: pull-request
+  reviewer: slarti
+  verdict: consistency-verified
+  blocking_findings: []
+  remaining_followups:
+    - "The canonical PR is awaiting merge."
+    - "Screenshot pixel OCR/redaction remains deferred."
+  supersedes_review: "yeraziael/slartis-backlog#100 at 69f7681896198cfdc74c5ff63e13787b593ec768"
+  review_timestamp: "2026-07-26T18:06:43+01:00"
