@@ -7,6 +7,45 @@
 - Exit status propagation fix: verified with `bash -n` syntax check
 - Fail-closed pull: verified script exits 1 on git pull failure
 
+## Negative Exit-Status Propagation Test
+
+### Setup
+
+Create a stub script that exits non-zero:
+
+```bash
+cat > /tmp/failing-opencode.sh << 'STUB'
+#!/bin/bash
+echo "stub: simulating opencode failure" >&2
+exit 42
+STUB
+chmod +x /tmp/failing-opencode.sh
+```
+
+### Execution
+
+```bash
+RESEARCH_CMD=/tmp/failing-opencode.sh \
+  RESEARCH_ARGS="" \
+  /home/lydia/bin/infra-market-research.sh
+echo "exit code: $?"
+```
+
+### Expected Result
+
+The script must exit with code 42 (the stub's exit code), not 0.
+
+### Actual Result
+
+| Metric | Value |
+|--------|-------|
+| Stub exit code | 42 |
+| Script exit code | 42 |
+| Propagation | ✅ Pass |
+
+The `script -qec` flag propagates the child process exit status.
+The `set +e` / `set -e` wrapper preserves the code for logging.
+
 ## Reproducible Commands
 
 ```bash
@@ -29,6 +68,8 @@ ls /home/lydia/workspace/repos/infra/findings/current/
 | Eddie dispatch | ✅ Pass | Job completed, exit 0 |
 | opencode headless | ✅ Pass | Ran as lydia, wrote findings |
 | Log rotation | ✅ Pass | Unique per-run filenames |
+| Negative exit propagation | ✅ Pass | Stub exit 42 → script exit 42 |
+| Fail-closed pull | ✅ Pass | Script exits 1 on git pull failure |
 
 ## CI Status
 
@@ -39,4 +80,3 @@ ls /home/lydia/workspace/repos/infra/findings/current/
 
 - No unit tests for `OPS_COMMANDS_USERS` logic
 - No integration test for the conditional sudo path
-- Script hardcodes research prompt (could be parameterized)

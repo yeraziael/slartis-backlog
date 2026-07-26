@@ -1,9 +1,9 @@
 diff --git a/runtime/infra-market-research.sh b/runtime/infra-market-research.sh
 new file mode 100755
-index 0000000..6e6fb0f
+index 0000000..a3f6ad1
 --- /dev/null
 +++ b/runtime/infra-market-research.sh
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,34 @@
 +#!/bin/bash
 +set -euo pipefail
 +
@@ -26,9 +26,12 @@ index 0000000..6e6fb0f
 +  exit 1
 +fi
 +
++RESEARCH_CMD="${RESEARCH_CMD:-/home/lydia/.opencode/bin/opencode}"
++RESEARCH_ARGS="${RESEARCH_ARGS:---auto --format json --dir /home/lydia/workspace/repos/infra \"Fuehre die taegliche Marktforschung fuer Issue #1 aus. Bearbeite nur rack_and_chassis. Preise an der Quelle verifizieren. Findings nach findings/current/. README.md Dashboard aktualisieren. Direkt auf main pushen.\"}"
++
 +echo "Running opencode headless..." >> "$LOG"
 +set +e
-+script -qec "/home/lydia/.opencode/bin/opencode run --auto --format json --dir /home/lydia/workspace/repos/infra \"Fuehre die taegliche Marktforschung fuer Issue #1 aus. Bearbeite nur rack_and_chassis. Preise an der Quelle verifizieren. Findings nach findings/current/. README.md Dashboard aktualisieren. Direkt auf main pushen.\"" /dev/null >> "$LOG" 2>&1
++script -qec "$RESEARCH_CMD $RESEARCH_ARGS" /dev/null >> "$LOG" 2>&1
 +OPENCODE_EXIT=$?
 +set -e
 +echo "opencode exit: $OPENCODE_EXIT" >> "$LOG"
