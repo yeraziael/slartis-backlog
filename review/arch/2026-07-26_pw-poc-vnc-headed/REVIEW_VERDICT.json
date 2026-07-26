@@ -1,0 +1,17 @@
+{
+  "schema": "acp.review-verdict.v2",
+  "reviewed_commit": "a5ddefca4e2ef8915e0f5f0d8b78797911172d5a",
+  "review_type": "self-verification",
+  "review_basis": "working-copy",
+  "reviewer": "slarti",
+  "verdict": "consistency-verified",
+  "blocking_findings": [],
+  "remaining_followups": [
+    "Independent review is still required; this self-verification has no external review authority.",
+    "gitea-mcp.hl.maier.wtf returned a TLS error during the runtime smoke test.",
+    "A full ten-round runtime run was not repeated after the final fresh-tab correction.",
+    "Canonical follow-up PR"
+  ],
+  "supersedes_review": null,
+  "review_timestamp": "2026-07-26T20:32:40+01:00"
+}
