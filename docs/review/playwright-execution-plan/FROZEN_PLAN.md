@@ -2,17 +2,19 @@
 
 ## Freeze Record
 
-- Freeze identifier: `playwright-execution-plan-v1`.
-- State: `FROZEN_AWAITING_FINAL_REVIEW_AND_OPERATOR_APPROVAL`.
-- Independent review: PR #83 review `4756629751`, reviewed head
-  `274ad202a8319728fc610870c92a3a79d19c22b9`.
+- Freeze candidate: `playwright-execution-plan-v2-self-verified`.
+- State: `FROZEN_AWAITING_V2_INDEPENDENT_REVIEW`.
+- Historical v1 approval: PR #83 review `4757129666`, reviewed head
+  `d1379fbb065b088e1615bce49205384b3f1a4ba`.
 - Gitea ticket snapshot SHA-256: `93e483fb33ae235c9c3e1b3400b3e9d3fbdb5a4eaf8ab78dcf7e8c6bceb9d62f`.
 - Hash domain: canonical UTF-8 JSON serialization of `tickets.json` using
   sorted object keys and separators `(comma, colon)`.
-- No implementation has begun. No ticket is ready before final SHA-bound review
-  and explicit operator approval.
-- After approval, PW-D01 is first executable; PW-I01 remains blocked by PW-D01
-  and the canonical-plan default-branch merge gate.
+- Planning PR #82, frozen-plan PR #83, and PW-D01 review PR #84 are merged.
+- PW-D01 is complete. PW-D02 is next but remains blocked until the v2 amendment
+  receives a fresh independent SHA-bound review and is merged unchanged.
+- `FREEZE_V2_AMENDMENT.md` supersedes only the reviewer/merge workflow and stale
+  authority facts. Ticket scope, dependencies, tests, models, and checkpoint
+  ordering remain unchanged.
 
 Any ticket-body, dependency, model, checkpoint, evidence, or reviewer-workflow
 change invalidates this freeze and requires a regenerated snapshot and new
@@ -43,7 +45,7 @@ diagram is a review aid and does not relax any prerequisite.
 
 ## Final Execution Order
 
-`operator approval -> PW-D01 -> PW-D02 -> PW-I01 -> PW-I02 -> PW-I03 -> PW-I04 -> PW-I05 -> PW-ACP-CP1 -> PW-D03 -> PW-I06 -> PW-I07 -> PW-I08 -> PW-D04 -> PW-I09 -> PW-I10 -> PW-I11 -> PW-D05 -> PW-I12 -> PW-I13 -> PW-I14 -> PW-I15 -> PW-I16 -> PW-I17 -> PW-I18 -> PW-D06 -> PW-I19 -> PW-I20 -> PW-I21`
+`v2 amendment review -> PW-D02 -> PW-I01 -> PW-I02 -> PW-I03 -> PW-I04 -> PW-I05 -> PW-ACP-CP1 -> PW-D03 -> PW-I06 -> PW-I07 -> PW-I08 -> PW-D04 -> PW-I09 -> PW-I10 -> PW-I11 -> PW-D05 -> PW-I12 -> PW-I13 -> PW-I14 -> PW-I15 -> PW-I16 -> PW-I17 -> PW-I18 -> PW-D06 -> PW-I19 -> PW-I20 -> PW-I21`
 
 Execution is serial by default. No parallel branch may start unless the parent
 index is explicitly amended and independently re-reviewed.
@@ -100,8 +102,9 @@ the platform or perform runtime changes.
 
 ## Final ACP Checkpoint Definition
 
-`PW-ACP-CP1` activates only after PW-I01 through PW-I05 are merged and
-independently reviewed at exact PR head SHAs. Decision tickets do not count.
+`PW-ACP-CP1` activates only after PW-I01 through PW-I05 are merged with green
+required CI, complete evidence, and ACP v0.3 self-verifications at exact PR
+head SHAs. Decision tickets do not count.
 The checkpoint blocks every PW-I06-or-later branch, edit, delegation, or retry.
 
 It evaluates task self-containment, model selection, acceptance evidence,
@@ -121,15 +124,15 @@ candidates require a separate versioned `Homelab/ACP` work item.
    finding categories.
 3. Transport validation confirms PR URL, exact head SHA, changed files, CI, and
    evidence are accessible before `WAITING_FOR_PR_REVIEW`.
-4. GitHub receives one concise review notification with internal ticket, Gitea
-   PR/head SHA, scope, tests/CI, ACP evidence location, and findings summary. It
-   does not receive a duplicate execution backlog.
-5. Independent review is SHA-bound. Any push invalidates the verdict.
-6. Review prioritises ticket-contract compliance, model routing, ACP checkpoint
-   quality, and evidence generation. Playwright-specific detail is examined only
-   where it affects an authoritative requirement or security boundary.
-7. Approval authorizes that ticket's merge gate only. Deployment, secrets,
-   accounts, DNS, and runtime mutation require separate operator authority.
+4. Slarti records an ACP v0.3 self-verification on the Gitea PR using verdict
+   `consistency-verified`; it carries no independent-review authority.
+5. Self-verification is SHA-bound. Any push invalidates the verdict.
+6. The Operator's standing epic authorization supplies merge authority. Slarti
+   may merge only the exact self-verified head after all ticket, test, CI,
+   evidence, and blocker gates pass.
+7. GitHub notification is an optional audit mirror, not a merge prerequisite.
+8. Deployment, secrets, accounts, DNS, and runtime mutation require separate
+   operator and deployment authority.
 
 ## Final Self-Containment Validation
 
@@ -148,8 +151,9 @@ candidates require a separate versioned `Homelab/ACP` work item.
 
 ## Remaining Open Questions
 
-- PR #82 must merge before PW-I01.
-- PW-D01 resolves exact runner image/package/invocation.
+- The v2 amendment must receive independent SHA-bound review and merge before
+  PW-D02 starts.
+- PW-D01 is complete; its accepted runner contract remains authoritative.
 - PW-D02 resolves provenance and mixed-result precedence.
 - PW-D03 resolves trace sanitisation and retention enforcement.
 - PW-D04 resolves synthetic identity and secret handoff.

@@ -1,5 +1,9 @@
 # Independent Review Disposition
 
+This file preserves the historical v1 disposition. The proposed reviewer and
+merge workflow change is isolated in `FREEZE_V2_AMENDMENT.md` and requires a
+new independent SHA-bound review before activation.
+
 ## Review Source
 
 - GitHub PR: `yeraziael/slartis-backlog#83`.
@@ -7,6 +11,10 @@
 - Reviewer: `yeraziael`.
 - Reviewed commit: `274ad202a8319728fc610870c92a3a79d19c22b9`.
 - Verdict: `COMMENTED`, no blocking architectural concerns.
+
+The final v1 approval was PR #83 review `4757129666`, bound to head
+`d1379fbb065b0888e1615bce49205384b3f1a4ba`. PR #83 then merged unchanged as
+`22aeef5ed411a8893cd3c4e3f923196417f11ffc`.
 
 ## Point-By-Point Classification
 

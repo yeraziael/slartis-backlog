@@ -1,7 +1,7 @@
 {
   "schema": "slarti.review-ci.v1",
   "repository": "yeraziael/slartis-backlog",
-  "branch": "review/playwright-execution-plan",
+  "branch": "review/playwright-execution-plan-v2",
   "status_checks": [],
   "conclusion": "local_validation_success",
   "note": "The repository defines no GitHub workflow. Structural, provenance, content, contract-scope, credential-pattern and whitespace validations passed locally."

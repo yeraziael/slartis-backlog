@@ -18,9 +18,10 @@
 
 ## Review Risks
 
-- Planning PR #82 is open rather than merged to `main`; PW-I01 explicitly blocks
-  on the default-branch merge gate.
-- ACP `0.1.0-draft` has no normative state machine. Ticket transitions are
-  repository control states, not a parallel ACP specification.
+- Planning PR #82 and PW-D01 are complete. The blocking risk is activation of
+  the amended self-verification/self-merge workflow before independent review.
+- Self-verification never supplies independent approval authority. Merge
+  authority comes only from the Operator's standing epic authorization.
+- ACP `v0.3.0` review-provenance semantics are binding.
 - Ticket snapshots can become stale after Gitea edits. Any edit to #253-#281
-  requires regenerating this package and a new SHA-bound review.
+  remains prohibited unless a later reviewed amendment changes ticket scope.

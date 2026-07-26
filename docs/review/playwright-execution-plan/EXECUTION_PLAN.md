@@ -7,9 +7,9 @@ decision tickets, twenty-one low-cost implementation tickets, and one mandatory
 ACP checkpoint. Each implementation ticket is bounded to one focused session
 and one Gitea pull request.
 
-The plan is frozen as `playwright-execution-plan-v1`. No implementation work
-has started, and no ticket is ready before final SHA-bound review and explicit
-operator approval.
+The current candidate is `playwright-execution-plan-v2-self-verified`. PW-D01
+is complete; PW-D02 remains blocked until the additive v2 reviewer-workflow
+amendment receives independent SHA-bound review and merges unchanged.
 
 ## Dependency Graph
 
@@ -99,7 +99,8 @@ and escalation conditions suitable for low-cost execution.
 ## ACP Checkpoint
 
 `PW-ACP-CP1` (`#261`) activates only after PW-I01
-through PW-I05 are merged and independently reviewed at exact head SHAs. It
+through PW-I05 are merged with exact-head ACP v0.3 self-verifications, complete
+evidence, and green required CI. It
 blocks every PW-I06-or-later branch, edit, delegation, or retry until the
 checkpoint records `release`.
 
@@ -135,17 +136,15 @@ PW-D05 and PW-D06.
 1. Review this package and exact ticket snapshots, not the Gitea issue list alone.
 2. Check each ticket for self-contained scope, non-goals, allowed paths, tests,
    CI, ACP evidence, findings, rollback, dependencies, model and escalation.
-3. Record review on this GitHub PR against the exact head SHA.
-4. Request changes for any ambiguous architecture delegated to a low-cost model.
-5. Approval authorizes ticket execution planning only. It does not authorize
-   implementation, merge, deployment, secrets, accounts or runtime mutation.
-6. During execution, each Gitea PR receives one concise GitHub reviewer
-   notification with internal ticket, PR/head SHA, scope, tests/CI, ACP evidence
-   location and findings summary. The full backlog is not duplicated again.
-7. Implementation review prioritises contract compliance, model routing, ACP
-   checkpoint quality, and evidence generation. Playwright-specific details are
-   reviewed only where they affect the authoritative requirement or security
-   contract.
+3. Independently review this one-time v2 amendment against the exact GitHub PR
+   head SHA before activating it.
+4. During execution, Slarti records ACP v0.3 self-verification at each exact
+   Gitea PR head. It is consistency evidence, not independent authority.
+5. The Operator's standing authorization permits Slarti to merge the exact
+   self-verified head after every ticket, test, CI, evidence, and blocker gate
+   passes.
+6. Any push invalidates the self-verification. Deployment, secrets, accounts,
+   DNS, and runtime mutation retain separate gates.
 
 ## Assumptions
 
@@ -155,13 +154,14 @@ PW-D05 and PW-D06.
   must verify image architecture and immutable digest before implementation.
 - Existing Audiobookshelf OIDC authority remains compatible with synthetic users;
   PW-D04 verifies the exact provisioning and handoff contract.
-- ACP `v0.1.0-draft` has no normative `SPEC/`; accepted Pilot 57 findings and
-  repository instructions are used without claiming a new ACP specification.
+- ACP review provenance is pinned to stable `v0.3.0`, peeled commit
+  `7768e129b3fdc48ebf69ebd888225d2c37af0c71`.
 
 ## Open Questions
 
-- Playwright plan PR #82 is still open and must reach the default branch before PW-I01.
-- Exact runner image digest/package contract: PW-D01.
+- The v2 reviewer-workflow amendment must be independently accepted before
+  PW-D02 starts.
+- PW-D01 and planning PR #82 are complete.
 - Trusted evidence provenance/result precedence: PW-D02.
 - Safe trace sanitisation and enforceable retention: PW-D03.
 - Synthetic identity/password handoff: PW-D04.
