@@ -15,20 +15,30 @@
   "plan_repository": "yeraziael/slartis-backlog",
   "plan_path": "docs/epics/playwright/",
   "plan_pr": 82,
-  "plan_commit": "5f2de959a4fb21b07405c7be65066b3093fb14af",
+  "plan_commit": "7ae8e1cd468f4f9543f5c3e2ccdd0df05ba68b2b",
   "architecture_repository": "Homelab/Architecture",
-  "architecture_inspected_commit": "ed54f11",
+  "architecture_inspected_commit": "a3b926bc16c6835eb0ae1ca8a9ca087ee5b4583d",
   "acp_repository": "Homelab/ACP",
-  "acp_version": "0.1.0-draft",
-  "acp_commit": "6b5e8ec58cde1e193b9310c01fc68b6885de8df5",
-  "freeze_identifier": "playwright-execution-plan-v1",
-  "freeze_state": "FROZEN_AWAITING_FINAL_REVIEW_AND_OPERATOR_APPROVAL",
+  "acp_version": "0.3.0",
+  "acp_commit": "7768e129b3fdc48ebf69ebd888225d2c37af0c71",
+  "freeze_identifier": "playwright-execution-plan-v2-self-verified",
+  "freeze_state": "FROZEN_AWAITING_V2_INDEPENDENT_REVIEW",
+  "supersedes_freeze": "playwright-execution-plan-v1",
+  "v2_amendment": "docs/review/playwright-execution-plan/FREEZE_V2_AMENDMENT.md",
+  "operator_authorization": {
+    "recorded_date": "2026-07-26",
+    "executor": "Slarti",
+    "self_verification": true,
+    "self_merge": true,
+    "subagents": false,
+    "production_mutation_separately_gated": true
+  },
   "independent_review": {
     "repository": "yeraziael/slartis-backlog",
     "pull_request": 83,
-    "review_id": 4756629751,
-    "reviewed_commit": "274ad202a8319728fc610870c92a3a79d19c22b9",
-    "review_state": "COMMENTED_NO_BLOCKERS"
+    "review_id": 4757129666,
+    "reviewed_commit": "d1379fbb065b0888e1615bce49205384b3f1a4ba",
+    "review_state": "APPROVED"
   },
   "ticket_counts": {
     "parent": 1,
@@ -46,6 +56,7 @@
   "changed_files": [
     "docs/review/playwright-execution-plan/CI.json",
     "docs/review/playwright-execution-plan/EXECUTION_PLAN.md",
+    "docs/review/playwright-execution-plan/FREEZE_V2_AMENDMENT.md",
     "docs/review/playwright-execution-plan/FROZEN_PLAN.md",
     "docs/review/playwright-execution-plan/INSTRUCTIONS.md",
     "docs/review/playwright-execution-plan/NOTES.md",
