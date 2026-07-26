@@ -1,0 +1,23 @@
+project: arch
+repository: Homelab/Architecture
+canonical_pr: 85
+base_commit: 056d5ac4b4238053e38fd3a1fe7e394935cef2a2
+head_commit: 369585652cfe4b35d585b2099867d07045bed099
+author: slarti
+change_request: slarti/backlog#258
+statistics:
+  files_changed: 6
+  insertions: 491
+  deletions: 14
+review_scope:
+  architecture: true
+  implementation: true
+  governance: false
+  security: true
+  compatibility: true
+  documentation: true
+integrity:
+  changeset_sha256: d8139e16cf8922707f20bf3e527d24b151818601bd2e7feb3c18040bfe8d5294
+generated:
+  timestamp: "2026-07-26T10:35:00+01:00"
+  tool: "opencode/slarti"
