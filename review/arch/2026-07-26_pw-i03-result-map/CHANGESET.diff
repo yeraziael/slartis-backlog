@@ -96,10 +96,10 @@ index 0000000..05c4850
 +});
 diff --git a/tests/playwright/runner/map-result.sh b/tests/playwright/runner/map-result.sh
 new file mode 100755
-index 0000000..f2d28e8
+index 0000000..5b9588b
 --- /dev/null
 +++ b/tests/playwright/runner/map-result.sh
-@@ -0,0 +1,49 @@
+@@ -0,0 +1,50 @@
 +#!/usr/bin/env bash
 +# PW-I03: map-result.sh — Map phase exit code to PW-D02 result precedence
 +# Usage: map-result.sh <exit-code> <phase>
@@ -116,9 +116,10 @@ index 0000000..f2d28e8
 +  exit 1
 +fi
 +
-+# Docker infrastructure errors: exit codes 125+ (docker daemon, container start)
++# Docker infrastructure errors: exit codes 125-127 (docker daemon, cannot invoke, not found)
++# Exit codes 128+ (signal-derived) retain phase-specific application semantics
 +is_docker_error() {
-+  [ "$1" -ge 125 ]
++  [ "$1" -ge 125 ] && [ "$1" -le 127 ]
 +}
 +
 +case "$PHASE" in
@@ -295,7 +296,7 @@ index 1071928..f87d3ea 100644
  const ROOT_VERSION = "1.61.1";
  const ALLOWED_HOST = "https://registry.npmjs.org/";
 diff --git a/tests/test_playwright_bootstrap.py b/tests/test_playwright_bootstrap.py
-index 1f28c61..13541b6 100644
+index 1f28c61..b3c0b3a 100644
 --- a/tests/test_playwright_bootstrap.py
 +++ b/tests/test_playwright_bootstrap.py
 @@ -62,7 +62,7 @@ TEST_PHASE_ARGS = {
@@ -322,7 +323,7 @@ index 1f28c61..13541b6 100644
  def test_gitignore_playwright_entries():
      with open(GITIGNORE) as f:
          content = f.read()
-@@ -280,6 +288,54 @@ def test_run_sh_home_env():
+@@ -280,6 +288,55 @@ def test_run_sh_home_env():
      assert "/tmp/npm-cache" in content, "Missing npm cache path"
  
  
@@ -349,7 +350,8 @@ index 1f28c61..13541b6 100644
 +    map_result = os.path.join(RUNNER_DIR, "map-result.sh")
 +    with open(map_result) as f:
 +        content = f.read()
-+    assert "125" in content, "Missing Docker error threshold (125+)"
++    assert "125" in content, "Missing Docker error threshold"
++    assert "127" in content, "Missing Docker upper threshold (127)"
 +
 +
 +def test_run_sh_calls_map_result():
@@ -377,7 +379,7 @@ index 1f28c61..13541b6 100644
  def test_run_sh_forbidden_mounts():
      with open(RUN_SH) as f:
          content = f.read()
-@@ -511,6 +567,222 @@ def test_local_page_is_valid_html():
+@@ -511,6 +568,255 @@ def test_local_page_is_valid_html():
      assert "</html>" in content, "Missing closing html tag"
  
  
@@ -433,9 +435,31 @@ index 1f28c61..13541b6 100644
 +    assert rc == 2, f"Expected 2 (prerequisite_error), got {rc}"
 +
 +
-+def test_map_result_dependency_docker_error():
++def test_map_result_dependency_docker_error_125():
 +    rc, _ = _run_map_result(125, "dependency")
-+    assert rc == 1, f"Expected 1 (docker error), got {rc}"
++    assert rc == 1, f"Expected 1 (docker error 125), got {rc}"
++
++
++def test_map_result_dependency_docker_error_126():
++    rc, _ = _run_map_result(126, "dependency")
++    assert rc == 1, f"Expected 1 (docker error 126), got {rc}"
++
++
++def test_map_result_dependency_docker_error_127():
++    rc, _ = _run_map_result(127, "dependency")
++    assert rc == 1, f"Expected 1 (docker error 127), got {rc}"
++
++
++def test_map_result_dependency_signal_130():
++    """Exit code 130 (SIGINT+128) retains phase semantics, not infrastructure."""
++    rc, _ = _run_map_result(130, "dependency")
++    assert rc == 2, f"Expected 2 (prerequisite_error for signal 130), got {rc}"
++
++
++def test_map_result_dependency_signal_139():
++    """Exit code 139 (SIGSEGV+128) retains phase semantics, not infrastructure."""
++    rc, _ = _run_map_result(139, "dependency")
++    assert rc == 2, f"Expected 2 (prerequisite_error for signal 139), got {rc}"
 +
 +
 +def test_map_result_test_pass():
@@ -448,9 +472,20 @@ index 1f28c61..13541b6 100644
 +    assert rc == 1, f"Expected 1 (fail), got {rc}"
 +
 +
-+def test_map_result_test_docker_error():
++def test_map_result_test_docker_error_125():
 +    rc, _ = _run_map_result(125, "test")
-+    assert rc == 1, f"Expected 1 (docker error), got {rc}"
++    assert rc == 1, f"Expected 1 (docker error 125), got {rc}"
++
++
++def test_map_result_test_docker_error_127():
++    rc, _ = _run_map_result(127, "test")
++    assert rc == 1, f"Expected 1 (docker error 127), got {rc}"
++
++
++def test_map_result_test_signal_130():
++    """Exit code 130 (SIGINT+128) retains phase semantics, not infrastructure."""
++    rc, _ = _run_map_result(130, "test")
++    assert rc == 1, f"Expected 1 (fail for signal 130), got {rc}"
 +
 +
 +def test_map_result_unknown_phase():
@@ -600,7 +635,7 @@ index 1f28c61..13541b6 100644
  # ---------------------------------------------------------------------------
  # Test runner
  # ---------------------------------------------------------------------------
-@@ -525,6 +797,8 @@ if __name__ == "__main__":
+@@ -525,6 +831,8 @@ if __name__ == "__main__":
          test_bootstrap_spec_exists,
          test_validate_lock_exists,
          test_run_sh_executable,
@@ -609,7 +644,7 @@ index 1f28c61..13541b6 100644
          test_gitignore_playwright_entries,
          test_package_json_parses,
          test_package_json_no_floating_deps,
-@@ -543,6 +817,12 @@ if __name__ == "__main__":
+@@ -543,6 +851,12 @@ if __name__ == "__main__":
          test_run_sh_results_dir,
          test_run_sh_root_resolution,
          test_run_sh_home_env,
@@ -622,7 +657,7 @@ index 1f28c61..13541b6 100644
          test_run_sh_forbidden_mounts,
          test_fake_docker_dependency_phase_image,
          test_fake_docker_dependency_phase_tmpfs,
-@@ -562,6 +842,22 @@ if __name__ == "__main__":
+@@ -562,6 +876,28 @@ if __name__ == "__main__":
          test_self_test_has_chromium_startup,
          test_self_test_has_isolation,
          test_local_page_is_valid_html,
@@ -631,10 +666,16 @@ index 1f28c61..13541b6 100644
 +        test_map_result_dependency_pass,
 +        test_map_result_dependency_prerequisite_error,
 +        test_map_result_dependency_prerequisite_error_any_nonzero,
-+        test_map_result_dependency_docker_error,
++        test_map_result_dependency_docker_error_125,
++        test_map_result_dependency_docker_error_126,
++        test_map_result_dependency_docker_error_127,
++        test_map_result_dependency_signal_130,
++        test_map_result_dependency_signal_139,
 +        test_map_result_test_pass,
 +        test_map_result_test_fail,
-+        test_map_result_test_docker_error,
++        test_map_result_test_docker_error_125,
++        test_map_result_test_docker_error_127,
++        test_map_result_test_signal_130,
 +        test_map_result_unknown_phase,
 +        test_map_result_missing_args,
 +        test_run_sh_forced_prerequisite_error,

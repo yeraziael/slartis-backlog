@@ -2,13 +2,17 @@
 
 ## Tests Executed
 
-### Static Bootstrap Tests (69 total, Python)
+### Static Bootstrap Tests (75 total, Python)
 
 ```bash
 python3 tests/test_playwright_bootstrap.py
 ```
-All 69 pass. Covers file existence, content contracts, map-result.sh unit
-tests (10), run.sh subcommand routing (5), and grep filter propagation (1).
+All 75 pass. Covers file existence, content contracts, map-result.sh unit
+tests (16), run.sh subcommand routing (5), and grep filter propagation (1).
+
+Includes signal-level coverage: 125, 126, 127 (Docker infrastructure), 130
+(SIGINT+128, maps to phase semantics), 139 (SIGSEGV+128, maps to phase
+semantics).
 
 ### Docker Platform Tests (5 Playwright tests)
 

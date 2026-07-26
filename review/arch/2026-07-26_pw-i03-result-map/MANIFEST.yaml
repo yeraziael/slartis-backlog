@@ -1,13 +1,14 @@
+manifest_version: v2
 project: arch
 repository: Homelab/Architecture
 canonical_pr: 85
 base_commit: 056d5ac4b4238053e38fd3a1fe7e394935cef2a2
-head_commit: 369585652cfe4b35d585b2099867d07045bed099
+head_commit: 9dc73eca4d57bc3c8564b243dd8f0b38ea6dceb6
 author: slarti
 change_request: slarti/backlog#258
 statistics:
   files_changed: 6
-  insertions: 491
+  insertions: 532
   deletions: 14
 review_scope:
   architecture: true
@@ -17,7 +18,19 @@ review_scope:
   compatibility: true
   documentation: true
 integrity:
-  changeset_sha256: d8139e16cf8922707f20bf3e527d24b151818601bd2e7feb3c18040bfe8d5294
+  changeset_sha256: 81b26be6c6b3d27a4f37cbc39ee3919b1598a95523d06e072ec118f3578edffb
 generated:
-  timestamp: "2026-07-26T10:35:00+01:00"
+  timestamp: "2026-07-26T12:10:00+01:00"
   tool: "opencode/slarti"
+review_verdict:
+  schema: acp.review-verdict.v2
+  reviewed_commit: 9dc73eca4d57bc3c8564b243dd8f0b38ea6dceb6
+  review_type: self-verification
+  review_basis: pull-request
+  reviewer: slarti
+  verdict: consistency-verified
+  blocking_findings: []
+  remaining_followups:
+    - "CI cannot run playwright-platform step (non-root Docker required)"
+  supersedes_review: "https://github.com/yeraziael/slartis-backlog/pull/96"
+  review_timestamp: "2026-07-26T12:10:00+01:00"

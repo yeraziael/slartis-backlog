@@ -1,5 +1,14 @@
 # Implementation — PW-I03 Result Semantics
 
+### Review Finding (GH PR #96): Docker Exit Code Mapping
+
+The original `is_docker_error` check used `[ $1 -ge 125 ]`, which
+misclassified signal-derived exit codes (128+) as infrastructure errors.
+Fixed to `[ $1 -ge 125 ] && [ $1 -le 127 ]`, constraining the
+infrastructure range to Docker-reserved codes 125-127. Signal-derived
+codes (e.g., 130 for SIGINT, 139 for SIGSEGV) retain phase-specific
+application semantics.
+
 ## Files Changed
 
 | File | Status | Lines | Description |
@@ -9,7 +18,7 @@
 | `tests/playwright/package-lock.json` | **new** | 75 | npm-generated lockfile |
 | `tests/playwright/runner/run.sh` | modified | +72/−8 | Mapping, grep filter, forced outcomes, --read-only removed |
 | `tests/playwright/runner/validate-lock.mjs` | modified | +1/−1 | Lockfile path fix |
-| `tests/test_playwright_bootstrap.py` | modified | +298/−3 | 24 new static tests |
+| `tests/test_playwright_bootstrap.py` | modified | +298/−3 | 30 new static tests |
 
 ## Semantic Summary
 
