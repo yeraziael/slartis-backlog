@@ -1,0 +1,37 @@
+manifest_version: v2
+project: arch
+repository: Homelab/Architecture
+canonical_pr: 94
+base_commit: c958341edba186820d77101b61dfa759d772b232
+head_commit: 3362689b63a8e557b8f1a8ac160fed066677ec32
+author: slarti
+change_request: "slarti/backlog#264, slarti/backlog#265"
+statistics:
+  files_changed: 19
+  insertions: 818
+  deletions: 0
+review_scope:
+  architecture: true
+  implementation: true
+  governance: false
+  security: true
+  compatibility: true
+  documentation: true
+integrity:
+  changeset_sha256: f06498bb949ece07dcf13c2e4c77efecfc067a5ad6b743f75e1548528e4efbc1
+generated:
+  timestamp: "2026-07-26T16:12:55+01:00"
+  tool: "opencode/slarti"
+review_verdict:
+  schema: acp.review-verdict.v2
+  reviewed_commit: 3362689b63a8e557b8f1a8ac160fed066677ec32
+  review_type: self-verification
+  review_basis: merge-commit
+  reviewer: slarti
+  verdict: consistency-verified
+  blocking_findings: []
+  remaining_followups:
+    - "Retention scheduler and artifact upload are intentionally deferred."
+    - "OCR/redaction for screenshot pixels is deferred."
+  supersedes_review: "yeraziael/slartis-backlog#99"
+  review_timestamp: "2026-07-26T16:12:55+01:00"
