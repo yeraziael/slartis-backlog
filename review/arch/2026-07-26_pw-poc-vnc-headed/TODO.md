@@ -16,5 +16,6 @@
 
 The canonical Gitea PR #96 was merged automatically by `eddie-policy` before
 this GitHub review PR was created. Follow-up PR #99 contains the two small
-post-merge corrections and remains open. This bundle is a self-verification of
-the cumulative working-copy state and has no independent merge authority.
+post-merge corrections and was also merged automatically. This bundle is a
+self-verification of the cumulative post-merge state and has no independent
+merge authority.
