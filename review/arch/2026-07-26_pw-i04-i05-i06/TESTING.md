@@ -47,8 +47,10 @@ The harness:
 
 ## CI Status
 
-- All Gitea Actions runs green for PR #86 (I04), PR #87 (I05), PR #88 (I06), and PR #89 (I06-fix: artifact harness)
-- All four PRs merged into main (cc54bb8)
+- All Gitea Actions runs green for PR #86 (I04), PR #87 (I05), PR #88 (I06),
+  PR #89 (I06-fix: artifact harness), PR #90 (I06-fix: trace hard failure),
+  and PR #91 (I06-fix: structural ZIP integrity)
+- All six PRs merged into main (b1b34b8)
 
 ## Known Gaps
 

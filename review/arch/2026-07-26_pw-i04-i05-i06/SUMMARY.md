@@ -40,3 +40,5 @@ tickets after PW-I03.
 - Homelab/Architecture#87 (PW-I05, merged)
 - Homelab/Architecture#88 (PW-I06, merged)
 - Homelab/Architecture#89 (PW-I06 fix: artifact verification harness, merged)
+- Homelab/Architecture#90 (PW-I06 fix: trace hard failure, merged)
+- Homelab/Architecture#91 (PW-I06 fix: structural ZIP integrity, merged)

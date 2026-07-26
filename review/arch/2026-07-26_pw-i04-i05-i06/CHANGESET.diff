@@ -24,10 +24,10 @@ index 0000000..ab6e3fc
 +});
 diff --git a/tests/playwright/evidence/artifacts/verify-artifacts.sh b/tests/playwright/evidence/artifacts/verify-artifacts.sh
 new file mode 100755
-index 0000000..c555d8a
+index 0000000..04e82f9
 --- /dev/null
 +++ b/tests/playwright/evidence/artifacts/verify-artifacts.sh
-@@ -0,0 +1,120 @@
+@@ -0,0 +1,136 @@
 +#!/usr/bin/env bash
 +# PW-I06: verify-artifacts.sh — Post-run artifact verification harness.
 +# Runs @pass, @fail, and @fixture Playwright suites on clean result
@@ -129,14 +129,30 @@ index 0000000..c555d8a
 +else
 +  echo "PW-I06: OK — fail run produced traces:" >&2
 +  echo "$FAIL_TRACES" >&2
-+  # Check ZIP header
++  # Validate ZIP structural integrity (magic header + unzip -t)
 +  for f in $FAIL_TRACES; do
 +    HEADER="$(xxd -l 4 -p "$f" 2>/dev/null || echo '')"
 +    if [ "$HEADER" != "504b0304" ]; then
 +      echo "PW-I06: FAIL — '$f' is not a valid ZIP (header: $HEADER)" >&2
 +      CHECKS_FAILED=1
++      continue
++    fi
++    if command -v unzip >/dev/null 2>&1; then
++      if unzip -t "$f" >/dev/null 2>&1; then
++        echo "PW-I06: OK — '$f' structurally valid ZIP" >&2
++      else
++        echo "PW-I06: FAIL — '$f' failed structural integrity check (unzip -t)" >&2
++        CHECKS_FAILED=1
++      fi
++    elif command -v python3 >/dev/null 2>&1; then
++      if python3 -c "import zipfile,sys; sys.exit(0 if zipfile.ZipFile('$f').testzip() is None else 1)" 2>/dev/null; then
++        echo "PW-I06: OK — '$f' structurally valid ZIP (python3 zipfile)" >&2
++      else
++        echo "PW-I06: FAIL — '$f' failed structural integrity check (python3 zipfile.testzip)" >&2
++        CHECKS_FAILED=1
++      fi
 +    else
-+      echo "PW-I06: OK — '$f' valid ZIP" >&2
++      echo "PW-I06: WARNING — no ZIP validator (unzip/python3) available, header check only" >&2
 +    fi
 +  done
 +fi
