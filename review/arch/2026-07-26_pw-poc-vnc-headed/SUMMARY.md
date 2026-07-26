@@ -45,13 +45,15 @@ document both execution modes, and provide a bounded public-endpoint workflow.
 - Repository: `Homelab/Architecture`
 - Canonical PR: `http://192.168.2.30:3000/Homelab/Architecture/pulls/96`
 - Follow-up PR: `http://192.168.2.30:3000/Homelab/Architecture/pulls/99` (merged)
+- Review-fix PR: `http://192.168.2.30:3000/Homelab/Architecture/pulls/100` (open)
 - Base commit: `b9f1c7df832b1be1e75019ba4881d1a524a4aa5d`
 - Feature merge commit: `511e6964421532083d98669b070f971f2254c137`
-- Reviewed head: `6eb1a8117a0ecd7453a73de90d267e8547d4a782`
-- Change request: `Homelab/Architecture#96; follow-up #99`
+- Reviewed head: `a5ddefc`
+- Change request: `Homelab/Architecture#96; follow-ups #99 and #100`
 
 The canonical feature PR was merged before the external review package was
 created. The reviewed head is the current branch state after the follow-up
 corrections. The changeset is a deterministic composite of the feature PR and
-the follow-up PR, excluding unrelated commits that landed on `main` between
-them.
+the follow-up PRs, excluding unrelated commits that landed on `main` between
+them. PR #100 resolves the blocking external-review finding by forwarding the
+host-side `PUBLIC_ENDPOINTS` override into the container.

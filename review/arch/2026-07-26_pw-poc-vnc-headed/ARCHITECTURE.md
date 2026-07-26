@@ -47,6 +47,10 @@ Each endpoint receives one ten-second display slot. The default ten rounds are
 bounded and the process exits after the final slot. A navigation or TLS error
 is rendered in a fresh browser tab and does not abort later endpoints.
 
+The host-side `PUBLIC_ENDPOINTS` value is conditionally added to the Docker
+environment array. When present, it replaces the built-in registry inside the
+container; when absent, the documented nine-endpoint default remains active.
+
 ## Security Boundary
 
 The VNC listener is password-protected and Docker binds it to the Homelab LAN

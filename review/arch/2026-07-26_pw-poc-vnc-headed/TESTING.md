@@ -3,7 +3,7 @@
 ## Local Gates
 
 All commands below were run from the Architecture worktree at the reviewed
-head `6eb1a8117a0ecd7453a73de90d267e8547d4a782`.
+head `a5ddefc`.
 
 | Command | Result |
 |---|---|
@@ -13,6 +13,7 @@ head `6eb1a8117a0ecd7453a73de90d267e8547d4a782`.
 | `node --check tests/playwright/automation/repeat-endpoints.mjs` | PASS. |
 | `git diff --check` | PASS. |
 | `docker build -t homelab/playwright-headed:v1.61.1-noble-poc -f tools/playwright-headed/Dockerfile .` | PASS. |
+| `PUBLIC_ENDPOINTS=... DISPLAY_SECONDS=2 ENDPOINT_ROUNDS=2 bash tools/playwright-headed/run.sh` | PASS; only the overridden Gitea endpoint loaded in both rounds. |
 
 ## Runtime Smoke Tests
 
@@ -25,6 +26,10 @@ The full ten-round workflow was also exercised at runtime before the final
 fresh-tab correction. The final correction was revalidated with the bounded
 reachable/unavailable smoke run above. The generated password initialization
 follow-up was validated by the final secret scan.
+
+The review-fix runtime smoke proved that a host-side `PUBLIC_ENDPOINTS` override
+is present in the container: a two-round run loaded only
+`https://gitea.hl.maier.wtf/`.
 
 ## CI
 

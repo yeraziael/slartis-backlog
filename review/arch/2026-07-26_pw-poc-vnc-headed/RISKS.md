@@ -8,4 +8,4 @@
 | Operations | A detached container can consume resources until stopped or ten rounds finish. | Medium | Medium | Bounded ten-round default, explicit container name, documented stop command. |
 | Compatibility | Chromium/Playwright version drift can break the image. | Low | Medium | Immutable base digest, exact existing package lock, build-time `npm ci`. |
 | Maintainability | Public endpoint registry can become stale as services change. | Medium | Low | Registry is documented and overridable with `PUBLIC_ENDPOINTS`; smoke output exposes failures. |
-| Review | Canonical PRs were auto-merged before independent GitHub review. | Certain | Medium | This package is SHA-bound self-verification of the cumulative post-merge state only; independent review remains required. |
+| Review | Canonical feature PRs were auto-merged before independent GitHub review. | Certain | Medium | This package is SHA-bound self-verification of the cumulative state; PR #100 carries the final resolution and independent review remains required. |

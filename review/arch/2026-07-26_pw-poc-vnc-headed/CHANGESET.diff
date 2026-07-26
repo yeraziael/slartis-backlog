@@ -329,10 +329,10 @@ index 3ad0874..cc744cf 100644
        },
 diff --git a/tests/test_playwright_headed.py b/tests/test_playwright_headed.py
 new file mode 100644
-index 0000000..e1c759e
+index 0000000..b419eea
 --- /dev/null
 +++ b/tests/test_playwright_headed.py
-@@ -0,0 +1,120 @@
+@@ -0,0 +1,128 @@
 +#!/usr/bin/env python3
 +"""Contract tests for the observable, repeating Playwright POC runner."""
 +
@@ -407,6 +407,13 @@ index 0000000..e1c759e
 +    assert "repeat-endpoints.mjs" in runner
 +
 +
++def test_runner_forwards_public_endpoint_override():
++    runner = read(RUNNER)
++
++    assert 'if [[ -n "${PUBLIC_ENDPOINTS:-}" ]]' in runner
++    assert 'CONTAINER_ENV+=(--env "PUBLIC_ENDPOINTS=${PUBLIC_ENDPOINTS}")' in runner
++
++
 +def test_runner_is_shellcheckable_and_documented():
 +    result = subprocess.run(
 +        ["bash", "-n", str(RUNNER), str(ENTRYPOINT)],
@@ -439,6 +446,7 @@ index 0000000..e1c759e
 +        test_entrypoint_starts_virtual_display_and_forwards_signals,
 +        test_endpoint_loop_contains_public_fqdns_and_round_contract,
 +        test_runner_waits_for_vnc_and_notifies_telegram,
++        test_runner_forwards_public_endpoint_override,
 +        test_runner_is_shellcheckable_and_documented,
 +        test_documentation_describes_headless_and_vnc_modes,
 +    ]
@@ -483,10 +491,10 @@ index 0000000..2c092db
 +ENTRYPOINT ["/entrypoint.sh"]
 diff --git a/tools/playwright-headed/README.md b/tools/playwright-headed/README.md
 new file mode 100644
-index 0000000..857467f
+index 0000000..29c9f3d
 --- /dev/null
 +++ b/tools/playwright-headed/README.md
-@@ -0,0 +1,69 @@
+@@ -0,0 +1,76 @@
 +# Playwright Headed POC
 +
 +This POC runs Chromium in headed mode on Xvfb and exposes the virtual display
@@ -530,6 +538,10 @@ index 0000000..857467f
 +docker logs -f playwright-headed-poc
 +```
 +
++Classic VNC/RFB is not transport-encrypted. Keep the default LAN bind inside
++the trusted Homelab boundary; use a VPN or an SSH tunnel for access from
++outside the LAN and do not publish the VNC port directly to the Internet.
++
 +## Configuration
 +
 +- `VNC_ADVERTISE_HOST` - host shown in the VNC address; defaults to `192.168.2.211`
@@ -545,6 +557,9 @@ index 0000000..857467f
 +
 +The Telegram token and VNC password are runtime inputs only and are not stored
 +in the repository.
++
++When set on the host, `PUBLIC_ENDPOINTS` is forwarded into the container and
++replaces the default endpoint registry for that run.
 +
 +## Headless Counterpart
 +
@@ -656,10 +671,10 @@ index 0000000..d22e1e1
 +exit "${CHILD_STATUS}"
 diff --git a/tools/playwright-headed/run.sh b/tools/playwright-headed/run.sh
 new file mode 100644
-index 0000000..02fb566
+index 0000000..ef3a5b8
 --- /dev/null
 +++ b/tools/playwright-headed/run.sh
-@@ -0,0 +1,168 @@
+@@ -0,0 +1,175 @@
 +#!/usr/bin/env bash
 +set -Eeuo pipefail
 +
@@ -786,6 +801,19 @@ index 0000000..02fb566
 +    CONTAINER_COMMAND=("$@")
 +fi
 +
++CONTAINER_ENV=(
++    --env DISPLAY=:99
++    --env VNC_ENABLED=true
++    --env VNC_PORT=5900
++    --env PLAYWRIGHT_HEADLESS=false
++    --env "DISPLAY_SECONDS=${DISPLAY_SECONDS}"
++    --env "ENDPOINT_ROUNDS=${ENDPOINT_ROUNDS}"
++    --env PLAYWRIGHT_RESULTS_DIR=/results/out
++)
++if [[ -n "${PUBLIC_ENDPOINTS:-}" ]]; then
++    CONTAINER_ENV+=(--env "PUBLIC_ENDPOINTS=${PUBLIC_ENDPOINTS}")
++fi
++
 +CONTAINER_ID="$(docker run -d --rm \
 +    --name "${CONTAINER_NAME}" \
 +    --init \
@@ -799,13 +827,7 @@ index 0000000..02fb566
 +    --mount "type=bind,src=${RESULTS_DIR},dst=/results" \
 +    --publish "${VNC_BIND_IP}:${VNC_HOST_PORT}:5900" \
 +    --env-file "${ENV_FILE}" \
-+    --env DISPLAY=:99 \
-+    --env VNC_ENABLED=true \
-+    --env VNC_PORT=5900 \
-+    --env PLAYWRIGHT_HEADLESS=false \
-+    --env DISPLAY_SECONDS="${DISPLAY_SECONDS}" \
-+    --env ENDPOINT_ROUNDS="${ENDPOINT_ROUNDS}" \
-+    --env PLAYWRIGHT_RESULTS_DIR=/results/out \
++    "${CONTAINER_ENV[@]}" \
 +    --workdir /workspace \
 +    "${FULL_IMAGE}" \
 +    "${CONTAINER_COMMAND[@]}")" || die "Container konnte nicht gestartet werden"
