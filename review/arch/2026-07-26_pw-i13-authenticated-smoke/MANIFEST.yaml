@@ -1,0 +1,43 @@
+manifest_version: v2
+project: arch
+repository: Homelab/Architecture
+canonical_pr: 103
+base_commit: 791c009140a7db47a436ee9eebba53d544ac3b78
+head_commit: 326ed2756de7c58169f0c9c77f22e5049b74fba0
+author: Slarti (OpenCode Agent)
+change_request: slarti/backlog#272
+statistics:
+  files_changed: 3
+  insertions: 176
+  deletions: 0
+review_scope:
+  architecture: true
+  implementation: true
+  governance: false
+  security: true
+  compatibility: true
+  documentation: true
+integrity:
+  changeset_sha256: 210d24ac83c1d9311d6505ef0c9986b133e6883b0dbf00593496999b1f5a2770
+generated:
+  timestamp: "2026-07-26T00:00:00Z"
+  tool: Slarti github-review skill
+review_verdict:
+  schema: acp.review-verdict.v2
+  reviewed_commit: 326ed2756de7c58169f0c9c77f22e5049b74fba0
+  review_type: self-verification
+  review_basis: pull-request
+  reviewer: emissaryofyeraziael
+  verdict: consistency-verified
+  blocking_findings: []
+  remaining_followups:
+    - Playwright config integration (projects entry for audiobookshelf)
+    - CI registration for smoke specs
+    - Shared OIDC fixture (PW-I11)
+    - Centralize ABS_BASE/Keycloak URLs into config
+  supersedes_review: null
+  review_timestamp: "2026-07-26T00:00:00Z"
+  disclaimer: >-
+    This is a self-verification by the implementation author. It demonstrates
+    internal consistency but is not an independent review. Only an independent
+    review represents an external quality assessment.
