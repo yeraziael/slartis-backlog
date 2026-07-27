@@ -3,12 +3,12 @@ project: arch
 repository: Homelab/Architecture
 canonical_pr: 105
 base_commit: 08d89bba6a0c219bf3247694212ec97085cfd73f
-head_commit: 0052d3aba9886d5f68e7a4cd3470da31dbc3f64e
+head_commit: ffddd9ca5198b72acce56adf256c3ba1823393c2
 author: Slarti (OpenCode Agent)
 change_request: slarti/backlog#267,#268,#269,#270,#271
 statistics:
   files_changed: 13
-  insertions: 1271
+  insertions: 1360
   deletions: 0
 review_scope:
   architecture: true
@@ -18,13 +18,13 @@ review_scope:
   compatibility: true
   documentation: true
 integrity:
-  changeset_sha256: db59c71f4d22e0f035e41fcc47ad4a73b3f760dfe41b73a78f9863282c922dff
+  changeset_sha256: 427cb894ed5ed0c716dd6bf28e9b87c7ce731b21b4d333b5169342bdb9227e3a
 generated:
   timestamp: "2026-07-27T00:00:00Z"
   tool: Slarti github-review skill
 review_verdict:
   schema: acp.review-verdict.v2
-  reviewed_commit: 0052d3aba9886d5f68e7a4cd3470da31dbc3f64e
+  reviewed_commit: ffddd9ca5198b72acce56adf256c3ba1823393c2
   review_type: self-verification
   review_basis: pull-request
   reviewer: emissaryofyeraziael

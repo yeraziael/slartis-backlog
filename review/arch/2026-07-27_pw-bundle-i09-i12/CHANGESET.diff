@@ -66,10 +66,10 @@ index 0000000..81a3c90
 +- No Audiobookshelf-specific logic enters shared fixtures (PWR-074)
 diff --git a/docs/playwright-synthetic-identities.md b/docs/playwright-synthetic-identities.md
 new file mode 100644
-index 0000000..1d6d164
+index 0000000..02c0761
 --- /dev/null
 +++ b/docs/playwright-synthetic-identities.md
-@@ -0,0 +1,96 @@
+@@ -0,0 +1,113 @@
 +# Synthetic Playwright Identities — Contract
 +
 +## Overview
@@ -141,7 +141,7 @@ index 0000000..1d6d164
 +
 +**Path:** `pi/tests/test_playwright_identities.sh`
 +
-+21 mock tests covering:
++25 mock tests covering:
 +- xtrace refusal
 +- dry-run and commit modes
 +- Help flag and argument validation
@@ -151,6 +151,7 @@ index 0000000..1d6d164
 +- Commit mode: denied identity stays ungrouped
 +- Idempotency (existing user, already-in-group)
 +- Secret-free output
++- Credentials file creation, permissions, JSON validity, completeness
 +
 +**Note:** The previous version listed 13 tests. The count increased to 21 after
 +adding fail-closed password provisioning, group reconciliation, and dry-run
@@ -160,24 +161,42 @@ index 0000000..1d6d164
 +
 +## Runtime Injection
 +
-+Credentials are injected at container start via environment variables:
++### Credentials File (commit mode)
++
++After provisioning, the script writes a credentials file to:
++`$PW_E2E_CREDENTIALS_DIR/.credentials.json` (default: `~/.playwright-e2e/.credentials.json`)
++
++File permissions: `0600` (owner-only read/write).
++
++```json
++{
++  "pw-e2e-abs-user": {"username": "pw-e2e-abs-user", "password": "<generated>"},
++  "pw-e2e-abs-admin": {"username": "pw-e2e-abs-admin", "password": "<generated>"},
++  "pw-e2e-abs-denied": {"username": "pw-e2e-abs-denied", "password": "<generated>"}
++}
++```
++
++### Environment Variables
++
++The Playwright test runner reads the credentials file at startup and injects:
 +- `PW_E2E_ABS_USER` — username
 +- `PW_E2E_ABS_PASSWORD` — password
 +
-+The provisioning script generates and stores passwords in Keycloak; the test
-+runner receives them at runtime. Passwords are never committed to code.
++Passwords are never committed to code or printed to stdout/stderr.
 diff --git a/pi/audiobookshelf/scripts/setup-playwright-identities.sh b/pi/audiobookshelf/scripts/setup-playwright-identities.sh
 new file mode 100755
-index 0000000..4231c30
+index 0000000..657109f
 --- /dev/null
 +++ b/pi/audiobookshelf/scripts/setup-playwright-identities.sh
-@@ -0,0 +1,179 @@
+@@ -0,0 +1,220 @@
 +#!/usr/bin/env bash
 +set -euo pipefail
 +
 +readonly SCRIPT_NAME="setup-playwright-identities"
 +readonly REALM="homelab"
 +readonly CLIENT_ID="audiobookshelf"
++readonly CREDENTIALS_DIR="${PW_E2E_CREDENTIALS_DIR:-$HOME/.playwright-e2e}"
++readonly CREDENTIALS_FILE="$CREDENTIALS_DIR/.credentials.json"
 +
 +IDENTITIES=("pw-e2e-abs-user" "pw-e2e-abs-admin" "pw-e2e-abs-denied")
 +
@@ -199,11 +218,18 @@ index 0000000..4231c30
 +  --dry-run   Read-only prerequisite checks; prove realm/groups/client exist
 +  --commit    Provision users, rotate passwords, reconcile group membership
 +
++Output (commit mode):
++  Writes structured credentials to $CREDENTIALS_FILE with mode 0600.
++  Each entry contains username and password for the provisioned identity.
++  The Playwright test runner reads this file at startup to inject
++  PW_E2E_ABS_USER / PW_E2E_ABS_PASSWORD env vars.
++
 +Security:
 +  * Refuses set -x (xtrace) to prevent secret leakage.
 +  * Never accepts secrets via command-line arguments.
 +  * Never prints existing passwords or client credentials.
 +  * Requires KCADM to be set to a mocked or real kcadm binary.
++  * Credentials file is written with mode 0600 (owner-only read/write).
 +USAGE
 +}
 +
@@ -277,6 +303,7 @@ index 0000000..4231c30
 +  local username="$1"
 +  local target_group="$2"
 +  local password
++  local result_var="$3"
 +
 +  echo "[$SCRIPT_NAME] Provisioning identity '$username'"
 +  if [[ -n "$target_group" ]]; then
@@ -321,11 +348,39 @@ index 0000000..4231c30
 +    if user_in_group "$user_id" "$group_id"; then
 +      echo "  User '$username' already in group '$target_group'"
 +    else
-+      echo "  Adding '$username' to group '$target_group'"
-+      "$KCADM" update "groups/$group_id" --add "members=[{\"id\":\"$user_id\"}]" \
++      echo "  Adding '$username' to group '$target_group' via users/$user_id/groups/$group_id"
++      "$KCADM" update "users/$user_id/groups/$group_id" \
 +        || die "Failed to add '$username' to group '$target_group'"
 +    fi
 +  fi
++
++  eval "$result_var"="$password"
++}
++
++write_credentials() {
++  local user_pass="$1"
++  local admin_pass="$2"
++  local denied_pass="$3"
++
++  mkdir -p "$CREDENTIALS_DIR"
++  chmod 700 "$CREDENTIALS_DIR"
++
++  python3 -c "
++import json, sys, os
++
++creds = {
++    'pw-e2e-abs-user': {'username': 'pw-e2e-abs-user', 'password': sys.argv[1]},
++    'pw-e2e-abs-admin': {'username': 'pw-e2e-abs-admin', 'password': sys.argv[2]},
++    'pw-e2e-abs-denied': {'username': 'pw-e2e-abs-denied', 'password': sys.argv[3]}
++}
++
++path = sys.argv[4]
++with open(path, 'w') as f:
++    json.dump(creds, f, indent=2)
++os.chmod(path, 0o600)
++" "$user_pass" "$admin_pass" "$denied_pass" "$CREDENTIALS_FILE"
++
++  echo "[$SCRIPT_NAME] Credentials written to $CREDENTIALS_FILE (mode 0600)"
 +}
 +
 +main() {
@@ -342,9 +397,12 @@ index 0000000..4231c30
 +    assert_groups
 +    assert_client
 +
-+    provision_identity "pw-e2e-abs-user"  "$GROUP_USERS"
-+    provision_identity "pw-e2e-abs-admin"  "$GROUP_ADMINS"
-+    provision_identity "pw-e2e-abs-denied" ""
++    local pw_user pw_admin pw_denied
++    provision_identity "pw-e2e-abs-user"  "$GROUP_USERS"  pw_user
++    provision_identity "pw-e2e-abs-admin"  "$GROUP_ADMINS" pw_admin
++    provision_identity "pw-e2e-abs-denied" ""             pw_denied
++
++    write_credentials "$pw_user" "$pw_admin" "$pw_denied"
 +  fi
 +
 +  echo "=== $SCRIPT_NAME: done ==="
@@ -353,10 +411,10 @@ index 0000000..4231c30
 +main "$@"
 diff --git a/pi/tests/test_playwright_identities.sh b/pi/tests/test_playwright_identities.sh
 new file mode 100755
-index 0000000..4334a78
+index 0000000..2f9c5d1
 --- /dev/null
 +++ b/pi/tests/test_playwright_identities.sh
-@@ -0,0 +1,303 @@
+@@ -0,0 +1,352 @@
 +#!/usr/bin/env bash
 +set -euo pipefail
 +
@@ -582,13 +640,13 @@ index 0000000..4334a78
 +test_commit_adds_user_to_group() {
 +  create_mock_kcadm
 +  KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
-+  grep -q "groups/group-users-id" "$MOCK_DIR/calls.log"
++  grep -q "users/id-pw-e2e-abs-user/groups/group-users-id" "$MOCK_DIR/calls.log"
 +}
 +
 +test_commit_adds_admin_to_group() {
 +  create_mock_kcadm
 +  KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
-+  grep -q "groups/group-admins-id" "$MOCK_DIR/calls.log"
++  grep -q "users/id-pw-e2e-abs-admin/groups/group-admins-id" "$MOCK_DIR/calls.log"
 +}
 +
 +test_commit_denied_ungrouped() {
@@ -634,6 +692,51 @@ index 0000000..4334a78
 +  echo "$output" | grep -q "done"
 +}
 +
++test_commit_creates_credentials_file() {
++  create_mock_kcadm
++  local tmpdir
++  tmpdir=$(mktemp -d)
++  PW_E2E_CREDENTIALS_DIR="$tmpdir" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  [[ -f "$tmpdir/.credentials.json" ]]
++  rm -rf "$tmpdir"
++}
++
++test_commit_credentials_mode_0600() {
++  create_mock_kcadm
++  local tmpdir
++  tmpdir=$(mktemp -d)
++  PW_E2E_CREDENTIALS_DIR="$tmpdir" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  local perms
++  perms=$(stat -c '%a' "$tmpdir/.credentials.json")
++  [[ "$perms" == "600" ]]
++  rm -rf "$tmpdir"
++}
++
++test_commit_credentials_valid_json() {
++  create_mock_kcadm
++  local tmpdir
++  tmpdir=$(mktemp -d)
++  PW_E2E_CREDENTIALS_DIR="$tmpdir" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  python3 -c "import json; json.load(open('$tmpdir/.credentials.json'))"
++  rm -rf "$tmpdir"
++}
++
++test_commit_credentials_has_all_identities() {
++  create_mock_kcadm
++  local tmpdir
++  tmpdir=$(mktemp -d)
++  PW_E2E_CREDENTIALS_DIR="$tmpdir" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  python3 -c "
++import json
++d = json.load(open('$tmpdir/.credentials.json'))
++assert 'pw-e2e-abs-user' in d, 'user missing'
++assert 'pw-e2e-abs-admin' in d, 'admin missing'
++assert 'pw-e2e-abs-denied' in d, 'denied missing'
++assert d['pw-e2e-abs-user']['password'], 'user password empty'
++"
++  rm -rf "$tmpdir"
++}
++
 +echo "=== test_playwright_identities ==="
 +run_test "refuses xtrace"                      test_refuses_xtrace
 +run_test "dry-run default"                     test_dry_run_default
@@ -656,6 +759,10 @@ index 0000000..4334a78
 +run_test "commit password rotated for existing" test_commit_password_rotated_for_existing
 +run_test "no secret in output"                 test_no_secret_in_output
 +run_test "done marker"                         test_done_marker
++run_test "commit creates credentials file"     test_commit_creates_credentials_file
++run_test "commit credentials mode 0600"        test_commit_credentials_mode_0600
++run_test "commit credentials valid json"       test_commit_credentials_valid_json
++run_test "commit credentials has all ids"      test_commit_credentials_has_all_identities
 +
 +echo ""
 +echo "Results: $PASS/$TESTS_RUN passed, $FAIL failed"
