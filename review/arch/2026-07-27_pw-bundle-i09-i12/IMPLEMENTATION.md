@@ -18,7 +18,7 @@
 | `tests/playwright/services/audiobookshelf/pages/login.ts` | **new** | +55 |
 | `tests/playwright/services/audiobookshelf/smoke-unauthenticated.spec.ts` | **new** | +59 |
 
-**Total:** 13 files, +1218 insertions, 0 deletions.
+**Total:** 13 files, +1271 insertions, 0 deletions.
 
 ## Semantic Summary
 
