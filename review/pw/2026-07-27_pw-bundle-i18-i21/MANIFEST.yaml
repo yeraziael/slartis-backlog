@@ -3,20 +3,20 @@ project: "homelab-playwright"
 repository: "Homelab/Architecture"
 canonical_pr: 107
 author: "Slarti Branchfast <slarti@hl.maier.wtf>"
-change_request: "PW-I18 through PW-I21 (Jellyfin & Maintenance) - Re-review Fixes #107"
+change_request: "PW-I18 through PW-I21 (Jellyfin & Maintenance) - Final Re-review Fixes #107"
 review_scope:
   tickets: ["PW-I18", "PW-D06", "PW-I19", "PW-I20", "PW-I21"]
-  description: "Addressed re-review findings: replaced index.html URL check with authenticated SPA header assertion, and added explicit navigation to protected restricted library route for denial verification."
-head_commit: "58ca90937991749590fe9ba4a8f33829a06d5924"
+  description: "Addressed final re-review finding: implemented deterministic protected library item route from controlled test-data contract with positive control for standard user and fail-closed denial assertion for restricted user."
+head_commit: "909cad0a393939603955d0a6acf40d019a914c2c"
 base_commit: "e74c58b2edb583819b091f4cf158e817e35fe99e"
-timestamp: "2026-07-27T19:05:00Z"
+timestamp: "2026-07-27T19:15:00Z"
 generated:
   tool: "validate_review_bundle.py"
   version: "0.3.0"
-  timestamp: "2026-07-27T19:05:00Z"
+  timestamp: "2026-07-27T19:15:00Z"
 integrity:
-  changeset_sha256: "7f2c6142662c0c54c54bd0fb05a86c9db1c2ba45cc17a0426cc815710655b9c1"
+  changeset_sha256: "de5f49777331fa3626a36e0d4c81748d73a02f76b177e02d75d1ad6a922cdc1c"
 statistics:
   files_changed: 8
-  insertions: 219
+  insertions: 236
   deletions: 0

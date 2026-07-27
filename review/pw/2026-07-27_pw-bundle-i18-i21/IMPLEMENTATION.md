@@ -1,3 +1,3 @@
-# IMPLEMENTATION — PW-I18 through PW-I21 Jellyfin & Maintenance (Re-review Fixes)
+# IMPLEMENTATION — PW-I18 through PW-I21 Jellyfin & Maintenance (Final Fixes)
 
 Covered in bundle.

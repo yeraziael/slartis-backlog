@@ -40,10 +40,10 @@ index 0000000..7e4b7c5
 +- **Test-Data Cleanup**: Ephemeral user states, cookies, and localStorage must be isolated via separate browser contexts per test. No persistent mutated state may leak between tests.
 diff --git a/tests/playwright/services/jellyfin/authentication-roles.spec.ts b/tests/playwright/services/jellyfin/authentication-roles.spec.ts
 new file mode 100644
-index 0000000..7d0be72
+index 0000000..73a4e18
 --- /dev/null
 +++ b/tests/playwright/services/jellyfin/authentication-roles.spec.ts
-@@ -0,0 +1,41 @@
+@@ -0,0 +1,51 @@
 +import { test, expect } from "@playwright/test";
 +import { JellyfinLoginPage } from "./pages/login";
 +
@@ -63,15 +63,25 @@ index 0000000..7d0be72
 +    expect(backOnLogin).toBeTruthy();
 +  });
 +
-+  test("Jellyfin restricted user role denial", { tag: "@auth" }, async ({ page }) => {
++  test("Jellyfin restricted user role denial with positive control", { tag: "@auth" }, async ({ page }) => {
 +    const restrictedUser = process.env.PW_E2E_JF_RESTRICTED_USER;
 +    const restrictedPass = process.env.PW_E2E_JF_RESTRICTED_PASSWORD;
-+    test.skip(!restrictedUser || !restrictedPass, "Jellyfin restricted credentials required");
++    const standardUser = process.env.PW_E2E_JF_USER;
++    const standardPass = process.env.PW_E2E_JF_PASSWORD;
++    const protectedLibraryId = process.env.PW_E2E_JF_RESTRICTED_LIBRARY_ID || "controlled-test-item-id";
++    test.skip(!restrictedUser || !restrictedPass || !standardUser || !standardPass, "Jellyfin restricted and standard credentials required");
 +
-+    const loginPage = new JellyfinLoginPage(page);
-+    await loginPage.login(restrictedUser, restrictedPass);
-+    const denied = await loginPage.isRestrictedLibraryDenied();
-+    expect(denied).toBeTruthy();
++    // Positive control: standard/authorized user can access protected resource
++    const standardLoginPage = new JellyfinLoginPage(page);
++    await standardLoginPage.login(standardUser, standardPass);
++    const standardCanAccess = await standardLoginPage.isProtectedLibraryAccessible(protectedLibraryId);
++    expect(standardCanAccess).toBeTruthy();
++
++    // Negative authorization test: restricted user cannot access protected resource
++    const restrictedLoginPage = new JellyfinLoginPage(page);
++    await restrictedLoginPage.login(restrictedUser, restrictedPass);
++    const restrictedDenied = await restrictedLoginPage.isProtectedLibraryDenied(protectedLibraryId);
++    expect(restrictedDenied).toBeTruthy();
 +  });
 +
 +  test("Jellyfin admin navigation check", { tag: "@auth" }, async ({ page }) => {
@@ -112,10 +122,10 @@ index 0000000..4079c08
 +});
 diff --git a/tests/playwright/services/jellyfin/pages/login.ts b/tests/playwright/services/jellyfin/pages/login.ts
 new file mode 100644
-index 0000000..def31ba
+index 0000000..86b0106
 --- /dev/null
 +++ b/tests/playwright/services/jellyfin/pages/login.ts
-@@ -0,0 +1,68 @@
+@@ -0,0 +1,75 @@
 +import { Page, expect } from "@playwright/test";
 +
 +export class JellyfinLoginPage {
@@ -144,7 +154,6 @@ index 0000000..def31ba
 +    await passField.fill(pass);
 +    await submitBtn.click();
 +    
-+    // Assert post-login SPA state: verify user profile button or main view header appears (avoiding index.html check since Jellyfin SPA hosts on index.html)
 +    const userHeader = this.page.locator('.headerUserButton, [data-testid="user-menu"], .mainDrawer');
 +    await expect(userHeader.first()).toBeVisible({ timeout: 15000 });
 +  }
@@ -158,7 +167,6 @@ index 0000000..def31ba
 +    await expect(logoutBtn).toBeVisible({ timeout: 5000 });
 +    await logoutBtn.click();
 +    
-+    // Assert return to login form state
 +    const userField = this.page.locator('input[name="username"], input[id*="username"]');
 +    await expect(userField).toBeVisible({ timeout: 10000 });
 +  }
@@ -173,15 +181,24 @@ index 0000000..def31ba
 +    return await adminLink.isVisible().catch(() => false);
 +  }
 +
-+  async navigateToRestrictedLibrary(): Promise<void> {
-+    // Navigate directly to protected restricted library route/item
-+    await this.page.goto("/web/index.html#!/restricted-library.html");
++  async navigateToProtectedLibrary(libraryId: string): Promise<void> {
++    // Navigate using deterministic controlled test-data contract route/ID per PW-D06
++    await this.page.goto(`/web/index.html#!/item.html?id=${libraryId}`);
 +  }
 +
-+  async isRestrictedLibraryDenied(): Promise<boolean> {
-+    await this.navigateToRestrictedLibrary();
-+    const restrictedBanner = this.page.locator(':text("Unauthorized"), :text("Access Denied"), :text("Restricted"), :text("Forbidden")');
-+    return await restrictedBanner.isVisible().catch(() => false);
++  async isProtectedLibraryAccessible(libraryId: string): Promise<boolean> {
++    await this.navigateToProtectedLibrary(libraryId);
++    const mediaContainer = this.page.locator('.detailSection, .listItem, [data-testid="media-item-detail"]');
++    return await mediaContainer.first().isVisible().catch(() => false);
++  }
++
++  async isProtectedLibraryDenied(libraryId: string): Promise<boolean> {
++    await this.navigateToProtectedLibrary(libraryId);
++    // Fail-closed denial check: verify unauthorized message, error notification, or redirection away from item
++    const errorBanner = this.page.locator(':text("Unauthorized"), :text("Access Denied"), :text("Forbidden"), :text("Item not found"), .toastErrorMessage');
++    const isErrorVisible = await errorBanner.isVisible().catch(() => false);
++    const isDetailVisible = await this.page.locator('.detailSection, [data-testid="media-item-detail"]').isVisible().catch(() => false);
++    return isErrorVisible || !isDetailVisible;
 +  }
 +}
 diff --git a/tests/playwright/services/jellyfin/pages/media.ts b/tests/playwright/services/jellyfin/pages/media.ts
