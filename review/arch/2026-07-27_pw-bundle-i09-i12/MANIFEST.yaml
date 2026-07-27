@@ -1,0 +1,42 @@
+manifest_version: v2
+project: arch
+repository: Homelab/Architecture
+canonical_pr: 105
+base_commit: 08d89bba6a0c219bf3247694212ec97085cfd73f
+head_commit: 1414e920a35360367e4190ec179b0e937182cb6b
+author: Slarti (OpenCode Agent)
+change_request: slarti/backlog#267,#268,#269,#270,#271
+statistics:
+  files_changed: 13
+  insertions: 1218
+  deletions: 0
+review_scope:
+  architecture: true
+  implementation: true
+  governance: false
+  security: true
+  compatibility: true
+  documentation: true
+integrity:
+  changeset_sha256: 60b32a133c74c8d448924c09494f6f5fa410dc9428a711ea901c7baf742dde48
+generated:
+  timestamp: "2026-07-27T00:00:00Z"
+  tool: Slarti github-review skill
+review_verdict:
+  schema: acp.review-verdict.v2
+  reviewed_commit: 1414e920a35360367e4190ec179b0e937182cb6b
+  review_type: self-verification
+  review_basis: pull-request
+  reviewer: emissaryofyeraziael
+  verdict: consistency-verified
+  blocking_findings: []
+  remaining_followups:
+    - Close backlog issues after merge
+    - Run live provisioned test suite with real credentials
+    - Register test-playwright-platform in Makefile
+  supersedes_review: null
+  review_timestamp: "2026-07-27T00:00:00Z"
+  disclaimer: >-
+    This is a self-verification by the implementation author. It demonstrates
+    internal consistency but is not an independent review. Only an independent
+    review represents an external quality assessment.
