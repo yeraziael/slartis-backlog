@@ -129,10 +129,10 @@ index 0000000..4079c08
 +});
 diff --git a/tests/playwright/services/jellyfin/pages/login.ts b/tests/playwright/services/jellyfin/pages/login.ts
 new file mode 100644
-index 0000000..86b0106
+index 0000000..5f7cd85
 --- /dev/null
 +++ b/tests/playwright/services/jellyfin/pages/login.ts
-@@ -0,0 +1,75 @@
+@@ -0,0 +1,76 @@
 +import { Page, expect } from "@playwright/test";
 +
 +export class JellyfinLoginPage {
@@ -148,6 +148,8 @@ index 0000000..86b0106
 +
 +  async verifyLoaded() {
 +    await expect(this.page).toHaveURL(/web/);
++    const userField = this.page.locator('input[name="username"], input[id*="username"], form');
++    await expect(userField.first()).toBeVisible({ timeout: 10000 });
 +  }
 +
 +  async login(username: string, pass: string): Promise<void> {
@@ -189,31 +191,30 @@ index 0000000..86b0106
 +  }
 +
 +  async navigateToProtectedLibrary(libraryId: string): Promise<void> {
-+    // Navigate using deterministic controlled test-data contract route/ID per PW-D06
 +    await this.page.goto(`/web/index.html#!/item.html?id=${libraryId}`);
 +  }
 +
 +  async isProtectedLibraryAccessible(libraryId: string): Promise<boolean> {
 +    await this.navigateToProtectedLibrary(libraryId);
 +    const mediaContainer = this.page.locator('.detailSection, .listItem, [data-testid="media-item-detail"]');
-+    return await mediaContainer.first().isVisible().catch(() => false);
++    await expect(mediaContainer.first()).toBeVisible({ timeout: 10000 });
++    return true;
 +  }
 +
 +  async isProtectedLibraryDenied(libraryId: string): Promise<boolean> {
 +    await this.navigateToProtectedLibrary(libraryId);
-+    // Fail-closed denial check: verify unauthorized message, error notification, or redirection away from item
++    // Strict fail-closed denial contract: requires explicit denial banner, toast error, or redirect back to home/login
 +    const errorBanner = this.page.locator(':text("Unauthorized"), :text("Access Denied"), :text("Forbidden"), :text("Item not found"), .toastErrorMessage');
-+    const isErrorVisible = await errorBanner.isVisible().catch(() => false);
-+    const isDetailVisible = await this.page.locator('.detailSection, [data-testid="media-item-detail"]').isVisible().catch(() => false);
-+    return isErrorVisible || !isDetailVisible;
++    await expect(errorBanner.first()).toBeVisible({ timeout: 10000 });
++    return true;
 +  }
 +}
 diff --git a/tests/playwright/services/jellyfin/pages/media.ts b/tests/playwright/services/jellyfin/pages/media.ts
 new file mode 100644
-index 0000000..f61b161
+index 0000000..efb3d88
 --- /dev/null
 +++ b/tests/playwright/services/jellyfin/pages/media.ts
-@@ -0,0 +1,32 @@
+@@ -0,0 +1,36 @@
 +import { Page, expect } from "@playwright/test";
 +
 +export class JellyfinMediaPage {
@@ -234,16 +235,20 @@ index 0000000..f61b161
 +    await expect(playBtn.first()).toBeVisible({ timeout: 10000 });
 +    await playBtn.first().click();
 +
-+    // Fail-closed assertion: verify video/audio player element is active
-+    const activePlayer = this.page.locator('video, audio, [data-testid="active-player"]');
++    // Fail-closed playback assertion: verify video/audio element is present and actually playing (paused === false)
++    const activePlayer = this.page.locator('video, audio');
 +    await expect(activePlayer.first()).toBeVisible({ timeout: 15000 });
++    
++    await this.page.waitForFunction(() => {
++      const media = document.querySelector('video, audio') as HTMLMediaElement | null;
++      return media && !media.paused;
++    }, { timeout: 15000 });
 +  }
 +
 +  async stopPlayback(): Promise<void> {
 +    const stopBtn = this.page.locator('button:has-text("Stop"), [data-testid="stop-button"]');
-+    if (await stopBtn.count() > 0) {
-+      await stopBtn.first().click();
-+    }
++    await expect(stopBtn.first()).toBeVisible({ timeout: 5000 });
++    await stopBtn.first().click();
 +  }
 +}
 diff --git a/tests/playwright/services/jellyfin/smoke-unauthenticated.spec.ts b/tests/playwright/services/jellyfin/smoke-unauthenticated.spec.ts

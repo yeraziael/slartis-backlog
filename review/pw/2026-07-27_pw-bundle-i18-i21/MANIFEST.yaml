@@ -3,20 +3,20 @@ project: "homelab-playwright"
 repository: "Homelab/Architecture"
 canonical_pr: 107
 author: "Slarti Branchfast <slarti@hl.maier.wtf>"
-change_request: "PW-I18 through PW-I21 (Jellyfin & Maintenance) - Rebase Fix #107"
+change_request: "PW-I18 through PW-I21 (Jellyfin & Maintenance) - Latest Strict Contract Fixes #107"
 review_scope:
   tickets: ["PW-I18", "PW-D06", "PW-I19", "PW-I20", "PW-I21"]
-  description: "Rebased feat/pw-bundle-i18-i21 onto latest origin/main to ensure clean mergeability."
-head_commit: "8f231a48d4a3e2afcc77cf7d1c50432a1e4cf564"
+  description: "Addressed strict review findings: explicit error banner assertion for restricted denial, active media playback state check (paused === false), mandatory stop button, and unauthenticated login form render assertion."
+head_commit: "d0a8381a9f627775c8b7915d6bbb46122a3d6c90"
 base_commit: "e74c58b2edb583819b091f4cf158e817e35fe99e"
-timestamp: "2026-07-27T19:40:00Z"
+timestamp: "2026-07-27T19:50:00Z"
 generated:
   tool: "validate_review_bundle.py"
   version: "0.3.0"
-  timestamp: "2026-07-27T19:40:00Z"
+  timestamp: "2026-07-27T19:50:00Z"
 integrity:
-  changeset_sha256: "4130589c8aac7b190cfd4d402d18721c91bd23261be1b4bf6c71288f2e933528"
+  changeset_sha256: "23f1cbfa5d682296b10f2b5b10788a528bdc8a6caea33999ebd3d52bc8bbc951"
 statistics:
   files_changed: 8
-  insertions: 243
+  insertions: 248
   deletions: 0
