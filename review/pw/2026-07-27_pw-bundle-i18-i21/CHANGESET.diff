@@ -112,10 +112,10 @@ index 0000000..4079c08
 +});
 diff --git a/tests/playwright/services/jellyfin/pages/login.ts b/tests/playwright/services/jellyfin/pages/login.ts
 new file mode 100644
-index 0000000..1e6ed73
+index 0000000..def31ba
 --- /dev/null
 +++ b/tests/playwright/services/jellyfin/pages/login.ts
-@@ -0,0 +1,62 @@
+@@ -0,0 +1,68 @@
 +import { Page, expect } from "@playwright/test";
 +
 +export class JellyfinLoginPage {
@@ -144,12 +144,12 @@ index 0000000..1e6ed73
 +    await passField.fill(pass);
 +    await submitBtn.click();
 +    
-+    // Assert post-login navigation away from login page
-+    await expect(this.page).not.toHaveURL(/login|index\.html/, { timeout: 15000 });
++    // Assert post-login SPA state: verify user profile button or main view header appears (avoiding index.html check since Jellyfin SPA hosts on index.html)
++    const userHeader = this.page.locator('.headerUserButton, [data-testid="user-menu"], .mainDrawer');
++    await expect(userHeader.first()).toBeVisible({ timeout: 15000 });
 +  }
 +
 +  async logout(): Promise<void> {
-+    // Open user menu / settings and click logout
 +    const userMenu = this.page.locator('[data-testid="user-menu"], .headerUserButton, button[aria-label="User"]');
 +    if (await userMenu.count() > 0) {
 +      await userMenu.first().click();
@@ -158,8 +158,9 @@ index 0000000..1e6ed73
 +    await expect(logoutBtn).toBeVisible({ timeout: 5000 });
 +    await logoutBtn.click();
 +    
-+    // Assert return to login screen
-+    await expect(this.page).toHaveURL(/login|index\.html/, { timeout: 10000 });
++    // Assert return to login form state
++    const userField = this.page.locator('input[name="username"], input[id*="username"]');
++    await expect(userField).toBeVisible({ timeout: 10000 });
 +  }
 +
 +  async isOnLoginPage(): Promise<boolean> {
@@ -172,9 +173,14 @@ index 0000000..1e6ed73
 +    return await adminLink.isVisible().catch(() => false);
 +  }
 +
++  async navigateToRestrictedLibrary(): Promise<void> {
++    // Navigate directly to protected restricted library route/item
++    await this.page.goto("/web/index.html#!/restricted-library.html");
++  }
++
 +  async isRestrictedLibraryDenied(): Promise<boolean> {
-+    // Verify unauthorized/restricted section shows restriction message or lacks administrative access
-+    const restrictedBanner = this.page.locator(':text("Unauthorized"), :text("Access Denied"), :text("Restricted")');
++    await this.navigateToRestrictedLibrary();
++    const restrictedBanner = this.page.locator(':text("Unauthorized"), :text("Access Denied"), :text("Restricted"), :text("Forbidden")');
 +    return await restrictedBanner.isVisible().catch(() => false);
 +  }
 +}

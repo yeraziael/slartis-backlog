@@ -3,20 +3,20 @@ project: "homelab-playwright"
 repository: "Homelab/Architecture"
 canonical_pr: 107
 author: "Slarti Branchfast <slarti@hl.maier.wtf>"
-change_request: "PW-I18 through PW-I21 (Jellyfin & Maintenance) - Fixes per review #107"
+change_request: "PW-I18 through PW-I21 (Jellyfin & Maintenance) - Re-review Fixes #107"
 review_scope:
   tickets: ["PW-I18", "PW-D06", "PW-I19", "PW-I20", "PW-I21"]
-  description: "Addressed review findings: enforced post-login/logout state assertions, restricted identity role coverage, and fail-closed media playback."
-head_commit: "7784b67b2eae465cbbfb07d3b7e31f624f5b4352"
+  description: "Addressed re-review findings: replaced index.html URL check with authenticated SPA header assertion, and added explicit navigation to protected restricted library route for denial verification."
+head_commit: "58ca90937991749590fe9ba4a8f33829a06d5924"
 base_commit: "e74c58b2edb583819b091f4cf158e817e35fe99e"
-timestamp: "2026-07-27T18:55:00Z"
+timestamp: "2026-07-27T19:05:00Z"
 generated:
   tool: "validate_review_bundle.py"
   version: "0.3.0"
-  timestamp: "2026-07-27T18:55:00Z"
+  timestamp: "2026-07-27T19:05:00Z"
 integrity:
-  changeset_sha256: "be75ab00a03511f1340c3c0f37e984b24952f8a15cf6753476703e22bbee0777"
+  changeset_sha256: "7f2c6142662c0c54c54bd0fb05a86c9db1c2ba45cc17a0426cc815710655b9c1"
 statistics:
   files_changed: 8
-  insertions: 213
+  insertions: 219
   deletions: 0
