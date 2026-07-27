@@ -1,3 +1,3 @@
-# RISKS — Playwright Plan-as-Code Epic #253 Wrap-up
+# RISKS — Epic #253 Wrap-up
 
-Fully documented and verified.
+Mitigated via ephemeral runner isolation, sanitisation gates, and zero-retry flake policy.

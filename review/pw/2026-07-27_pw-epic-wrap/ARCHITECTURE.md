@@ -1,3 +1,3 @@
-# ARCHITECTURE — Playwright Plan-as-Code Epic #253 Wrap-up
+# ARCHITECTURE — Epic #253 Wrap-up
 
-Fully documented and verified.
+Covered in bundle.

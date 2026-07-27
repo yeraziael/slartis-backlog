@@ -1,3 +1,5 @@
-# TODO — Playwright Plan-as-Code Epic #253 Wrap-up
+# TODO & RESTING STATE — Epic #253 Closeout
 
-Fully documented and verified.
+- All Epic #253 tickets (PW-I01 through PW-I21) are closed.
+- Future maintenance and flaky test handling follow docs/playwright-operations.md.
+- No further tickets remain open under Epic #253.
