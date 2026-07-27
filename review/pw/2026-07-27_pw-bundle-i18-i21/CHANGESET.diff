@@ -129,10 +129,10 @@ index 0000000..4079c08
 +});
 diff --git a/tests/playwright/services/jellyfin/pages/login.ts b/tests/playwright/services/jellyfin/pages/login.ts
 new file mode 100644
-index 0000000..5f7cd85
+index 0000000..781813c
 --- /dev/null
 +++ b/tests/playwright/services/jellyfin/pages/login.ts
-@@ -0,0 +1,76 @@
+@@ -0,0 +1,77 @@
 +import { Page, expect } from "@playwright/test";
 +
 +export class JellyfinLoginPage {
@@ -148,7 +148,8 @@ index 0000000..5f7cd85
 +
 +  async verifyLoaded() {
 +    await expect(this.page).toHaveURL(/web/);
-+    const userField = this.page.locator('input[name="username"], input[id*="username"], form');
++    // Require Jellyfin-specific login affordance / form inputs rather than generic <form>
++    const userField = this.page.locator('input[name="username"], input[id*="username"], button:has-text("Sign In"), button:has-text("Login")');
 +    await expect(userField.first()).toBeVisible({ timeout: 10000 });
 +  }
 +
@@ -203,7 +204,7 @@ index 0000000..5f7cd85
 +
 +  async isProtectedLibraryDenied(libraryId: string): Promise<boolean> {
 +    await this.navigateToProtectedLibrary(libraryId);
-+    // Strict fail-closed denial contract: requires explicit denial banner, toast error, or redirect back to home/login
++    // Strict fail-closed denial contract: requires explicit denial banner, toast error, or access denied indicator
 +    const errorBanner = this.page.locator(':text("Unauthorized"), :text("Access Denied"), :text("Forbidden"), :text("Item not found"), .toastErrorMessage');
 +    await expect(errorBanner.first()).toBeVisible({ timeout: 10000 });
 +    return true;
@@ -211,10 +212,10 @@ index 0000000..5f7cd85
 +}
 diff --git a/tests/playwright/services/jellyfin/pages/media.ts b/tests/playwright/services/jellyfin/pages/media.ts
 new file mode 100644
-index 0000000..efb3d88
+index 0000000..8374fc9
 --- /dev/null
 +++ b/tests/playwright/services/jellyfin/pages/media.ts
-@@ -0,0 +1,36 @@
+@@ -0,0 +1,41 @@
 +import { Page, expect } from "@playwright/test";
 +
 +export class JellyfinMediaPage {
@@ -235,7 +236,6 @@ index 0000000..efb3d88
 +    await expect(playBtn.first()).toBeVisible({ timeout: 10000 });
 +    await playBtn.first().click();
 +
-+    // Fail-closed playback assertion: verify video/audio element is present and actually playing (paused === false)
 +    const activePlayer = this.page.locator('video, audio');
 +    await expect(activePlayer.first()).toBeVisible({ timeout: 15000 });
 +    
@@ -249,6 +249,12 @@ index 0000000..efb3d88
 +    const stopBtn = this.page.locator('button:has-text("Stop"), [data-testid="stop-button"]');
 +    await expect(stopBtn.first()).toBeVisible({ timeout: 5000 });
 +    await stopBtn.first().click();
++
++    // Fail-closed stop postcondition: assert media is paused (paused === true) or player element teardown
++    await this.page.waitForFunction(() => {
++      const media = document.querySelector('video, audio') as HTMLMediaElement | null;
++      return !media || media.paused;
++    }, { timeout: 15000 });
 +  }
 +}
 diff --git a/tests/playwright/services/jellyfin/smoke-unauthenticated.spec.ts b/tests/playwright/services/jellyfin/smoke-unauthenticated.spec.ts
