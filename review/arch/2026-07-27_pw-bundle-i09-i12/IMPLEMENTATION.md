@@ -4,8 +4,9 @@
 
 | File | Status | Lines |
 |------|--------|-------|
-| `pi/audiobookshelf/scripts/setup-playwright-identities.sh` | **new** | +127 |
-| `pi/tests/test_playwright_identities.sh` | **new** | +123 |
+| `pi/audiobookshelf/scripts/setup-playwright-identities.sh` | **new** | +220 |
+| `pi/audiobookshelf/scripts/load-playwright-credentials.sh` | **new** | +85 |
+| `pi/tests/test_playwright_identities.sh` | **new** | +352 |
 | `docs/playwright-synthetic-identities.md` | **new** | +71 |
 | `docs/decisions/playwright/audiobookshelf-onboarding.md` | **new** | +60 |
 | `tests/playwright/fixtures/service.ts` | **new** | +64 |
@@ -18,11 +19,11 @@
 | `tests/playwright/services/audiobookshelf/pages/login.ts` | **new** | +55 |
 | `tests/playwright/services/audiobookshelf/smoke-unauthenticated.spec.ts` | **new** | +59 |
 
-**Total:** 13 files, +1271 insertions, 0 deletions.
+**Total:** 14 files, +1471 insertions, 0 deletions.
 
 ## Semantic Summary
 
-5 issues bundled into a single atomic commit. Establishes the shared fixture library (service, roles, console, OIDC), the fake OIDC test harness, the Audiobookshelf service suite with login page object and unauthenticated smoke, and the identity provisioning contract.
+5 issues bundled into a single atomic commit. Establishes the shared fixture library (service, roles, console, OIDC), the fake OIDC test harness, the Audiobookshelf service suite with login page object and unauthenticated smoke, and the identity provisioning contract with secure credential handoff.
 
 ## Breaking Changes
 

@@ -66,10 +66,10 @@ index 0000000..81a3c90
 +- No Audiobookshelf-specific logic enters shared fixtures (PWR-074)
 diff --git a/docs/playwright-synthetic-identities.md b/docs/playwright-synthetic-identities.md
 new file mode 100644
-index 0000000..02c0761
+index 0000000..744e672
 --- /dev/null
 +++ b/docs/playwright-synthetic-identities.md
-@@ -0,0 +1,113 @@
+@@ -0,0 +1,114 @@
 +# Synthetic Playwright Identities — Contract
 +
 +## Overview
@@ -141,7 +141,7 @@ index 0000000..02c0761
 +
 +**Path:** `pi/tests/test_playwright_identities.sh`
 +
-+25 mock tests covering:
++30 mock tests covering:
 +- xtrace refusal
 +- dry-run and commit modes
 +- Help flag and argument validation
@@ -152,6 +152,7 @@ index 0000000..02c0761
 +- Idempotency (existing user, already-in-group)
 +- Secret-free output
 +- Credentials file creation, permissions, JSON validity, completeness
++- Credential loader: role selection, env var export, invalid role rejection, insecure perms rejection
 +
 +**Note:** The previous version listed 13 tests. The count increased to 21 after
 +adding fail-closed password provisioning, group reconciliation, and dry-run
@@ -183,6 +184,92 @@ index 0000000..02c0761
 +- `PW_E2E_ABS_PASSWORD` — password
 +
 +Passwords are never committed to code or printed to stdout/stderr.
+diff --git a/pi/audiobookshelf/scripts/load-playwright-credentials.sh b/pi/audiobookshelf/scripts/load-playwright-credentials.sh
+new file mode 100755
+index 0000000..cfa1c57
+--- /dev/null
++++ b/pi/audiobookshelf/scripts/load-playwright-credentials.sh
+@@ -0,0 +1,80 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++readonly LOAD_CRED_SCRIPT_NAME="load-playwright-credentials"
++readonly CREDENTIALS_DIR="${PW_E2E_CREDENTIALS_DIR:-$HOME/.playwright-e2e}"
++readonly CREDENTIALS_FILE="$CREDENTIALS_DIR/.credentials.json"
++
++usage() {
++  cat <<'USAGE' >&2
++Usage: source load-playwright-credentials.sh [--role user|admin|denied]
++
++Reads .credentials.json written by setup-playwright-identities.sh and exports
++PW_E2E_ABS_USER and PW_E2E_ABS_PASSWORD environment variables for the
++requested role.
++
++Modes:
++  --role user    Load pw-e2e-abs-user credentials (default)
++  --role admin   Load pw-e2e-abs-admin credentials
++  --role denied  Load pw-e2e-abs-denied credentials
++
++Must be sourced, not executed:
++  source pi/audiobookshelf/scripts/load-playwright-credentials.sh --role user
++
++Security:
++  * Refuses set -x (xtrace) to prevent secret leakage.
++  * Credentials file must exist and have mode 0600.
++  * Never prints passwords to stdout/stderr.
++USAGE
++}
++
++die() {
++  echo "ERROR: $*" >&2
++  return 1 2>/dev/null || exit 1
++}
++
++if [[ "${BASH_XTRACEFD:-}" ]] || [[ $- == *x* ]]; then
++  die "xtrace is forbidden — prevents secret leakage"
++fi
++
++_load_creds_role="user"
++while [[ $# -gt 0 ]]; do
++  case "${1:-}" in
++    --role) shift; _load_creds_role="${1:-user}" ;;
++    --help|-h) usage; return 0 ;;
++    *) usage; return 1 ;;
++  esac
++  shift
++done
++
++[[ "$_load_creds_role" =~ ^(user|admin|denied)$ ]] || die "Invalid role: $_load_creds_role (expected user, admin, or denied)"
++
++[[ -f "$CREDENTIALS_FILE" ]] || die "Credentials file not found: $CREDENTIALS_FILE (run setup-playwright-identities.sh --commit first)"
++
++_creds_json=$(python3 -c "
++import json, sys, os
++
++path = sys.argv[1]
++mode = oct(os.stat(path).st_mode)[-3:]
++if mode != '600':
++    print(f'ERROR: Credentials file has insecure permissions: {mode} (expected 600)', file=sys.stderr)
++    sys.exit(1)
++
++with open(path) as f:
++    data = json.load(f)
++
++role = sys.argv[2]
++if role not in data:
++    print(f'ERROR: Role {role} not found in credentials file', file=sys.stderr)
++    sys.exit(1)
++
++entry = data[role]
++print(entry['username'])
++print(entry['password'])
++" "$CREDENTIALS_FILE" "$_load_creds_role" 2>&1) || die "Failed to read credentials: $_creds_json"
++
++export PW_E2E_ABS_USER
++export PW_E2E_ABS_PASSWORD
++read -r PW_E2E_ABS_USER PW_E2E_ABS_PASSWORD <<< "$_creds_json"
++
++echo "[$LOAD_CRED_SCRIPT_NAME] Loaded credentials for role '$_load_creds_role' (user=$PW_E2E_ABS_USER)"
 diff --git a/pi/audiobookshelf/scripts/setup-playwright-identities.sh b/pi/audiobookshelf/scripts/setup-playwright-identities.sh
 new file mode 100755
 index 0000000..657109f
@@ -411,15 +498,16 @@ index 0000000..657109f
 +main "$@"
 diff --git a/pi/tests/test_playwright_identities.sh b/pi/tests/test_playwright_identities.sh
 new file mode 100755
-index 0000000..2f9c5d1
+index 0000000..1ebee80
 --- /dev/null
 +++ b/pi/tests/test_playwright_identities.sh
-@@ -0,0 +1,352 @@
+@@ -0,0 +1,405 @@
 +#!/usr/bin/env bash
 +set -euo pipefail
 +
 +readonly TEST_DIR="$(cd "$(dirname "$0")" && pwd)"
 +readonly SCRIPT_UNDER_TEST="$TEST_DIR/../audiobookshelf/scripts/setup-playwright-identities.sh"
++readonly LOADER_UNDER_TEST="$TEST_DIR/../audiobookshelf/scripts/load-playwright-credentials.sh"
 +readonly MOCK_DIR="$(mktemp -d)"
 +
 +PASS=0
@@ -737,6 +825,53 @@ index 0000000..2f9c5d1
 +  rm -rf "$tmpdir"
 +}
 +
++test_loader_requires_credentials() {
++  ! PW_E2E_CREDENTIALS_DIR="/nonexistent" bash "$LOADER_UNDER_TEST" --role user 2>/dev/null
++}
++
++test_loader_exports_user_creds() {
++  create_mock_kcadm
++  local tmpdir
++  tmpdir=$(mktemp -d)
++  PW_E2E_CREDENTIALS_DIR="$tmpdir" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  local output
++  output=$(PW_E2E_CREDENTIALS_DIR="$tmpdir" bash "$LOADER_UNDER_TEST" --role user 2>&1)
++  echo "$output" | grep -q "Loaded credentials for role 'user'"
++  echo "$output" | grep -q "pw-e2e-abs-user"
++  rm -rf "$tmpdir"
++}
++
++test_loader_exports_admin_creds() {
++  create_mock_kcadm
++  local tmpdir
++  tmpdir=$(mktemp -d)
++  PW_E2E_CREDENTIALS_DIR="$tmpdir" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  local output
++  output=$(PW_E2E_CREDENTIALS_DIR="$tmpdir" bash "$LOADER_UNDER_TEST" --role admin 2>&1)
++  echo "$output" | grep -q "Loaded credentials for role 'admin'"
++  echo "$output" | grep -q "pw-e2e-abs-admin"
++  rm -rf "$tmpdir"
++}
++
++test_loader_rejects_invalid_role() {
++  create_mock_kcadm
++  local tmpdir
++  tmpdir=$(mktemp -d)
++  PW_E2E_CREDENTIALS_DIR="$tmpdir" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  ! PW_E2E_CREDENTIALS_DIR="$tmpdir" bash "$LOADER_UNDER_TEST" --role invalid 2>/dev/null
++  rm -rf "$tmpdir"
++}
++
++test_loader_rejects_insecure_perms() {
++  create_mock_kcadm
++  local tmpdir
++  tmpdir=$(mktemp -d)
++  PW_E2E_CREDENTIALS_DIR="$tmpdir" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  chmod 644 "$tmpdir/.credentials.json"
++  ! PW_E2E_CREDENTIALS_DIR="$tmpdir" bash "$LOADER_UNDER_TEST" --role user 2>/dev/null
++  rm -rf "$tmpdir"
++}
++
 +echo "=== test_playwright_identities ==="
 +run_test "refuses xtrace"                      test_refuses_xtrace
 +run_test "dry-run default"                     test_dry_run_default
@@ -763,6 +898,11 @@ index 0000000..2f9c5d1
 +run_test "commit credentials mode 0600"        test_commit_credentials_mode_0600
 +run_test "commit credentials valid json"       test_commit_credentials_valid_json
 +run_test "commit credentials has all ids"      test_commit_credentials_has_all_identities
++run_test "loader requires credentials file"    test_loader_requires_credentials
++run_test "loader exports user creds"           test_loader_exports_user_creds
++run_test "loader exports admin creds"          test_loader_exports_admin_creds
++run_test "loader rejects invalid role"         test_loader_rejects_invalid_role
++run_test "loader rejects insecure perms"       test_loader_rejects_insecure_perms
 +
 +echo ""
 +echo "Results: $PASS/$TESTS_RUN passed, $FAIL failed"

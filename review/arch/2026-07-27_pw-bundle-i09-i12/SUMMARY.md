@@ -10,7 +10,7 @@ Implement the foundational shared fixtures and first unauthenticated Audiobooksh
 
 ## Scope
 
-- PW-I09: Synthetic identity provisioning script + 13 mock tests + contract doc
+- PW-I09: Synthetic identity provisioning script + 30 mock tests + credential loader + contract doc
 - PW-I10: Service target, role selection, console-error capture fixtures + 10 self-tests
 - PW-I11: Shared Keycloak OIDC auth fixture + fake harness + 7 self-tests
 - PW-D05: Audiobookshelf browser onboarding contract (selectors, journeys)
