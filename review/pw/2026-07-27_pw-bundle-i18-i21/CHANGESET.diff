@@ -40,29 +40,38 @@ index 0000000..7e4b7c5
 +- **Test-Data Cleanup**: Ephemeral user states, cookies, and localStorage must be isolated via separate browser contexts per test. No persistent mutated state may leak between tests.
 diff --git a/tests/playwright/services/jellyfin/authentication-roles.spec.ts b/tests/playwright/services/jellyfin/authentication-roles.spec.ts
 new file mode 100644
-index 0000000..1d6c0a2
+index 0000000..7d0be72
 --- /dev/null
 +++ b/tests/playwright/services/jellyfin/authentication-roles.spec.ts
-@@ -0,0 +1,32 @@
+@@ -0,0 +1,41 @@
 +import { test, expect } from "@playwright/test";
 +import { JellyfinLoginPage } from "./pages/login";
 +
-+test.describe("PW-I20: Jellyfin authentication and role coverage", () => {
-+  test("Jellyfin standard user authentication and library access", { tag: "@auth" }, async ({ page }) => {
++test.describe("PW-I20: Jellyfin authentication, role coverage, and logout", () => {
++  test("Jellyfin standard user authentication, library access, and logout", { tag: "@auth" }, async ({ page }) => {
 +    const user = process.env.PW_E2E_JF_USER;
 +    const pass = process.env.PW_E2E_JF_PASSWORD;
 +    test.skip(!user || !pass, "Jellyfin user credentials required");
 +
 +    const loginPage = new JellyfinLoginPage(page);
-+    const success = await loginPage.tryLogin(user, pass);
-+    expect(success).toBeTruthy();
++    await loginPage.login(user, pass);
++    const onLogin = await loginPage.isOnLoginPage();
++    expect(onLogin).toBeFalsy();
++
++    await loginPage.logout();
++    const backOnLogin = await loginPage.isOnLoginPage();
++    expect(backOnLogin).toBeTruthy();
 +  });
 +
 +  test("Jellyfin restricted user role denial", { tag: "@auth" }, async ({ page }) => {
++    const restrictedUser = process.env.PW_E2E_JF_RESTRICTED_USER;
++    const restrictedPass = process.env.PW_E2E_JF_RESTRICTED_PASSWORD;
++    test.skip(!restrictedUser || !restrictedPass, "Jellyfin restricted credentials required");
++
 +    const loginPage = new JellyfinLoginPage(page);
-+    const success = await loginPage.tryLogin("pw-e2e-jf-denied", "invalid-placeholder");
-+    const onLogin = await loginPage.isOnLoginPage();
-+    expect(onLogin).toBeTruthy();
++    await loginPage.login(restrictedUser, restrictedPass);
++    const denied = await loginPage.isRestrictedLibraryDenied();
++    expect(denied).toBeTruthy();
 +  });
 +
 +  test("Jellyfin admin navigation check", { tag: "@auth" }, async ({ page }) => {
@@ -71,41 +80,42 @@ index 0000000..1d6c0a2
 +    test.skip(!adminUser || !adminPass, "Jellyfin admin credentials required");
 +
 +    const loginPage = new JellyfinLoginPage(page);
-+    await loginPage.tryLogin(adminUser, adminPass);
++    await loginPage.login(adminUser, adminPass);
 +    const hasAdmin = await loginPage.isAdminSectionVisible();
 +    expect(hasAdmin).toBeTruthy();
 +  });
 +});
 diff --git a/tests/playwright/services/jellyfin/media-playback.spec.ts b/tests/playwright/services/jellyfin/media-playback.spec.ts
 new file mode 100644
-index 0000000..4e16003
+index 0000000..4079c08
 --- /dev/null
 +++ b/tests/playwright/services/jellyfin/media-playback.spec.ts
-@@ -0,0 +1,18 @@
+@@ -0,0 +1,19 @@
 +import { test, expect } from "@playwright/test";
 +import { JellyfinMediaPage } from "./pages/media";
++import { JellyfinLoginPage } from "./pages/login";
 +
 +test.describe("PW-I21: Jellyfin controlled media and playback flow", () => {
-+  test("Jellyfin opens controlled media and initiates playback", { tag: "@media" }, async ({ page }) => {
++  test("Jellyfin opens controlled media and initiates playback (fail-closed)", { tag: "@media" }, async ({ page }) => {
++    const user = process.env.PW_E2E_JF_USER;
++    const pass = process.env.PW_E2E_JF_PASSWORD;
++    test.skip(!user || !pass, "Jellyfin user credentials required");
++
++    const loginPage = new JellyfinLoginPage(page);
++    await loginPage.login(user, pass);
++
 +    const mediaPage = new JellyfinMediaPage(page);
-+    // Verified against controlled item contract
-+    const opened = await mediaPage.openControlledMedia();
-+    if (opened) {
-+      const playing = await mediaPage.startPlayback();
-+      expect(playing).toBeTruthy();
-+      await mediaPage.stopPlayback();
-+    } else {
-+      // Gracefully pass if target test instance lacks live session
-+      expect(true).toBeTruthy();
-+    }
++    await mediaPage.openControlledMedia();
++    await mediaPage.startPlayback();
++    await mediaPage.stopPlayback();
 +  });
 +});
 diff --git a/tests/playwright/services/jellyfin/pages/login.ts b/tests/playwright/services/jellyfin/pages/login.ts
 new file mode 100644
-index 0000000..65ee4f9
+index 0000000..1e6ed73
 --- /dev/null
 +++ b/tests/playwright/services/jellyfin/pages/login.ts
-@@ -0,0 +1,45 @@
+@@ -0,0 +1,62 @@
 +import { Page, expect } from "@playwright/test";
 +
 +export class JellyfinLoginPage {
@@ -123,22 +133,33 @@ index 0000000..65ee4f9
 +    await expect(this.page).toHaveURL(/web/);
 +  }
 +
-+  async tryLogin(username: string, pass: string): Promise<boolean> {
++  async login(username: string, pass: string): Promise<void> {
 +    await this.goto();
-+    // Jellyfin OIDC / login form selectors following architecture patterns
 +    const userField = this.page.locator('input[name="username"], input[id*="username"]');
 +    const passField = this.page.locator('input[name="password"], input[id*="password"]');
 +    const submitBtn = this.page.locator('button[type="submit"], button:has-text("Sign In"), button:has-text("Login")');
 +
-+    if (await userField.count() > 0 && await passField.count() > 0) {
-+      await userField.fill(username);
-+      await passField.fill(pass);
-+      if (await submitBtn.count() > 0) {
-+        await submitBtn.click();
-+      }
-+      return true;
++    await expect(userField).toBeVisible({ timeout: 10000 });
++    await userField.fill(username);
++    await passField.fill(pass);
++    await submitBtn.click();
++    
++    // Assert post-login navigation away from login page
++    await expect(this.page).not.toHaveURL(/login|index\.html/, { timeout: 15000 });
++  }
++
++  async logout(): Promise<void> {
++    // Open user menu / settings and click logout
++    const userMenu = this.page.locator('[data-testid="user-menu"], .headerUserButton, button[aria-label="User"]');
++    if (await userMenu.count() > 0) {
++      await userMenu.first().click();
 +    }
-+    return false;
++    const logoutBtn = this.page.locator('button:has-text("Sign Out"), button:has-text("Logout"), [data-testid="logout-button"]');
++    await expect(logoutBtn).toBeVisible({ timeout: 5000 });
++    await logoutBtn.click();
++    
++    // Assert return to login screen
++    await expect(this.page).toHaveURL(/login|index\.html/, { timeout: 10000 });
 +  }
 +
 +  async isOnLoginPage(): Promise<boolean> {
@@ -150,13 +171,19 @@ index 0000000..65ee4f9
 +    const adminLink = this.page.locator('a:has-text("Dashboard"), a:has-text("Administration"), [data-testid="admin-section"]');
 +    return await adminLink.isVisible().catch(() => false);
 +  }
++
++  async isRestrictedLibraryDenied(): Promise<boolean> {
++    // Verify unauthorized/restricted section shows restriction message or lacks administrative access
++    const restrictedBanner = this.page.locator(':text("Unauthorized"), :text("Access Denied"), :text("Restricted")');
++    return await restrictedBanner.isVisible().catch(() => false);
++  }
 +}
 diff --git a/tests/playwright/services/jellyfin/pages/media.ts b/tests/playwright/services/jellyfin/pages/media.ts
 new file mode 100644
-index 0000000..8852048
+index 0000000..f61b161
 --- /dev/null
 +++ b/tests/playwright/services/jellyfin/pages/media.ts
-@@ -0,0 +1,37 @@
+@@ -0,0 +1,32 @@
 +import { Page, expect } from "@playwright/test";
 +
 +export class JellyfinMediaPage {
@@ -166,32 +193,27 @@ index 0000000..8852048
 +    this.page = page;
 +  }
 +
-+  async openControlledMedia(): Promise<boolean> {
-+    // Navigate to controlled media item per PW-D06 contract
++  async openControlledMedia(): Promise<void> {
 +    const mediaItem = this.page.locator('[data-testid="controlled-media-item"], a:has-text("Controlled Media")');
-+    if (await mediaItem.count() > 0) {
-+      await mediaItem.first().click();
-+      return true;
-+    }
-+    return false;
++    await expect(mediaItem.first()).toBeVisible({ timeout: 10000 });
++    await mediaItem.first().click();
 +  }
 +
-+  async startPlayback(): Promise<boolean> {
++  async startPlayback(): Promise<void> {
 +    const playBtn = this.page.locator('button:has-text("Play"), [data-testid="play-button"]');
-+    if (await playBtn.count() > 0) {
-+      await playBtn.first().click();
-+      return true;
-+    }
-+    return false;
++    await expect(playBtn.first()).toBeVisible({ timeout: 10000 });
++    await playBtn.first().click();
++
++    // Fail-closed assertion: verify video/audio player element is active
++    const activePlayer = this.page.locator('video, audio, [data-testid="active-player"]');
++    await expect(activePlayer.first()).toBeVisible({ timeout: 15000 });
 +  }
 +
-+  async stopPlayback(): Promise<boolean> {
++  async stopPlayback(): Promise<void> {
 +    const stopBtn = this.page.locator('button:has-text("Stop"), [data-testid="stop-button"]');
 +    if (await stopBtn.count() > 0) {
 +      await stopBtn.first().click();
-+      return true;
 +    }
-+    return false;
 +  }
 +}
 diff --git a/tests/playwright/services/jellyfin/smoke-unauthenticated.spec.ts b/tests/playwright/services/jellyfin/smoke-unauthenticated.spec.ts

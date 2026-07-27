@@ -3,20 +3,20 @@ project: "homelab-playwright"
 repository: "Homelab/Architecture"
 canonical_pr: 107
 author: "Slarti Branchfast <slarti@hl.maier.wtf>"
-change_request: "PW-I18 through PW-I21 (Jellyfin & Maintenance)"
+change_request: "PW-I18 through PW-I21 (Jellyfin & Maintenance) - Fixes per review #107"
 review_scope:
   tickets: ["PW-I18", "PW-D06", "PW-I19", "PW-I20", "PW-I21"]
-  description: "Jellyfin onboarding, unauthenticated smoke, auth/roles, media playback, and operations runbook"
-head_commit: "53472bf8b263ba0cd1ba365939e878960be8931a"
+  description: "Addressed review findings: enforced post-login/logout state assertions, restricted identity role coverage, and fail-closed media playback."
+head_commit: "7784b67b2eae465cbbfb07d3b7e31f624f5b4352"
 base_commit: "e74c58b2edb583819b091f4cf158e817e35fe99e"
-timestamp: "2026-07-27T18:45:00Z"
+timestamp: "2026-07-27T18:55:00Z"
 generated:
   tool: "validate_review_bundle.py"
   version: "0.3.0"
-  timestamp: "2026-07-27T18:45:00Z"
+  timestamp: "2026-07-27T18:55:00Z"
 integrity:
-  changeset_sha256: "6e900bfd3b0fc3639f53f6650670838e0cc90dbc348c4096b596a9542f235a18"
+  changeset_sha256: "be75ab00a03511f1340c3c0f37e984b24952f8a15cf6753476703e22bbee0777"
 statistics:
   files_changed: 8
-  insertions: 191
+  insertions: 213
   deletions: 0
