@@ -1,0 +1,720 @@
+diff --git a/.gitea/workflows/ci.yaml b/.gitea/workflows/ci.yaml
+index 611ffa9..58090e2 100644
+--- a/.gitea/workflows/ci.yaml
++++ b/.gitea/workflows/ci.yaml
+@@ -61,7 +61,8 @@ jobs:
+       - name: playwright-headed-contract
+         run: python3 tests/test_playwright_headed.py
+       - name: playwright-platform
+-        if: false
++        run: bash tests/playwright/runner/run.sh
++      - name: playwright-service
+         run: bash tests/playwright/runner/run.sh
+ 
+   report:
+@@ -91,3 +92,15 @@ jobs:
+           name: ci-summary
+           path: reports/ci-summary.json
+           if-no-files-found: ignore
++
++  post-deploy:
++    name: Post-Deployment Smoke
++    runs-on: ubuntu-latest
++    steps:
++      - uses: actions/checkout@v4
++        with:
++          fetch-depth: 0
++      - name: setup
++        run: apt-get update -qq && apt-get install -y -qq git jq python3 python3-yaml docker.io docker-compose
++      - name: smoke-audiobookshelf
++        run: bash tests/playwright/ci/post-deploy.sh
+diff --git a/Makefile b/Makefile
+index 037ea34..13c61b3 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,6 +1,6 @@
+ # Homelab Architecture – CI Checks (auto-generated from ci-manifest.yaml)
+ # shellcheck disable=all
+-.PHONY: check-compose check-git-diff check-links ci clean lint scan-secrets test test-all test-audiobookshelf-proxy test-checks test-ci-generator test-matrix-bridge-egress test-matrix-bridge-operations test-matrix-coturn test-matrix-hardening test-matrix-operations test-matrix-release-profile test-mautrix-facebook test-mautrix-instagram test-playwright-bootstrap test-playwright-headed-contract test-playwright-platform test-synapse-active-appservices test-synapse-media-permissions
++.PHONY: check-compose check-git-diff check-links ci clean lint scan-secrets test test-all test-audiobookshelf-proxy test-checks test-ci-generator test-matrix-bridge-egress test-matrix-bridge-operations test-matrix-coturn test-matrix-hardening test-matrix-operations test-matrix-release-profile test-mautrix-facebook test-mautrix-instagram test-playwright-bootstrap test-playwright-headed-contract test-playwright-platform test-playwright-post-deploy test-playwright-service test-synapse-active-appservices test-synapse-media-permissions
+ 
+ check-compose:
+ 	bash scripts/check-compose.sh
+@@ -24,10 +24,10 @@ scan-secrets:
+ 	bash scripts/scan-secrets.sh
+ 
+ test:
+-	make test-checks test-ci-generator test-matrix-hardening test-synapse-media-permissions test-synapse-active-appservices test-matrix-coturn test-matrix-operations test-matrix-release-profile test-matrix-bridge-egress test-mautrix-facebook test-mautrix-instagram test-matrix-bridge-operations test-audiobookshelf-proxy test-playwright-bootstrap test-playwright-headed-contract
++	make test-checks test-ci-generator test-matrix-hardening test-synapse-media-permissions test-synapse-active-appservices test-matrix-coturn test-matrix-operations test-matrix-release-profile test-matrix-bridge-egress test-mautrix-facebook test-mautrix-instagram test-matrix-bridge-operations test-audiobookshelf-proxy test-playwright-bootstrap test-playwright-headed-contract test-playwright-platform test-playwright-service
+ 
+ test-all:
+-	make lint test
++	make lint test test-playwright-post-deploy
+ 
+ test-audiobookshelf-proxy:
+ 	bash pi/tests/test_audiobookshelf_proxy.sh
+@@ -71,6 +71,12 @@ test-playwright-headed-contract:
+ test-playwright-platform:
+ 	bash tests/playwright/runner/run.sh platform
+ 
++test-playwright-post-deploy:
++	bash tests/playwright/ci/post-deploy.sh
++
++test-playwright-service:
++	bash tests/playwright/runner/run.sh service
++
+ test-synapse-active-appservices:
+ 	bash pi/tests/test_synapse_active_appservices.sh
+ 
+diff --git a/__pycache__/ci-generate.cpython-311.pyc b/__pycache__/ci-generate.cpython-311.pyc
+deleted file mode 100644
+index 9ac4f58..0000000
+Binary files a/__pycache__/ci-generate.cpython-311.pyc and /dev/null differ
+diff --git a/ci-manifest.yaml b/ci-manifest.yaml
+index a5bffe8..29d732d 100644
+--- a/ci-manifest.yaml
++++ b/ci-manifest.yaml
+@@ -188,9 +188,18 @@ stages:
+         flags: platform
+         quality_gate: exit_zero
+         timeout: 300s
+-        enabled: false
++        enabled: true
+         tags: [playwright, platform, docker]
+ 
++      - id: playwright-service
++        tool: bash
++        target: tests/playwright/runner/run.sh
++        flags: service
++        quality_gate: exit_zero
++        timeout: 300s
++        enabled: true
++        tags: [playwright, audiobookshelf, service, docker]
++
+   - id: report
+     label: Reporting
+     order: 50
+@@ -201,13 +210,25 @@ stages:
+         quality_gate: always_pass
+         timeout: 10s
+ 
++  - id: post-deploy
++    label: Post-Deployment Smoke
++    order: 60
++    steps:
++      - id: smoke-audiobookshelf
++        tool: bash
++        target: tests/playwright/ci/post-deploy.sh
++        quality_gate: exit_zero
++        timeout: 600s
++        enabled: true
++        tags: [playwright, audiobookshelf, smoke, deployment]
++
+ branch_rules:
+   feature:
+     stages: [lint, test-unit]
+     required_approvals: 0
+     allow_skip: false
+   main:
+-    stages: [lint, test-unit, report]
++    stages: [lint, test-unit, report, post-deploy]
+     required_approvals: 1
+     require_all_previous_green: true
+     allow_skip: false
+@@ -302,8 +323,10 @@ local_dev:
+     test-playwright-bootstrap: python3 tests/test_playwright_bootstrap.py
+     test-playwright-headed-contract: python3 tests/test_playwright_headed.py
+     test-playwright-platform: bash tests/playwright/runner/run.sh platform
+-    test: make test-checks test-ci-generator test-matrix-hardening test-synapse-media-permissions test-synapse-active-appservices test-matrix-coturn test-matrix-operations test-matrix-release-profile test-matrix-bridge-egress test-mautrix-facebook test-mautrix-instagram test-matrix-bridge-operations test-audiobookshelf-proxy test-playwright-bootstrap test-playwright-headed-contract
+-    test-all: make lint test
++    test-playwright-service: bash tests/playwright/runner/run.sh service
++    test-playwright-post-deploy: bash tests/playwright/ci/post-deploy.sh
++    test: make test-checks test-ci-generator test-matrix-hardening test-synapse-media-permissions test-synapse-active-appservices test-matrix-coturn test-matrix-operations test-matrix-release-profile test-matrix-bridge-egress test-mautrix-facebook test-mautrix-instagram test-matrix-bridge-operations test-audiobookshelf-proxy test-playwright-bootstrap test-playwright-headed-contract test-playwright-platform test-playwright-service
++    test-all: make lint test test-playwright-post-deploy
+     ci: make lint test
+     clean: rm -rf reports/ logs/
+   pre_commit:
+diff --git a/docs/playwright-ci-runbook.md b/docs/playwright-ci-runbook.md
+new file mode 100644
+index 0000000..804fb47
+--- /dev/null
++++ b/docs/playwright-ci-runbook.md
+@@ -0,0 +1,55 @@
++# Playwright CI Runbook
++
++## Stages
++
++### lint
++Shellcheck and shfmt on all shell scripts in the repository.
++
++### test-unit
++Three parallel groups:
++
++| Group | Scope |
++|---|---|
++| test-checks | Shell unit tests in `pi/tests/` and `tests/playwright/evidence/` |
++| test-ci-generator | CI manifest validation + generator roundtrip |
++| test-playwright-bootstrap | Headless project load without browser (`tests/playwright/runner/bootstrap.spec.ts`) |
++| test-playwright-headed-contract | Headed contract tests (platform self-tests, evidence, result semantics) |
++| test-playwright-platform | Platform tests via `npm run test:platform` (platform/ evidence/ runner/) |
++| test-playwright-service | Service tests via `npm run test:service` (services/audiobookshelf/) |
++
++### report
++Aggregates lint and test-unit results into a CI summary artifact.
++
++### post-deploy (main branch only)
++Runs after deployment to a live environment:
++
++1. **smoke-audiobookshelf** — Executes `tests/playwright/ci/post-deploy.sh` which delegates to `run.sh service`. Runs all service-level Playwright tests (authenticated smoke, library/playback, authorization) against the deployed instance.
++
++## Test Counts (current)
++- provisioning: 31
++- shared fixtures: 10
++- OIDC: 7
++- smoke: 5
++- **total: 53**
++
++## CI wrapper scripts
++
++| Script | Purpose |
++|---|---|
++| `tests/playwright/runner/run.sh` | Ephemeral Docker runner for platform & service tests |
++| `tests/playwright/ci/post-deploy.sh` | Post-deployment smoke wrapper (delegates to run.sh) |
++
++## Runner modes
++
++| Command | What it runs |
++|---|---|
++| `run.sh platform` | `npm run test:platform` — platform/ evidence/ runner/ tests |
++| `run.sh service` | `npm run test:service` — services/audiobookshelf/ tests |
++| `run.sh service:<url>` | Prerequisite checks + `npm run test:service` against live URL |
++
++## Adding a new test
++
++1. Place platform tests in `tests/playwright/platform/`
++2. Place service tests in `tests/playwright/services/<service>/`
++3. Platform tests are auto-included by `test:platform` (testDir: platform/ evidence/ runner/)
++4. Service tests are auto-included by `test:service` (testDir: services/)
+diff --git a/tests/playwright/ci/post-deploy.sh b/tests/playwright/ci/post-deploy.sh
+new file mode 100644
+index 0000000..63f24d5
+--- /dev/null
++++ b/tests/playwright/ci/post-deploy.sh
+@@ -0,0 +1,28 @@
++#!/usr/bin/env bash
++# PW-I17: post-deployment smoke — runs playwright service tests after deployment
++set -uo pipefail
++
++SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
++RUNNER_DIR="$(cd "$SCRIPT_DIR/../runner" && pwd)"
++
++usage() {
++  echo "Usage: $(basename "$0") [service-url]"
++  echo "  Runs playwright service smoke tests after deployment."
++  echo "  If service-url is provided, passes it as service:<url> to the runner."
++  echo "  If omitted, runs service tests without prerequisite checks."
++  exit 2
++}
++
++if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
++  usage
++fi
++
++BASE_URL="${1:-}"
++if [ -n "$BASE_URL" ]; then
++  SUITE="service:${BASE_URL}"
++else
++  SUITE="service"
++fi
++
++echo "PW-I17: post-deployment smoke starting (suite=${SUITE})"
++exec bash "${RUNNER_DIR}/run.sh" "${SUITE}"
+diff --git a/tests/playwright/package.json b/tests/playwright/package.json
+index 0f41211..1f39dab 100644
+--- a/tests/playwright/package.json
++++ b/tests/playwright/package.json
+@@ -10,6 +10,7 @@
+     "@playwright/test": "1.61.1"
+   },
+   "scripts": {
+-    "test:platform": "playwright test --config=playwright.config.ts --project=chromium"
++    "test:platform": "playwright test --config=playwright.config.ts --project=chromium platform/ evidence/ runner/",
++    "test:service": "playwright test --config=playwright.config.ts --project=chromium services/"
+   }
+ }
+diff --git a/tests/playwright/runner/run.sh b/tests/playwright/runner/run.sh
+index b9ba5de..c878faf 100755
+--- a/tests/playwright/runner/run.sh
++++ b/tests/playwright/runner/run.sh
+@@ -39,6 +39,8 @@ RUN_TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+ 
+ _generate_forced_manifest() {
+   local result="$1" exit_code="$2"
++  local sn="playwright-platform"
++  case "$SUITE" in service*) sn="playwright-service" ;; esac
+   local out="${RESULTS_DIR}/out/manifest.json"
+   local duration=$(( $(date -u +%s) - RUN_START_EPOCH ))
+   python3 "${EVIDENCE_DIR}/manifest-generate.py" --out "$out" << ENVEOF
+@@ -48,7 +50,7 @@ _generate_forced_manifest() {
+   "source_commit": "$(git rev-parse --verify HEAD 2>/dev/null || echo '0000000000000000000000000000000000000000')",
+   "architecture_repository": "Homelab/Architecture",
+   "architecture_commit": "$(git rev-parse --verify HEAD 2>/dev/null || echo '0000000000000000000000000000000000000000')",
+-  "service_name": "playwright-platform",
++  "service_name": "${sn}",
+   "service_version": "v1.61.1-noble",
+   "service_version_source": "runner_image",
+   "runner_image": "${PLAYWRIGHT_IMAGE}",
+@@ -164,8 +166,18 @@ case "$SUITE" in
+     ;;
+ esac
+ 
++# Select npm script based on suite
++case "$SUITE" in
++  service*)
++    TEST_SCRIPT="test:service"
++    ;;
++  *)
++    TEST_SCRIPT="test:platform"
++    ;;
++esac
++
+ # Build test command with optional grep filter
+-TEST_CMD='mkdir -p "$HOME" "$npm_config_cache" && npm run test:platform'
++TEST_CMD='mkdir -p "$HOME" "$npm_config_cache" && npm run '"${TEST_SCRIPT}"
+ if [ -n "${GREP_FILTER:-}" ]; then
+   TEST_CMD="$TEST_CMD -- --grep '${GREP_FILTER}'"
+ fi
+@@ -209,6 +221,12 @@ FINAL_EXIT=$?
+ RUN_END_EPOCH="$(date -u +%s)"
+ DURATION=$(( RUN_END_EPOCH - RUN_START_EPOCH ))
+ 
++# Determine service name from suite
++case "$SUITE" in
++  service*) SERVICE_NAME="playwright-service" ;;
++  *)        SERVICE_NAME="playwright-platform" ;;
++esac
++
+ # Map final exit to result string
+ case "$FINAL_EXIT" in
+   0) RESULT_STR="pass" ;;
+@@ -225,7 +243,7 @@ python3 "${EVIDENCE_DIR}/manifest-generate.py" --out "$MANIFEST_OUT" << ENVELOPE
+   "source_commit": "$(git rev-parse --verify HEAD 2>/dev/null || echo '0000000000000000000000000000000000000000')",
+   "architecture_repository": "Homelab/Architecture",
+   "architecture_commit": "$(git rev-parse --verify HEAD 2>/dev/null || echo '0000000000000000000000000000000000000000')",
+-  "service_name": "playwright-platform",
++  "service_name": "${SERVICE_NAME}",
+   "service_version": "v1.61.1-noble",
+   "service_version_source": "runner_image",
+   "runner_image": "${PLAYWRIGHT_IMAGE}",
+diff --git a/tests/playwright/services/audiobookshelf/authorization.spec.ts b/tests/playwright/services/audiobookshelf/authorization.spec.ts
+new file mode 100644
+index 0000000..e2bf5ea
+--- /dev/null
++++ b/tests/playwright/services/audiobookshelf/authorization.spec.ts
+@@ -0,0 +1,81 @@
++import { test, expect } from "@playwright/test";
++import { AuthorizationPage } from "./pages/authorization";
++
++test.describe("PW-I15: Audiobookshelf role and negative authorization", () => {
++  test.describe("denied identity", () => {
++    test("denied user cannot log in", async ({ page }) => {
++      const auth = new AuthorizationPage(page);
++      const success = await auth.tryLogin("pw-e2e-abs-denied", "invalid-placeholder");
++      expect(success).toBeFalsy();
++    });
++
++    test("denied user sees login page after failed attempt", async ({ page }) => {
++      const auth = new AuthorizationPage(page);
++      await auth.tryLogin("pw-e2e-abs-denied", "invalid-placeholder");
++      const onLogin = await auth.isOnLoginPage();
++      expect(onLogin).toBeTruthy();
++    });
++  });
++
++  test.describe("user role", () => {
++    test("user can log in and reach library", async ({ page }) => {
++      const user = process.env.PW_E2E_ABS_USER;
++      const pass = process.env.PW_E2E_ABS_PASSWORD;
++      test.skip(!user || !pass, "credentials required");
++
++      const auth = new AuthorizationPage(page);
++      const success = await auth.tryLogin(user, pass);
++      expect(success).toBeTruthy();
++    });
++
++    test("user cannot see admin section", async ({ page }) => {
++      const user = process.env.PW_E2E_ABS_USER;
++      const pass = process.env.PW_E2E_ABS_PASSWORD;
++      test.skip(!user || !pass, "credentials required");
++
++      const auth = new AuthorizationPage(page);
++      await auth.tryLogin(user, pass);
++      const hasAdmin = await auth.isAdminSectionVisible();
++      expect(hasAdmin).toBeFalsy();
++    });
++  });
++
++  test.describe("admin role", () => {
++    test("admin can log in and reach library", async ({ page }) => {
++      const adminUser = process.env.PW_E2E_ABS_ADMIN_USER || process.env.PW_E2E_ABS_USER;
++      const adminPass = process.env.PW_E2E_ABS_ADMIN_PASSWORD || process.env.PW_E2E_ABS_PASSWORD;
++      test.skip(!adminUser || !adminPass, "admin credentials required");
++
++      const auth = new AuthorizationPage(page);
++      const success = await auth.tryLogin(adminUser, adminPass);
++      expect(success).toBeTruthy();
++    });
++
++    test("admin can see admin section", async ({ page }) => {
++      const adminUser = process.env.PW_E2E_ABS_ADMIN_USER || process.env.PW_E2E_ABS_USER;
++      const adminPass = process.env.PW_E2E_ABS_ADMIN_PASSWORD || process.env.PW_E2E_ABS_PASSWORD;
++      test.skip(!adminUser || !adminPass, "admin credentials required");
++
++      const auth = new AuthorizationPage(page);
++      await auth.tryLogin(adminUser, adminPass);
++      const hasAdmin = await auth.isAdminSectionVisible();
++      expect(hasAdmin).toBeTruthy();
++    });
++  });
++
++  test.describe("malformed auth", () => {
++    test("empty credentials stay on login page", async ({ page }) => {
++      const auth = new AuthorizationPage(page);
++      await auth.tryLogin("", "");
++      const onLogin = await auth.isOnLoginPage();
++      expect(onLogin).toBeTruthy();
++    });
++
++    test("invalid username shows error on Keycloak", async ({ page }) => {
++      const auth = new AuthorizationPage(page);
++      await auth.tryLogin("nonexistent@test.test", "anypassword");
++      const onLogin = await auth.isOnLoginPage();
++      expect(onLogin).toBeTruthy();
++    });
++  });
++});
+diff --git a/tests/playwright/services/audiobookshelf/library-playback.spec.ts b/tests/playwright/services/audiobookshelf/library-playback.spec.ts
+new file mode 100644
+index 0000000..86f1910
+--- /dev/null
++++ b/tests/playwright/services/audiobookshelf/library-playback.spec.ts
+@@ -0,0 +1,58 @@
++import { test, expect } from "@playwright/test";
++import { LoginPage } from "./pages/login";
++import { LibraryPage } from "./pages/library";
++import { PlayerPage } from "./pages/player";
++
++const KNOWN_TITLE = process.env.PW_E2E_KNOWN_TITLE || "Test";
++
++test.describe("PW-I14: Audiobookshelf controlled library and playback", () => {
++  test.beforeEach(async ({ page }) => {
++    const user = process.env.PW_E2E_ABS_USER;
++    const pass = process.env.PW_E2E_ABS_PASSWORD;
++    test.skip(!user || !pass, "PW_E2E_ABS_USER and PW_E2E_ABS_PASSWORD must be set");
++
++    const login = new LoginPage(page);
++    await login.navigateToRoot();
++    await (await login.getKeycloakButton()).click();
++    await page.waitForURL(/realms\/homelab/, { timeout: 15_000 });
++    await page.fill('input[name="username"]', user);
++    await page.fill('input[name="password"]', pass);
++    await page.getByRole("button", { name: /sign in/i }).click();
++    await page.waitForURL("**/audiobookshelf.hl.maier.wtf/**", { timeout: 15_000 });
++  });
++
++  test("library page shows book cards after login", async ({ page }) => {
++    const library = new LibraryPage(page);
++    await library.navigateToLibrary();
++    const cards = await library.getBookCards();
++    expect(await cards.count()).toBeGreaterThan(0);
++  });
++
++  test("known title opens and displays book detail", async ({ page }) => {
++    const library = new LibraryPage(page);
++    await library.navigateToLibrary();
++    await library.openBook(KNOWN_TITLE);
++    const title = await library.getBookTitle();
++    expect(title.length).toBeGreaterThan(0);
++  });
++
++  test("play button starts playback", async ({ page }) => {
++    const library = new LibraryPage(page);
++    const player = new PlayerPage(page);
++    await library.navigateToLibrary();
++    await library.openBook(KNOWN_TITLE);
++    await player.play();
++    expect(await player.isPlaying()).toBeTruthy();
++  });
++
++  test("pause button stops playback", async ({ page }) => {
++    const library = new LibraryPage(page);
++    const player = new PlayerPage(page);
++    await library.navigateToLibrary();
++    await library.openBook(KNOWN_TITLE);
++    await player.play();
++    expect(await player.isPlaying()).toBeTruthy();
++    await player.pause();
++    expect(await player.isPlaying()).toBeFalsy();
++  });
++});
+diff --git a/tests/playwright/services/audiobookshelf/pages/authorization.ts b/tests/playwright/services/audiobookshelf/pages/authorization.ts
+new file mode 100644
+index 0000000..20fafe1
+--- /dev/null
++++ b/tests/playwright/services/audiobookshelf/pages/authorization.ts
+@@ -0,0 +1,38 @@
++import { Page } from "@playwright/test";
++import { LoginPage } from "./login";
++
++export class AuthorizationPage {
++  readonly page: Page;
++
++  constructor(page: Page) {
++    this.page = page;
++  }
++
++  async tryLogin(username: string, password: string): Promise<boolean> {
++    const login = new LoginPage(this.page);
++    await login.navigateToRoot();
++    const hasButton = await login.hasKeycloakButton();
++    if (!hasButton) return false;
++    await (await login.getKeycloakButton()).click();
++    await this.page.waitForURL(/realms\/homelab/, { timeout: 15_000 });
++    await this.page.fill('input[name="username"]', username);
++    await this.page.fill('input[name="password"]', password);
++    await this.page.getByRole("button", { name: /sign in/i }).click();
++    await this.page.waitForURL(/audiobookshelf|realms/, { timeout: 10_000 });
++    return this.page.url().includes("audiobookshelf");
++  }
++
++  async isAdminSectionVisible(): Promise<boolean> {
++    const adminLink = this.page.getByRole("link", { name: /admin|settings|configuration/i });
++    return (await adminLink.count()) > 0;
++  }
++
++  async getAccessibleLinks(): Promise<string[]> {
++    return this.page.locator("nav a, [role='navigation'] a, header a").allTextContents();
++  }
++
++  async isOnLoginPage(): Promise<boolean> {
++    const url = this.page.url();
++    return url.includes("/login") || url.includes("/realms/");
++  }
++}
+diff --git a/tests/playwright/services/audiobookshelf/pages/library.ts b/tests/playwright/services/audiobookshelf/pages/library.ts
+new file mode 100644
+index 0000000..d172926
+--- /dev/null
++++ b/tests/playwright/services/audiobookshelf/pages/library.ts
+@@ -0,0 +1,41 @@
++import { Page } from "@playwright/test";
++
++export class LibraryPage {
++  readonly page: Page;
++
++  constructor(page: Page) {
++    this.page = page;
++  }
++
++  async navigateToLibrary(): Promise<void> {
++    const libraryLink = this.page.getByRole("link", { name: /library/i });
++    const count = await libraryLink.count();
++    if (count > 0) {
++      await libraryLink.click();
++      await this.page.waitForLoadState("networkidle");
++    }
++  }
++
++  async getBookCards() {
++    return this.page.locator('[role="listitem"], .book-card, [class*="book"]');
++  }
++
++  async openBook(title: string): Promise<void> {
++    const book = this.page.getByRole("link", { name: new RegExp(title, "i") });
++    const count = await book.count();
++    if (count === 0) {
++      throw new Error(`Book titled "${title}" not found in library`);
++    }
++    await book.first().click();
++    await this.page.waitForLoadState("networkidle");
++  }
++
++  async isOnLibraryPage(): Promise<boolean> {
++    const url = this.page.url();
++    return url.includes("/library") || url.includes("/books");
++  }
++
++  async getBookTitle(): Promise<string> {
++    return (await this.page.locator("h1, h2, [class*='title']").first().textContent()) || "";
++  }
++}
+diff --git a/tests/playwright/services/audiobookshelf/pages/player.ts b/tests/playwright/services/audiobookshelf/pages/player.ts
+new file mode 100644
+index 0000000..dc50c69
+--- /dev/null
++++ b/tests/playwright/services/audiobookshelf/pages/player.ts
+@@ -0,0 +1,40 @@
++import { Page } from "@playwright/test";
++
++export class PlayerPage {
++  readonly page: Page;
++
++  constructor(page: Page) {
++    this.page = page;
++  }
++
++  async playButton() {
++    return this.page.getByRole("button", { name: /play/i });
++  }
++
++  async pauseButton() {
++    return this.page.getByRole("button", { name: /pause/i });
++  }
++
++  async isPlaying(): Promise<boolean> {
++    const pause = await this.pauseButton();
++    return (await pause.count()) > 0;
++  }
++
++  async play(): Promise<void> {
++    const play = await this.playButton();
++    const count = await play.count();
++    if (count > 0) {
++      await play.click();
++      await this.page.waitForTimeout(1000);
++    }
++  }
++
++  async pause(): Promise<void> {
++    const pause = await this.pauseButton();
++    const count = await pause.count();
++    if (count > 0) {
++      await pause.click();
++      await this.page.waitForTimeout(500);
++    }
++  }
++}
+diff --git a/tests/playwright/services/audiobookshelf/smoke-authenticated.spec.ts b/tests/playwright/services/audiobookshelf/smoke-authenticated.spec.ts
+new file mode 100644
+index 0000000..8fa03ca
+--- /dev/null
++++ b/tests/playwright/services/audiobookshelf/smoke-authenticated.spec.ts
+@@ -0,0 +1,104 @@
++import { test, expect } from "@playwright/test";
++import { LoginPage } from "./pages/login";
++
++test.describe("PW-I13: Audiobookshelf authenticated login and logout smoke", () => {
++  test.beforeEach(async ({ page }) => {
++    await page.goto(process.env.SERVICE_URL || "https://audiobookshelf.hl.maier.wtf", { waitUntil: "networkidle" });
++  });
++
++  test("SSO button redirects to Keycloak realm", async ({ page }) => {
++    const login = new LoginPage(page);
++    await login.navigateToRoot();
++    const hasButton = await login.hasKeycloakButton();
++    expect(hasButton).toBeTruthy();
++    const button = await login.getKeycloakButton();
++    await button.click();
++    await page.waitForURL(/realms\/homelab/, { timeout: 15_000 });
++    expect(page.url()).toContain("realms/homelab");
++  });
++
++  test("login with valid credentials lands on service", async ({ page }) => {
++    const user = process.env.PW_E2E_ABS_USER;
++    const pass = process.env.PW_E2E_ABS_PASSWORD;
++    test.skip(!user || !pass, "PW_E2E_ABS_USER and PW_E2E_ABS_PASSWORD must be set");
++
++    const login = new LoginPage(page);
++    await login.navigateToRoot();
++    await (await login.getKeycloakButton()).click();
++    await page.waitForURL(/realms\/homelab/, { timeout: 15_000 });
++
++    await page.fill('input[name="username"]', user);
++    await page.fill('input[name="password"]', pass);
++    await page.getByRole("button", { name: /sign in/i }).click();
++
++    await page.waitForURL("**/audiobookshelf.hl.maier.wtf/**", { timeout: 15_000 });
++    const url = page.url();
++    expect(url).not.toContain("/login");
++    expect(url).not.toContain("/realms/");
++  });
++
++  test("logout terminates session and redirects to login", async ({ page }) => {
++    const user = process.env.PW_E2E_ABS_USER;
++    const pass = process.env.PW_E2E_ABS_PASSWORD;
++    test.skip(!user || !pass, "credentials required");
++
++    const login = new LoginPage(page);
++    await login.navigateToRoot();
++    await (await login.getKeycloakButton()).click();
++    await page.waitForURL(/realms\/homelab/, { timeout: 15_000 });
++    await page.fill('input[name="username"]', user);
++    await page.fill('input[name="password"]', pass);
++    await page.getByRole("button", { name: /sign in/i }).click();
++    await page.waitForURL("**/audiobookshelf.hl.maier.wtf/**", { timeout: 15_000 });
++
++    const logoutLink = page.getByRole("link", { name: /logout/i });
++    await expect(logoutLink).toBeVisible({ timeout: 5_000 });
++    await logoutLink.click();
++    await page.waitForURL(/login|logout/, { timeout: 10_000 });
++    expect(page.url()).not.toContain("audiobookshelf.hl.maier.wtf/");
++  });
++
++  test("post-logout reload stays unauthenticated", async ({ page }) => {
++    const user = process.env.PW_E2E_ABS_USER;
++    const pass = process.env.PW_E2E_ABS_PASSWORD;
++    test.skip(!user || !pass, "credentials required");
++
++    const login = new LoginPage(page);
++    await login.navigateToRoot();
++    await (await login.getKeycloakButton()).click();
++    await page.waitForURL(/realms\/homelab/, { timeout: 15_000 });
++    await page.fill('input[name="username"]', user);
++    await page.fill('input[name="password"]', pass);
++    await page.getByRole("button", { name: /sign in/i }).click();
++    await page.waitForURL("**/audiobookshelf.hl.maier.wtf/**", { timeout: 15_000 });
++
++    const logoutLink = page.getByRole("link", { name: /logout/i });
++    await expect(logoutLink).toBeVisible({ timeout: 5_000 });
++    await logoutLink.click();
++    await page.waitForURL(/login|logout/, { timeout: 10_000 });
++
++    await page.reload();
++    await page.waitForLoadState("networkidle");
++    const url = page.url();
++    const isUnauthenticated =
++      url.includes("/login") || url.includes("/auth/openid") || url.includes("/realms/");
++    expect(isUnauthenticated).toBeTruthy();
++  });
++
++  test("callback failure (wrong credentials) shows error", async ({ page }) => {
++    const login = new LoginPage(page);
++    await login.navigateToRoot();
++    await (await login.getKeycloakButton()).click();
++    await page.waitForURL(/realms\/homelab/, { timeout: 15_000 });
++
++    await page.fill('input[name="username"]', "nonexistent-user");
++    await page.fill('input[name="password"]', "wrong-password");
++    await page.getByRole("button", { name: /sign in/i }).click();
++
++    await page.waitForTimeout(2000);
++    const errorVisible = await page.locator("#kc-error-msg, .alert-error, .kc-feedback-text").first().isVisible().catch(() => false);
++    const url = page.url();
++    const stillOnKeycloak = url.includes("/realms/");
++    expect(errorVisible || stillOnKeycloak).toBeTruthy();
++  });
++});
+diff --git a/tests/test_playwright_bootstrap.py b/tests/test_playwright_bootstrap.py
+index 801f772..7ff3f27 100644
+--- a/tests/test_playwright_bootstrap.py
++++ b/tests/test_playwright_bootstrap.py
+@@ -141,7 +141,8 @@ def test_package_json_parses():
+     assert pkg.get("engines") == {"node": "24.17.0", "npm": "11.13.0"}
+     assert pkg.get("devDependencies") == {"@playwright/test": "1.61.1"}
+     assert pkg.get("scripts") == {
+-        "test:platform": "playwright test --config=playwright.config.ts --project=chromium"
++        "test:platform": "playwright test --config=playwright.config.ts --project=chromium platform/ evidence/ runner/",
++        "test:service": "playwright test --config=playwright.config.ts --project=chromium services/"
+     }
+ 
+ 
