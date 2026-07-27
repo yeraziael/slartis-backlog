@@ -1,3 +1,3 @@
-# ARCHITECTURE — PW-I18 through PW-I21 Jellyfin & Maintenance (Final Fixes)
+# ARCHITECTURE — PW-I18 through PW-I21 Jellyfin & Maintenance (Latest Fixes)
 
 Covered in bundle.

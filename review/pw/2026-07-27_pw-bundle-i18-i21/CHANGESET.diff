@@ -40,10 +40,10 @@ index 0000000..7e4b7c5
 +- **Test-Data Cleanup**: Ephemeral user states, cookies, and localStorage must be isolated via separate browser contexts per test. No persistent mutated state may leak between tests.
 diff --git a/tests/playwright/services/jellyfin/authentication-roles.spec.ts b/tests/playwright/services/jellyfin/authentication-roles.spec.ts
 new file mode 100644
-index 0000000..73a4e18
+index 0000000..314193a
 --- /dev/null
 +++ b/tests/playwright/services/jellyfin/authentication-roles.spec.ts
-@@ -0,0 +1,51 @@
+@@ -0,0 +1,58 @@
 +import { test, expect } from "@playwright/test";
 +import { JellyfinLoginPage } from "./pages/login";
 +
@@ -63,25 +63,32 @@ index 0000000..73a4e18
 +    expect(backOnLogin).toBeTruthy();
 +  });
 +
-+  test("Jellyfin restricted user role denial with positive control", { tag: "@auth" }, async ({ page }) => {
++  test("Jellyfin restricted user role denial with isolated context and strict contract", { tag: "@auth" }, async ({ browser }) => {
 +    const restrictedUser = process.env.PW_E2E_JF_RESTRICTED_USER;
 +    const restrictedPass = process.env.PW_E2E_JF_RESTRICTED_PASSWORD;
 +    const standardUser = process.env.PW_E2E_JF_USER;
 +    const standardPass = process.env.PW_E2E_JF_PASSWORD;
-+    const protectedLibraryId = process.env.PW_E2E_JF_RESTRICTED_LIBRARY_ID || "controlled-test-item-id";
-+    test.skip(!restrictedUser || !restrictedPass || !standardUser || !standardPass, "Jellyfin restricted and standard credentials required");
++    const protectedLibraryId = process.env.PW_E2E_JF_RESTRICTED_LIBRARY_ID;
 +
-+    // Positive control: standard/authorized user can access protected resource
-+    const standardLoginPage = new JellyfinLoginPage(page);
++    test.skip(!restrictedUser || !restrictedPass || !standardUser || !standardPass || !protectedLibraryId, "Jellyfin restricted/standard credentials and PW_E2E_JF_RESTRICTED_LIBRARY_ID required");
++
++    // 1. Positive control in dedicated context
++    const contextStandard = await browser.newContext();
++    const pageStandard = await contextStandard.newPage();
++    const standardLoginPage = new JellyfinLoginPage(pageStandard);
 +    await standardLoginPage.login(standardUser, standardPass);
 +    const standardCanAccess = await standardLoginPage.isProtectedLibraryAccessible(protectedLibraryId);
 +    expect(standardCanAccess).toBeTruthy();
++    await contextStandard.close();
 +
-+    // Negative authorization test: restricted user cannot access protected resource
-+    const restrictedLoginPage = new JellyfinLoginPage(page);
++    // 2. Negative authorization check in isolated context
++    const contextRestricted = await browser.newContext();
++    const pageRestricted = await contextRestricted.newPage();
++    const restrictedLoginPage = new JellyfinLoginPage(pageRestricted);
 +    await restrictedLoginPage.login(restrictedUser, restrictedPass);
 +    const restrictedDenied = await restrictedLoginPage.isProtectedLibraryDenied(protectedLibraryId);
 +    expect(restrictedDenied).toBeTruthy();
++    await contextRestricted.close();
 +  });
 +
 +  test("Jellyfin admin navigation check", { tag: "@auth" }, async ({ page }) => {

@@ -3,20 +3,20 @@ project: "homelab-playwright"
 repository: "Homelab/Architecture"
 canonical_pr: 107
 author: "Slarti Branchfast <slarti@hl.maier.wtf>"
-change_request: "PW-I18 through PW-I21 (Jellyfin & Maintenance) - Final Re-review Fixes #107"
+change_request: "PW-I18 through PW-I21 (Jellyfin & Maintenance) - Latest Review Fixes #107"
 review_scope:
   tickets: ["PW-I18", "PW-D06", "PW-I19", "PW-I20", "PW-I21"]
-  description: "Addressed final re-review finding: implemented deterministic protected library item route from controlled test-data contract with positive control for standard user and fail-closed denial assertion for restricted user."
-head_commit: "909cad0a393939603955d0a6acf40d019a914c2c"
+  description: "Addressed latest review findings: isolated standard and restricted role checks in separate browser contexts, and enforced strict requirement for PW_E2E_JF_RESTRICTED_LIBRARY_ID without fallback."
+head_commit: "8f231a48d4a3e2afcc77cf7d1c50432a1e4cf564"
 base_commit: "e74c58b2edb583819b091f4cf158e817e35fe99e"
-timestamp: "2026-07-27T19:15:00Z"
+timestamp: "2026-07-27T19:30:00Z"
 generated:
   tool: "validate_review_bundle.py"
   version: "0.3.0"
-  timestamp: "2026-07-27T19:15:00Z"
+  timestamp: "2026-07-27T19:30:00Z"
 integrity:
-  changeset_sha256: "de5f49777331fa3626a36e0d4c81748d73a02f76b177e02d75d1ad6a922cdc1c"
+  changeset_sha256: "4130589c8aac7b190cfd4d402d18721c91bd23261be1b4bf6c71288f2e933528"
 statistics:
   files_changed: 8
-  insertions: 236
+  insertions: 243
   deletions: 0
