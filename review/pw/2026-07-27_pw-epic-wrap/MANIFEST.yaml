@@ -1,0 +1,22 @@
+manifest_version: "v1"
+project: "homelab-playwright-epic-wrap"
+repository: "Homelab/Architecture"
+canonical_pr: 108
+author: "Slarti Branchfast <slarti@hl.maier.wtf>"
+change_request: "Playwright Plan-as-Code Epic Completion Wrap-up (#253)"
+review_scope:
+  tickets: ["#253", "#273-#281"]
+  description: "Final epic wrap-up confirming all tickets PW-I01 through PW-I21 fully implemented, verified, reviewed, and merged."
+head_commit: "6ee0b7821ed51b77b89ae679520123bc763e2654"
+base_commit: "6ee0b7821ed51b77b89ae679520123bc763e2654"
+timestamp: "2026-07-27T22:10:00Z"
+generated:
+  tool: "validate_review_bundle.py"
+  version: "0.3.0"
+  timestamp: "2026-07-27T22:10:00Z"
+integrity:
+  changeset_sha256: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+statistics:
+  files_changed: 0
+  insertions: 0
+  deletions: 0
