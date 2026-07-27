@@ -1,5 +1,5 @@
 diff --git a/.gitea/workflows/ci.yaml b/.gitea/workflows/ci.yaml
-index 611ffa9..af1f36b 100644
+index 611ffa9..6adca24 100644
 --- a/.gitea/workflows/ci.yaml
 +++ b/.gitea/workflows/ci.yaml
 @@ -61,8 +61,9 @@ jobs:
@@ -14,7 +14,7 @@ index 611ffa9..af1f36b 100644
  
    report:
      name: Reporting
-@@ -91,3 +92,16 @@ jobs:
+@@ -91,3 +92,18 @@ jobs:
            name: ci-summary
            path: reports/ci-summary.json
            if-no-files-found: ignore
@@ -30,7 +30,18 @@ index 611ffa9..af1f36b 100644
 +      - name: setup
 +        run: apt-get update -qq && apt-get install -y -qq git jq python3 python3-yaml docker.io docker-compose
 +      - name: smoke-audiobookshelf
-+        run: bash tests/playwright/ci/post-deploy.sh
++        env:
++          SERVICE_URL: ${{ secrets.AUDIOBOOKSHELF_URL }}
++        run: bash tests/playwright/ci/post-deploy.sh "$SERVICE_URL"
+diff --git a/.gitignore b/.gitignore
+index 234aad2..2b44c65 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -4,3 +4,4 @@
+ /test-results/playwright/
+ /test-results/playwright-headed/
+ /tests/playwright/node_modules/
++__pycache__/
 diff --git a/Makefile b/Makefile
 index 037ea34..13c61b3 100644
 --- a/Makefile
@@ -74,7 +85,7 @@ deleted file mode 100644
 index 9ac4f58..0000000
 Binary files a/__pycache__/ci-generate.cpython-311.pyc and /dev/null differ
 diff --git a/ci-generate.py b/ci-generate.py
-index 998aab3..9ff6a7c 100644
+index 998aab3..15d8226 100644
 --- a/ci-generate.py
 +++ b/ci-generate.py
 @@ -79,6 +79,10 @@ def generate_gitea_workflow(m):
@@ -88,7 +99,18 @@ index 998aab3..9ff6a7c 100644
          lines.append("    steps:")
          lines.append("      - uses: actions/checkout@v4")
          lines.append("        with:")
-@@ -102,7 +106,7 @@ def generate_gitea_workflow(m):
+@@ -97,12 +101,18 @@ def generate_gitea_workflow(m):
+             if step.get("enabled") is False:
+                 lines.append("        if: false")
+ 
++            step_env = step.get("env", {})
++            if step_env:
++                lines.append("        env:")
++                for k, v in step_env.items():
++                    lines.append(f"          {k}: {v}")
++
+             if tool == "script":
+                 lines.append(f"        run: bash {target} {flags}".rstrip())
              elif tool == "python":
                  lines.append(f"        run: python3 {target} {flags}".rstrip())
              elif tool == "bash":
@@ -98,7 +120,7 @@ index 998aab3..9ff6a7c 100644
                  lines += [
                      "        env:",
 diff --git a/ci-manifest.yaml b/ci-manifest.yaml
-index a5bffe8..5ba7fe0 100644
+index a5bffe8..104efc3 100644
 --- a/ci-manifest.yaml
 +++ b/ci-manifest.yaml
 @@ -188,9 +188,18 @@ stages:
@@ -121,7 +143,7 @@ index a5bffe8..5ba7fe0 100644
    - id: report
      label: Reporting
      order: 50
-@@ -201,13 +210,26 @@ stages:
+@@ -201,13 +210,29 @@ stages:
          quality_gate: always_pass
          timeout: 10s
  
@@ -133,10 +155,13 @@ index a5bffe8..5ba7fe0 100644
 +      - id: smoke-audiobookshelf
 +        tool: bash
 +        target: tests/playwright/ci/post-deploy.sh
++        flags: '"$SERVICE_URL"'
 +        quality_gate: exit_zero
 +        timeout: 600s
 +        enabled: true
 +        tags: [playwright, audiobookshelf, smoke, deployment]
++        env:
++          SERVICE_URL: ${{ secrets.AUDIOBOOKSHELF_URL }}
 +
  branch_rules:
    feature:
@@ -149,7 +174,7 @@ index a5bffe8..5ba7fe0 100644
      required_approvals: 1
      require_all_previous_green: true
      allow_skip: false
-@@ -302,8 +324,10 @@ local_dev:
+@@ -302,8 +327,10 @@ local_dev:
      test-playwright-bootstrap: python3 tests/test_playwright_bootstrap.py
      test-playwright-headed-contract: python3 tests/test_playwright_headed.py
      test-playwright-platform: bash tests/playwright/runner/run.sh platform
@@ -736,10 +761,10 @@ index 0000000..8fa03ca
 +  });
 +});
 diff --git a/tests/test_ci_generator.py b/tests/test_ci_generator.py
-index 9f2c338..a0e665c 100644
+index 9f2c338..fce48fe 100644
 --- a/tests/test_ci_generator.py
 +++ b/tests/test_ci_generator.py
-@@ -171,6 +171,42 @@ def test_matrix_coturn_is_registered():
+@@ -171,6 +171,48 @@ def test_matrix_coturn_is_registered():
      assert "run: bash pi/tests/test_coturn_compose.sh" in workflow
  
  
@@ -765,7 +790,7 @@ index 9f2c338..a0e665c 100644
 +
 +
 +def test_post_deploy_has_branch_condition():
-+    """Post-deploy job must run only on main branch."""
++    """Post-deploy job must run only on main branch and pass deployed URL."""
 +    import importlib.util
 +
 +    spec = importlib.util.spec_from_file_location("ci_generate", GENERATOR)
@@ -777,12 +802,18 @@ index 9f2c338..a0e665c 100644
 +    assert "if: github.ref == 'refs/heads/main'" in workflow, (
 +        "post-deploy job must have a main-branch condition"
 +    )
++    assert "secrets.AUDIOBOOKSHELF_URL" in workflow, (
++        "post-deploy must reference AUDIOBOOKSHELF_URL secret"
++    )
++    assert "post-deploy.sh" in workflow and '"$SERVICE_URL"' in workflow, (
++        "post-deploy must call post-deploy.sh with SERVICE_URL argument"
++    )
 +
 +
  if __name__ == "__main__":
      tests = [
          test_manifest_exists,
-@@ -181,6 +217,8 @@ if __name__ == "__main__":
+@@ -181,6 +223,8 @@ if __name__ == "__main__":
          test_matrix_hardening_is_registered,
          test_every_checkout_fetches_full_history,
          test_matrix_coturn_is_registered,

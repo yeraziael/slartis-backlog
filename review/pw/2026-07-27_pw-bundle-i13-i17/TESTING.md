@@ -1,8 +1,8 @@
-# Testing — PW Bundle 2 (v2, head=45a80c4)
+# Testing — PW Bundle 2 (v3, head=ed11fc7)
 
 ## Tests Executed
 
-All tests pass on the canonical repository (`make test` on commit `45a80c4`).
+All tests pass on the canonical repository (`make test` on commit `ed11fc7`).
 
 ### Shell/Unit Tests (`make test-checks`)
 - 12/12 PASS — link checker, compose checker, secret scanner, git-diff
@@ -42,7 +42,11 @@ All tests pass on the canonical repository (`make test` on commit `45a80c4`).
 - **Fix:** `ci-generate.py` `bash` tool handler now appends `flags` to run command (line 105)
 - **Round-trip guard:** `test_playwright_steps_have_explicit_arguments` test verifies correct command lines
 
-### Finding 2: Post-deploy branch condition missing
+### Finding 3: Post-deploy missing deployed URL
+- **Fix:** Added `env` field support to `ci-generate.py` for step-level environment variables
+- **Fix:** `smoke-audiobookshelf` step now sets `SERVICE_URL: ${{ secrets.AUDIOBOOKSHELF_URL }}` and passes `"$SERVICE_URL"` as argument
+- **Fix:** `post-deploy.sh` receives the deployed URL via `"$SERVICE_URL"` argument
+- **Round-trip guard:** `test_post_deploy_has_branch_condition` now also asserts `secrets.AUDIOBOOKSHELF_URL` reference and `"$SERVICE_URL"` argument in generated workflow
 - **Fix:** Added `condition: github.ref == 'refs/heads/main'` to `post-deploy` stage in `ci-manifest.yaml`
 - **Fix:** Added `if:` support to `ci-generate.py` for stage-level conditions
 - **Fix:** `post-deploy.sh` now fails closed (exit 2) when `CI=true` and no URL is provided
