@@ -1,6 +1,6 @@
 # Implementation — PW Bundle 2
 
-## Files Changed (15 files, +520/-13)
+## Files Changed (20 files, +570/-16)
 
 | File | Status | Lines | Issue |
 |------|--------|-------|-------|
@@ -12,12 +12,14 @@
 | `tests/playwright/services/audiobookshelf/authorization.spec.ts` | **new** | +83 | PW-I15 |
 | `tests/playwright/package.json` | modified | +2/-1 | PW-I16 |
 | `tests/playwright/runner/run.sh` | modified | +20/-3 | PW-I16 |
-| `tests/playwright/ci/post-deploy.sh` | **new** | +31 | PW-I17 |
+| `tests/playwright/ci/post-deploy.sh` | **new** | +34 | PW-I17 |
 | `docs/playwright-ci-runbook.md` | **new** | +76 | PW-I17 |
-| `ci-manifest.yaml` | modified | +27/-4 | PW-I16/I17 |
-| `.gitea/workflows/ci.yaml` | modified | +15/-1 | generated |
+| `ci-manifest.yaml` | modified | +28/-4 | PW-I16/I17 |
+| `ci-generate.py` | modified | +6/-1 | fix |
+| `.gitea/workflows/ci.yaml` | modified | +18/-3 | generated |
 | `Makefile` | modified | +9/-3 | generated |
 | `tests/test_playwright_bootstrap.py` | modified | +3/-2 | test fix |
+| `tests/test_ci_generator.py` | modified | +38/-0 | fix round-trip |
 
 ### Semantic Summary
 

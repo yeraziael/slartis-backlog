@@ -1,18 +1,20 @@
 diff --git a/.gitea/workflows/ci.yaml b/.gitea/workflows/ci.yaml
-index 611ffa9..58090e2 100644
+index 611ffa9..af1f36b 100644
 --- a/.gitea/workflows/ci.yaml
 +++ b/.gitea/workflows/ci.yaml
-@@ -61,7 +61,8 @@ jobs:
+@@ -61,8 +61,9 @@ jobs:
        - name: playwright-headed-contract
          run: python3 tests/test_playwright_headed.py
        - name: playwright-platform
 -        if: false
-+        run: bash tests/playwright/runner/run.sh
+-        run: bash tests/playwright/runner/run.sh
++        run: bash tests/playwright/runner/run.sh platform
 +      - name: playwright-service
-         run: bash tests/playwright/runner/run.sh
++        run: bash tests/playwright/runner/run.sh service
  
    report:
-@@ -91,3 +92,15 @@ jobs:
+     name: Reporting
+@@ -91,3 +92,16 @@ jobs:
            name: ci-summary
            path: reports/ci-summary.json
            if-no-files-found: ignore
@@ -20,6 +22,7 @@ index 611ffa9..58090e2 100644
 +  post-deploy:
 +    name: Post-Deployment Smoke
 +    runs-on: ubuntu-latest
++    if: github.ref == 'refs/heads/main'
 +    steps:
 +      - uses: actions/checkout@v4
 +        with:
@@ -70,8 +73,32 @@ diff --git a/__pycache__/ci-generate.cpython-311.pyc b/__pycache__/ci-generate.c
 deleted file mode 100644
 index 9ac4f58..0000000
 Binary files a/__pycache__/ci-generate.cpython-311.pyc and /dev/null differ
+diff --git a/ci-generate.py b/ci-generate.py
+index 998aab3..9ff6a7c 100644
+--- a/ci-generate.py
++++ b/ci-generate.py
+@@ -79,6 +79,10 @@ def generate_gitea_workflow(m):
+             lines.append("    needs: [lint, test-unit]")
+             lines.append("    if: always()")
+ 
++        condition = stage.get("condition")
++        if condition:
++            lines.append(f"    if: {condition}")
++
+         lines.append("    steps:")
+         lines.append("      - uses: actions/checkout@v4")
+         lines.append("        with:")
+@@ -102,7 +106,7 @@ def generate_gitea_workflow(m):
+             elif tool == "python":
+                 lines.append(f"        run: python3 {target} {flags}".rstrip())
+             elif tool == "bash":
+-                lines.append(f"        run: bash {target}")
++                lines.append(f"        run: bash {target} {flags}".rstrip())
+             elif tool == "internal" and step.get("action") == "generate_summary":
+                 lines += [
+                     "        env:",
 diff --git a/ci-manifest.yaml b/ci-manifest.yaml
-index a5bffe8..29d732d 100644
+index a5bffe8..5ba7fe0 100644
 --- a/ci-manifest.yaml
 +++ b/ci-manifest.yaml
 @@ -188,9 +188,18 @@ stages:
@@ -94,13 +121,14 @@ index a5bffe8..29d732d 100644
    - id: report
      label: Reporting
      order: 50
-@@ -201,13 +210,25 @@ stages:
+@@ -201,13 +210,26 @@ stages:
          quality_gate: always_pass
          timeout: 10s
  
 +  - id: post-deploy
 +    label: Post-Deployment Smoke
 +    order: 60
++    condition: github.ref == 'refs/heads/main'
 +    steps:
 +      - id: smoke-audiobookshelf
 +        tool: bash
@@ -121,7 +149,7 @@ index a5bffe8..29d732d 100644
      required_approvals: 1
      require_all_previous_green: true
      allow_skip: false
-@@ -302,8 +323,10 @@ local_dev:
+@@ -302,8 +324,10 @@ local_dev:
      test-playwright-bootstrap: python3 tests/test_playwright_bootstrap.py
      test-playwright-headed-contract: python3 tests/test_playwright_headed.py
      test-playwright-platform: bash tests/playwright/runner/run.sh platform
@@ -197,10 +225,10 @@ index 0000000..804fb47
 +4. Service tests are auto-included by `test:service` (testDir: services/)
 diff --git a/tests/playwright/ci/post-deploy.sh b/tests/playwright/ci/post-deploy.sh
 new file mode 100644
-index 0000000..63f24d5
+index 0000000..edd015a
 --- /dev/null
 +++ b/tests/playwright/ci/post-deploy.sh
-@@ -0,0 +1,28 @@
+@@ -0,0 +1,31 @@
 +#!/usr/bin/env bash
 +# PW-I17: post-deployment smoke — runs playwright service tests after deployment
 +set -uo pipefail
@@ -223,6 +251,9 @@ index 0000000..63f24d5
 +BASE_URL="${1:-}"
 +if [ -n "$BASE_URL" ]; then
 +  SUITE="service:${BASE_URL}"
++elif [ "${CI:-}" = "true" ]; then
++  echo "PW-I17: FATAL — SERVICE_URL required in CI, none provided" >&2
++  exit 2
 +else
 +  SUITE="service"
 +fi
@@ -704,6 +735,62 @@ index 0000000..8fa03ca
 +    expect(errorVisible || stillOnKeycloak).toBeTruthy();
 +  });
 +});
+diff --git a/tests/test_ci_generator.py b/tests/test_ci_generator.py
+index 9f2c338..a0e665c 100644
+--- a/tests/test_ci_generator.py
++++ b/tests/test_ci_generator.py
+@@ -171,6 +171,42 @@ def test_matrix_coturn_is_registered():
+     assert "run: bash pi/tests/test_coturn_compose.sh" in workflow
+ 
+ 
++def test_playwright_steps_have_explicit_arguments():
++    """Playwright CI steps must pass platform/service arguments to the runner."""
++    import importlib.util
++
++    spec = importlib.util.spec_from_file_location("ci_generate", GENERATOR)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    workflow = module.generate_gitea_workflow(module.load_manifest(MANIFEST))
++
++    assert "- name: playwright-platform" in workflow
++    assert "run: bash tests/playwright/runner/run.sh platform" in workflow, (
++        "playwright-platform must pass 'platform' argument"
++    )
++    assert "- name: playwright-service" in workflow
++    assert "run: bash tests/playwright/runner/run.sh service" in workflow, (
++        "playwright-service must pass 'service' argument"
++    )
++    assert "- name: smoke-audiobookshelf" in workflow
++    assert "run: bash tests/playwright/ci/post-deploy.sh" in workflow
++
++
++def test_post_deploy_has_branch_condition():
++    """Post-deploy job must run only on main branch."""
++    import importlib.util
++
++    spec = importlib.util.spec_from_file_location("ci_generate", GENERATOR)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    workflow = module.generate_gitea_workflow(module.load_manifest(MANIFEST))
++
++    assert "  post-deploy:" in workflow
++    assert "if: github.ref == 'refs/heads/main'" in workflow, (
++        "post-deploy job must have a main-branch condition"
++    )
++
++
+ if __name__ == "__main__":
+     tests = [
+         test_manifest_exists,
+@@ -181,6 +217,8 @@ if __name__ == "__main__":
+         test_matrix_hardening_is_registered,
+         test_every_checkout_fetches_full_history,
+         test_matrix_coturn_is_registered,
++        test_playwright_steps_have_explicit_arguments,
++        test_post_deploy_has_branch_condition,
+     ]
+     failures = 0
+     for t in tests:
 diff --git a/tests/test_playwright_bootstrap.py b/tests/test_playwright_bootstrap.py
 index 801f772..7ff3f27 100644
 --- a/tests/test_playwright_bootstrap.py

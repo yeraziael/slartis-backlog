@@ -1,14 +1,14 @@
-# Testing — PW Bundle 2
+# Testing — PW Bundle 2 (v2, head=45a80c4)
 
 ## Tests Executed
 
-All tests pass on the canonical repository (`make test` on commit `2beb30f`).
+All tests pass on the canonical repository (`make test` on commit `45a80c4`).
 
 ### Shell/Unit Tests (`make test-checks`)
 - 12/12 PASS — link checker, compose checker, secret scanner, git-diff
 
 ### CI Generator Tests (`make test-ci-generator`)
-- 10/10 PASS — manifest validation, generator reproducibility, generated target matching
+- **12/12 PASS** — includes new `test_playwright_steps_have_explicit_arguments` and `test_post_deploy_has_branch_condition` round-trip assertions
 
 ### Matrix/Framework Tests (`make test` — all framework tests)
 - All Matrix, Synapse, Coturn, Mautrix, Audiobookshelf-proxy tests: PASS
@@ -31,7 +31,22 @@ All tests pass on the canonical repository (`make test` on commit `2beb30f`).
 
 ## CI Status
 - Gitea Actions workflow `.gitea/workflows/ci.yaml` updated with `playwright-service` and `post-deploy` stages
+- `playwright-platform` now correctly passes `platform` argument to runner
+- `playwright-service` now correctly passes `service` argument to runner
+- `post-deploy` job has `if: github.ref == 'refs/heads/main'` condition
 - YAML validation: PASS
+
+## Findings Resolved (v2)
+
+### Finding 1: Missing `flags` argument in `bash` tool
+- **Fix:** `ci-generate.py` `bash` tool handler now appends `flags` to run command (line 105)
+- **Round-trip guard:** `test_playwright_steps_have_explicit_arguments` test verifies correct command lines
+
+### Finding 2: Post-deploy branch condition missing
+- **Fix:** Added `condition: github.ref == 'refs/heads/main'` to `post-deploy` stage in `ci-manifest.yaml`
+- **Fix:** Added `if:` support to `ci-generate.py` for stage-level conditions
+- **Fix:** `post-deploy.sh` now fails closed (exit 2) when `CI=true` and no URL is provided
+- **Round-trip guard:** `test_post_deploy_has_branch_condition` test verifies the condition
 
 ## Reproducible Commands
 
@@ -39,6 +54,7 @@ All tests pass on the canonical repository (`make test` on commit `2beb30f`).
 cd /mnt/raid0/slarti/workspace/worktrees/architecture-main-sync
 make lint    # ALL PASS
 make test    # ALL PASS (except pre-existing playwright ESM issue)
+python3 tests/test_ci_generator.py  # 12/12 PASS
 ```
 
 ## Test Gaps

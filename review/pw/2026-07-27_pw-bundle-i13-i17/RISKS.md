@@ -7,7 +7,7 @@
 - **Low.** Credentials loaded from env vars (`PW_E2E_ABS_USER`, `PW_E2E_ABS_PASSWORD`), never hardcoded or committed. Credential loader at `pi/audiobookshelf/scripts/load-playwright-credentials.sh` enforces `umask 077`.
 
 ## Operations
-- **Medium.** Post-deployment smoke runs on main branch. If service tests fail after deployment, they block subsequent CI runs until resolved. Mitigation: `post-deploy` is a separate stage that can be skipped if needed.
+- **Low.** Post-deployment smoke runs only on main branch (`if: github.ref == 'refs/heads/main'`). Fails closed when `CI=true` and no URL is provided.
 
 ## Migration
 - **None.** No migration required.

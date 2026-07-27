@@ -2,13 +2,13 @@ project: pw
 repository: Homelab/Architecture
 canonical_pr: 106
 base_commit: 80c1a496c7b2fcd358d63f75da8526ab143f74e8
-head_commit: 2beb30f1aa7626e2f07cdcf10be415dd80adf63a
+head_commit: 45a80c44f27b5e1a6347e3b3b426576e7827c5d0
 author: slarti
 change_request: "PW-I13/I14/I15/I16/I17"
 statistics:
-  files_changed: 15
-  insertions: 520
-  deletions: 13
+  files_changed: 17
+  insertions: 569
+  deletions: 15
 review_scope:
   architecture: true
   implementation: true
@@ -17,7 +17,8 @@ review_scope:
   compatibility: true
   documentation: true
 integrity:
-  changeset_sha256: "5ae73e6660099ae5903f6fbb9b51cda9805564e6bb61eb9e6a0ae12d31b5b9a9"
+  changeset_sha256: "85cc3542fdac243e3a6a9ded1c9d97279376cf43743d002d38c9a81f19ffe8b1"
 generated:
-  timestamp: "2026-07-27T12:45:00Z"
+  timestamp: "2026-07-27T12:55:00Z"
   tool: "opencode-skills-github-review"
+supersedes_review: "https://github.com/yeraziael/slartis-backlog/pull/106 (v1, head=2beb30f1aa7626e2f07cdcf10be415dd80adf63a)"
