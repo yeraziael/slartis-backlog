@@ -6,14 +6,14 @@ author: "Slarti Branchfast <slarti@hl.maier.wtf>"
 change_request: "Playwright Plan-as-Code Epic Completion Wrap-up (#253)"
 review_scope:
   tickets: ["PW-D01", "PW-D02", "PW-D03", "PW-D04", "PW-D05", "PW-D06", "PW-I01", "PW-I02", "PW-I03", "PW-I04", "PW-I05", "PW-I06", "PW-I07", "PW-I08", "PW-I09", "PW-I10", "PW-I11", "PW-I12", "PW-I13", "PW-I14", "PW-I15", "PW-I16", "PW-I17", "PW-I18", "PW-I19", "PW-I20", "PW-I21"]
-  description: "Definitive auditable closeout package for Playwright Plan-as-Code Epic #253 covering PW-D01 through PW-D06 and PW-I01 through PW-I21 with complete commit SHAs, canonical PR numbers, and authoritative ACP checkpoint references."
+  description: "Definitive auditable closeout package for Playwright Plan-as-Code Epic #253 covering PW-D01 through PW-D06 and PW-I01 through PW-I21 with complete literal commit SHAs, canonical PR numbers, and authoritative ACP checkpoint references."
 head_commit: "6ee0b7821ed51b77b89ae679520123bc763e2654"
 base_commit: "6ee0b7821ed51b77b89ae679520123bc763e2654"
-timestamp: "2026-07-28T00:00:00Z"
+timestamp: "2026-07-28T01:00:00Z"
 generated:
   tool: "validate_review_bundle.py"
   version: "0.3.0"
-  timestamp: "2026-07-28T00:00:00Z"
+  timestamp: "2026-07-28T01:00:00Z"
 integrity:
   changeset_sha256: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 statistics:

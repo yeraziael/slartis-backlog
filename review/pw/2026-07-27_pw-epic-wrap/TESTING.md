@@ -3,4 +3,4 @@
 - Bootstrap Tests:  (139/139 PASS)
 - CI Generator Tests:  (PASS)
 - Operations Policy Tests:  (PASS)
-- Gitea Actions CI: All PR checks executed green ( [Run #870],  [Run #870],  [Run #870]).
+- Gitea Actions CI: All PR checks executed green ( [Gitea Actions Run #870, head ],  [Gitea Actions Run #870, head ],  [Gitea Actions Run #870, head ]).
