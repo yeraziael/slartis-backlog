@@ -285,6 +285,51 @@ index 0000000..edd015a
 +
 +echo "PW-I17: post-deployment smoke starting (suite=${SUITE})"
 +exec bash "${RUNNER_DIR}/run.sh" "${SUITE}"
+diff --git a/tests/playwright/evidence/artifacts/artifact-self-test.spec.ts b/tests/playwright/evidence/artifacts/artifact-self-test.spec.ts
+index ab6e3fc..f2c3cc0 100644
+--- a/tests/playwright/evidence/artifacts/artifact-self-test.spec.ts
++++ b/tests/playwright/evidence/artifacts/artifact-self-test.spec.ts
+@@ -1,18 +1,19 @@
+ import { test, expect } from "@playwright/test";
+-import * as path from "path";
++
++const LOCAL_PAGE = "file:///workspace/tests/playwright/platform/fixtures/local-page.html";
+ 
+ test("Passing test completes without assertion failure", { tag: "@pass" }, async ({ page }) => {
+-  await page.goto("file://" + path.resolve(__dirname, "../../platform/fixtures/local-page.html"));
++  await page.goto(LOCAL_PAGE);
+   await expect(page.locator("h1")).toHaveText("PW Self-Test");
+ });
+ 
+ test("Failing test produces screenshot and trace", { tag: "@fail" }, async ({ page }) => {
+-  await page.goto("file://" + path.resolve(__dirname, "../../platform/fixtures/local-page.html"));
++  await page.goto(LOCAL_PAGE);
+   await expect(page.locator("h1")).toHaveText("nonexistent");
+ });
+ 
+ test("Prerequisite error simulation", { tag: "@prerequisite_error" }, async ({ page }) => {
+-  await page.goto("file://" + path.resolve(__dirname, "../../platform/fixtures/local-page.html"));
++  await page.goto(LOCAL_PAGE);
+   const resp = await page.request.get("http://192.0.2.1/").catch(() => null);
+   expect(resp).toBeNull();
+ });
+diff --git a/tests/playwright/evidence/sanitisation/sanitisation-spec.spec.ts b/tests/playwright/evidence/sanitisation/sanitisation-spec.spec.ts
+index 05890c4..b235f7e 100644
+--- a/tests/playwright/evidence/sanitisation/sanitisation-spec.spec.ts
++++ b/tests/playwright/evidence/sanitisation/sanitisation-spec.spec.ts
+@@ -1,10 +1,11 @@
+ import { test, expect } from '@playwright/test';
+ import { spawnSync } from 'child_process';
++import { fileURLToPath } from 'url';
+ import * as fs from 'fs';
+ import * as os from 'os';
+ import * as path from 'path';
+ 
+-const SANITISATION_DIR = path.resolve(__dirname);
++const SANITISATION_DIR = path.dirname(fileURLToPath(import.meta.url));
+ const SANITISE_SH = path.join(SANITISATION_DIR, 'sanitise.sh');
+ const FIXTURES_DIR = path.join(SANITISATION_DIR, 'fixtures');
+ 
 diff --git a/tests/playwright/package.json b/tests/playwright/package.json
 index 0f41211..1f39dab 100644
 --- a/tests/playwright/package.json
@@ -298,6 +343,22 @@ index 0f41211..1f39dab 100644
 +    "test:service": "playwright test --config=playwright.config.ts --project=chromium services/"
    }
  }
+diff --git a/tests/playwright/platform/prerequisite-classification.spec.ts b/tests/playwright/platform/prerequisite-classification.spec.ts
+index e5f7cfa..16fcd1b 100644
+--- a/tests/playwright/platform/prerequisite-classification.spec.ts
++++ b/tests/playwright/platform/prerequisite-classification.spec.ts
+@@ -1,9 +1,10 @@
+ import { test, expect } from "@playwright/test";
+ import { execSync } from "child_process";
++import { fileURLToPath } from "url";
+ import * as path from "path";
+ import * as fs from "fs";
+ 
+-const PREREQ_DIR = path.resolve(__dirname, "..", "prerequisites");
++const PREREQ_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "prerequisites");
+ const FIXTURES_DIR = path.join(PREREQ_DIR, "fixtures");
+ 
+ function runCheckAll(mode: string, target: string): { exitCode: number; stdout: string } {
 diff --git a/tests/playwright/runner/run.sh b/tests/playwright/runner/run.sh
 index b9ba5de..c878faf 100755
 --- a/tests/playwright/runner/run.sh
