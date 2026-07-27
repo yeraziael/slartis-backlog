@@ -1,0 +1,22 @@
+manifest_version: "v1"
+project: "homelab-playwright"
+repository: "Homelab/Architecture"
+canonical_pr: 107
+author: "Slarti Branchfast <slarti@hl.maier.wtf>"
+change_request: "PW-I18 through PW-I21 (Jellyfin & Maintenance)"
+review_scope:
+  tickets: ["PW-I18", "PW-D06", "PW-I19", "PW-I20", "PW-I21"]
+  description: "Jellyfin onboarding, unauthenticated smoke, auth/roles, media playback, and operations runbook"
+head_commit: "53472bf8b263ba0cd1ba365939e878960be8931a"
+base_commit: "e74c58b2edb583819b091f4cf158e817e35fe99e"
+timestamp: "2026-07-27T18:45:00Z"
+generated:
+  tool: "validate_review_bundle.py"
+  version: "0.3.0"
+  timestamp: "2026-07-27T18:45:00Z"
+integrity:
+  changeset_sha256: "6e900bfd3b0fc3639f53f6650670838e0cc90dbc348c4096b596a9542f235a18"
+statistics:
+  files_changed: 8
+  insertions: 191
+  deletions: 0
