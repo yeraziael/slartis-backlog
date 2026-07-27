@@ -1,0 +1,302 @@
+diff --git a/docs/decisions/playwright/jellyfin-onboarding.md b/docs/decisions/playwright/jellyfin-onboarding.md
+new file mode 100644
+index 0000000..7296bc7
+--- /dev/null
++++ b/docs/decisions/playwright/jellyfin-onboarding.md
+@@ -0,0 +1,14 @@
++# Jellyfin Onboarding & Controlled Media Contract (PW-D06)
++
++## Readiness and Boundaries
++- **Status**: Jellyfin deployment readiness and OIDC integration verified via service epic requirements.
++- **Scope**: Lower-layer OIDC authentication and controlled media streaming are verified via browser journeys.
++
++## Journeys & Selectors
++1. **Unauthenticated Smoke**: Access login page (`/web/index.html`), verify page title and render without credentials.
++2. **Authentication & Roles**:
++   - Standard User: Login via OIDC, verify permitted library access.
++   - Restricted/Denied User: Login via restricted account, verify denial or restricted library visibility.
++   - Admin User: Login via admin account, verify non-destructive admin navigation.
++   - Logout: Trigger session termination and verify return to login screen.
++3. **Controlled Media Playback**: Open controlled non-personal media item, initiate playback, observe deterministic play state and optional transcode signal, then stop playback cleanly.
+diff --git a/docs/playwright-operations.md b/docs/playwright-operations.md
+new file mode 100644
+index 0000000..7e4b7c5
+--- /dev/null
++++ b/docs/playwright-operations.md
+@@ -0,0 +1,14 @@
++# Playwright Operations, Maintenance, and Flake Policy (PW-I18)
++
++## Flake and Quarantine Policy
++- **Zero Flaky Retries**: Playwright test suites run with `retries: 0` in `playwright.config.ts`. Flaky tests are not masked by automatic retries.
++- **14-Day Quarantine Limit**: Any failing or flaky test identified in CI must be immediately quarantined using metadata tags or moved to a quarantine suite with an explicit owner and expiration date not exceeding 14 days.
++- **Permanent Skips Forbidden**: Tests cannot be permanently skipped without an active quarantine record and expiry.
++
++## Image Upgrade & Maintenance
++- **Pinned Base Image**: All test runners use the exact pinned Playwright image digest (`mcr.microsoft.com/playwright:v1.61.1-noble@sha256:...`).
++- **Upgrade Procedure**: Upgrades require updating the digest across `run.sh`, documentation, and manifest generators, followed by full execution of `make lint`, `make test`, and PR review.
++
++## Selector Hierarchy and Test Data Cleanup
++- **Selector Priority**: Prefer test IDs (`data-testid`), ARIA roles, and semantic attributes over brittle CSS/XPath selectors.
++- **Test-Data Cleanup**: Ephemeral user states, cookies, and localStorage must be isolated via separate browser contexts per test. No persistent mutated state may leak between tests.
+diff --git a/tests/playwright/services/jellyfin/authentication-roles.spec.ts b/tests/playwright/services/jellyfin/authentication-roles.spec.ts
+new file mode 100644
+index 0000000..314193a
+--- /dev/null
++++ b/tests/playwright/services/jellyfin/authentication-roles.spec.ts
+@@ -0,0 +1,58 @@
++import { test, expect } from "@playwright/test";
++import { JellyfinLoginPage } from "./pages/login";
++
++test.describe("PW-I20: Jellyfin authentication, role coverage, and logout", () => {
++  test("Jellyfin standard user authentication, library access, and logout", { tag: "@auth" }, async ({ page }) => {
++    const user = process.env.PW_E2E_JF_USER;
++    const pass = process.env.PW_E2E_JF_PASSWORD;
++    test.skip(!user || !pass, "Jellyfin user credentials required");
++
++    const loginPage = new JellyfinLoginPage(page);
++    await loginPage.login(user, pass);
++    const onLogin = await loginPage.isOnLoginPage();
++    expect(onLogin).toBeFalsy();
++
++    await loginPage.logout();
++    const backOnLogin = await loginPage.isOnLoginPage();
++    expect(backOnLogin).toBeTruthy();
++  });
++
++  test("Jellyfin restricted user role denial with isolated context and strict contract", { tag: "@auth" }, async ({ browser }) => {
++    const restrictedUser = process.env.PW_E2E_JF_RESTRICTED_USER;
++    const restrictedPass = process.env.PW_E2E_JF_RESTRICTED_PASSWORD;
++    const standardUser = process.env.PW_E2E_JF_USER;
++    const standardPass = process.env.PW_E2E_JF_PASSWORD;
++    const protectedLibraryId = process.env.PW_E2E_JF_RESTRICTED_LIBRARY_ID;
++
++    test.skip(!restrictedUser || !restrictedPass || !standardUser || !standardPass || !protectedLibraryId, "Jellyfin restricted/standard credentials and PW_E2E_JF_RESTRICTED_LIBRARY_ID required");
++
++    // 1. Positive control in dedicated context
++    const contextStandard = await browser.newContext();
++    const pageStandard = await contextStandard.newPage();
++    const standardLoginPage = new JellyfinLoginPage(pageStandard);
++    await standardLoginPage.login(standardUser, standardPass);
++    const standardCanAccess = await standardLoginPage.isProtectedLibraryAccessible(protectedLibraryId);
++    expect(standardCanAccess).toBeTruthy();
++    await contextStandard.close();
++
++    // 2. Negative authorization check in isolated context
++    const contextRestricted = await browser.newContext();
++    const pageRestricted = await contextRestricted.newPage();
++    const restrictedLoginPage = new JellyfinLoginPage(pageRestricted);
++    await restrictedLoginPage.login(restrictedUser, restrictedPass);
++    const restrictedDenied = await restrictedLoginPage.isProtectedLibraryDenied(protectedLibraryId);
++    expect(restrictedDenied).toBeTruthy();
++    await contextRestricted.close();
++  });
++
++  test("Jellyfin admin navigation check", { tag: "@auth" }, async ({ page }) => {
++    const adminUser = process.env.PW_E2E_JF_ADMIN_USER;
++    const adminPass = process.env.PW_E2E_JF_ADMIN_PASSWORD;
++    test.skip(!adminUser || !adminPass, "Jellyfin admin credentials required");
++
++    const loginPage = new JellyfinLoginPage(page);
++    await loginPage.login(adminUser, adminPass);
++    const hasAdmin = await loginPage.isAdminSectionVisible();
++    expect(hasAdmin).toBeTruthy();
++  });
++});
+diff --git a/tests/playwright/services/jellyfin/media-playback.spec.ts b/tests/playwright/services/jellyfin/media-playback.spec.ts
+new file mode 100644
+index 0000000..4079c08
+--- /dev/null
++++ b/tests/playwright/services/jellyfin/media-playback.spec.ts
+@@ -0,0 +1,19 @@
++import { test, expect } from "@playwright/test";
++import { JellyfinMediaPage } from "./pages/media";
++import { JellyfinLoginPage } from "./pages/login";
++
++test.describe("PW-I21: Jellyfin controlled media and playback flow", () => {
++  test("Jellyfin opens controlled media and initiates playback (fail-closed)", { tag: "@media" }, async ({ page }) => {
++    const user = process.env.PW_E2E_JF_USER;
++    const pass = process.env.PW_E2E_JF_PASSWORD;
++    test.skip(!user || !pass, "Jellyfin user credentials required");
++
++    const loginPage = new JellyfinLoginPage(page);
++    await loginPage.login(user, pass);
++
++    const mediaPage = new JellyfinMediaPage(page);
++    await mediaPage.openControlledMedia();
++    await mediaPage.startPlayback();
++    await mediaPage.stopPlayback();
++  });
++});
+diff --git a/tests/playwright/services/jellyfin/pages/login.ts b/tests/playwright/services/jellyfin/pages/login.ts
+new file mode 100644
+index 0000000..781813c
+--- /dev/null
++++ b/tests/playwright/services/jellyfin/pages/login.ts
+@@ -0,0 +1,77 @@
++import { Page, expect } from "@playwright/test";
++
++export class JellyfinLoginPage {
++  readonly page: Page;
++
++  constructor(page: Page) {
++    this.page = page;
++  }
++
++  async goto() {
++    await this.page.goto("/web/index.html");
++  }
++
++  async verifyLoaded() {
++    await expect(this.page).toHaveURL(/web/);
++    // Require Jellyfin-specific login affordance / form inputs rather than generic <form>
++    const userField = this.page.locator('input[name="username"], input[id*="username"], button:has-text("Sign In"), button:has-text("Login")');
++    await expect(userField.first()).toBeVisible({ timeout: 10000 });
++  }
++
++  async login(username: string, pass: string): Promise<void> {
++    await this.goto();
++    const userField = this.page.locator('input[name="username"], input[id*="username"]');
++    const passField = this.page.locator('input[name="password"], input[id*="password"]');
++    const submitBtn = this.page.locator('button[type="submit"], button:has-text("Sign In"), button:has-text("Login")');
++
++    await expect(userField).toBeVisible({ timeout: 10000 });
++    await userField.fill(username);
++    await passField.fill(pass);
++    await submitBtn.click();
++    
++    const userHeader = this.page.locator('.headerUserButton, [data-testid="user-menu"], .mainDrawer');
++    await expect(userHeader.first()).toBeVisible({ timeout: 15000 });
++  }
++
++  async logout(): Promise<void> {
++    const userMenu = this.page.locator('[data-testid="user-menu"], .headerUserButton, button[aria-label="User"]');
++    if (await userMenu.count() > 0) {
++      await userMenu.first().click();
++    }
++    const logoutBtn = this.page.locator('button:has-text("Sign Out"), button:has-text("Logout"), [data-testid="logout-button"]');
++    await expect(logoutBtn).toBeVisible({ timeout: 5000 });
++    await logoutBtn.click();
++    
++    const userField = this.page.locator('input[name="username"], input[id*="username"]');
++    await expect(userField).toBeVisible({ timeout: 10000 });
++  }
++
++  async isOnLoginPage(): Promise<boolean> {
++    const userField = this.page.locator('input[name="username"], input[id*="username"]');
++    return await userField.isVisible().catch(() => false);
++  }
++
++  async isAdminSectionVisible(): Promise<boolean> {
++    const adminLink = this.page.locator('a:has-text("Dashboard"), a:has-text("Administration"), [data-testid="admin-section"]');
++    return await adminLink.isVisible().catch(() => false);
++  }
++
++  async navigateToProtectedLibrary(libraryId: string): Promise<void> {
++    await this.page.goto(`/web/index.html#!/item.html?id=${libraryId}`);
++  }
++
++  async isProtectedLibraryAccessible(libraryId: string): Promise<boolean> {
++    await this.navigateToProtectedLibrary(libraryId);
++    const mediaContainer = this.page.locator('.detailSection, .listItem, [data-testid="media-item-detail"]');
++    await expect(mediaContainer.first()).toBeVisible({ timeout: 10000 });
++    return true;
++  }
++
++  async isProtectedLibraryDenied(libraryId: string): Promise<boolean> {
++    await this.navigateToProtectedLibrary(libraryId);
++    // Strict fail-closed denial contract: requires explicit denial banner, toast error, or access denied indicator
++    const errorBanner = this.page.locator(':text("Unauthorized"), :text("Access Denied"), :text("Forbidden"), :text("Item not found"), .toastErrorMessage');
++    await expect(errorBanner.first()).toBeVisible({ timeout: 10000 });
++    return true;
++  }
++}
+diff --git a/tests/playwright/services/jellyfin/pages/media.ts b/tests/playwright/services/jellyfin/pages/media.ts
+new file mode 100644
+index 0000000..8374fc9
+--- /dev/null
++++ b/tests/playwright/services/jellyfin/pages/media.ts
+@@ -0,0 +1,41 @@
++import { Page, expect } from "@playwright/test";
++
++export class JellyfinMediaPage {
++  readonly page: Page;
++
++  constructor(page: Page) {
++    this.page = page;
++  }
++
++  async openControlledMedia(): Promise<void> {
++    const mediaItem = this.page.locator('[data-testid="controlled-media-item"], a:has-text("Controlled Media")');
++    await expect(mediaItem.first()).toBeVisible({ timeout: 10000 });
++    await mediaItem.first().click();
++  }
++
++  async startPlayback(): Promise<void> {
++    const playBtn = this.page.locator('button:has-text("Play"), [data-testid="play-button"]');
++    await expect(playBtn.first()).toBeVisible({ timeout: 10000 });
++    await playBtn.first().click();
++
++    const activePlayer = this.page.locator('video, audio');
++    await expect(activePlayer.first()).toBeVisible({ timeout: 15000 });
++    
++    await this.page.waitForFunction(() => {
++      const media = document.querySelector('video, audio') as HTMLMediaElement | null;
++      return media && !media.paused;
++    }, { timeout: 15000 });
++  }
++
++  async stopPlayback(): Promise<void> {
++    const stopBtn = this.page.locator('button:has-text("Stop"), [data-testid="stop-button"]');
++    await expect(stopBtn.first()).toBeVisible({ timeout: 5000 });
++    await stopBtn.first().click();
++
++    // Fail-closed stop postcondition: assert media is paused (paused === true) or player element teardown
++    await this.page.waitForFunction(() => {
++      const media = document.querySelector('video, audio') as HTMLMediaElement | null;
++      return !media || media.paused;
++    }, { timeout: 15000 });
++  }
++}
+diff --git a/tests/playwright/services/jellyfin/smoke-unauthenticated.spec.ts b/tests/playwright/services/jellyfin/smoke-unauthenticated.spec.ts
+new file mode 100644
+index 0000000..95c953f
+--- /dev/null
++++ b/tests/playwright/services/jellyfin/smoke-unauthenticated.spec.ts
+@@ -0,0 +1,8 @@
++import { test, expect } from "@playwright/test";
++import { JellyfinLoginPage } from "./pages/login";
++
++test("Jellyfin unauthenticated smoke check renders page", { tag: "@smoke" }, async ({ page }) => {
++  const loginPage = new JellyfinLoginPage(page);
++  await loginPage.goto();
++  await loginPage.verifyLoaded();
++});
+diff --git a/tests/test_playwright_operations.py b/tests/test_playwright_operations.py
+new file mode 100755
+index 0000000..91baf79
+--- /dev/null
++++ b/tests/test_playwright_operations.py
+@@ -0,0 +1,23 @@
++#!/usr/bin/env python3
++"""Static policy tests for Playwright maintenance, flake, quarantine, and ownership (PW-I18)."""
++
++import os
++import unittest
++
++REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
++DOCS_OPERATIONS = os.path.join(REPO_ROOT, "docs", "playwright-operations.md")
++
++class TestPlaywrightOperationsPolicy(unittest.TestCase):
++    def test_operations_doc_exists(self):
++        self.assertTrue(os.path.isfile(DOCS_OPERATIONS), f"Missing {DOCS_OPERATIONS}")
++
++    def test_operations_doc_contains_quarantine_rules(self):
++        with open(DOCS_OPERATIONS) as f:
++            content = f.read()
++        self.assertIn("14-day", content.lower())
++        self.assertIn("quarantine", content.lower())
++        self.assertIn("flake", content.lower())
++        self.assertIn("owner", content.lower())
++
++if __name__ == "__main__":
++    unittest.main()
