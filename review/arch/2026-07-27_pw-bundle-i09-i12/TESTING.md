@@ -28,7 +28,7 @@
 
 | Suite | Tests | Result |
 |-------|-------|--------|
-| `test_playwright_identities.sh` (PW-I09) | 30 | **30/30 PASS** |
+| `test_playwright_identities.sh` (PW-I09) | 31 | **31/31 PASS** |
 
 ### CI Status
 
@@ -36,7 +36,7 @@ No CI integration yet. All tests run locally on rechenknecht.
 
 ## Total Evidence
 
-**52/52 tests passing** across all 4 suites.
+**53/53 tests passing** across all 4 suites.
 
 ## Schema Validations
 

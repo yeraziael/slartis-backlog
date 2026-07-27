@@ -66,7 +66,7 @@ index 0000000..81a3c90
 +- No Audiobookshelf-specific logic enters shared fixtures (PWR-074)
 diff --git a/docs/playwright-synthetic-identities.md b/docs/playwright-synthetic-identities.md
 new file mode 100644
-index 0000000..744e672
+index 0000000..6bf98f2
 --- /dev/null
 +++ b/docs/playwright-synthetic-identities.md
 @@ -0,0 +1,114 @@
@@ -141,7 +141,7 @@ index 0000000..744e672
 +
 +**Path:** `pi/tests/test_playwright_identities.sh`
 +
-+30 mock tests covering:
++31 mock tests covering:
 +- xtrace refusal
 +- dry-run and commit modes
 +- Help flag and argument validation
@@ -152,7 +152,7 @@ index 0000000..744e672
 +- Idempotency (existing user, already-in-group)
 +- Secret-free output
 +- Credentials file creation, permissions, JSON validity, completeness
-+- Credential loader: role selection, env var export, invalid role rejection, insecure perms rejection
++- Credential loader: role selection, env var export, invalid role rejection, insecure perms rejection, exact password match with special characters
 +
 +**Note:** The previous version listed 13 tests. The count increased to 21 after
 +adding fail-closed password provisioning, group reconciliation, and dry-run
@@ -186,10 +186,10 @@ index 0000000..744e672
 +Passwords are never committed to code or printed to stdout/stderr.
 diff --git a/pi/audiobookshelf/scripts/load-playwright-credentials.sh b/pi/audiobookshelf/scripts/load-playwright-credentials.sh
 new file mode 100755
-index 0000000..cfa1c57
+index 0000000..e84bc7f
 --- /dev/null
 +++ b/pi/audiobookshelf/scripts/load-playwright-credentials.sh
-@@ -0,0 +1,80 @@
+@@ -0,0 +1,84 @@
 +#!/usr/bin/env bash
 +set -euo pipefail
 +
@@ -243,7 +243,9 @@ index 0000000..cfa1c57
 +
 +[[ -f "$CREDENTIALS_FILE" ]] || die "Credentials file not found: $CREDENTIALS_FILE (run setup-playwright-identities.sh --commit first)"
 +
-+_creds_json=$(python3 -c "
++export PW_E2E_ABS_USER PW_E2E_ABS_PASSWORD
++mapfile -t -d '' _creds < <(
++  python3 -c "
 +import json, sys, os
 +
 +path = sys.argv[1]
@@ -261,13 +263,15 @@ index 0000000..cfa1c57
 +    sys.exit(1)
 +
 +entry = data[role]
-+print(entry['username'])
-+print(entry['password'])
-+" "$CREDENTIALS_FILE" "$_load_creds_role" 2>&1) || die "Failed to read credentials: $_creds_json"
++sys.stdout.write(entry['username'] + chr(0))
++sys.stdout.write(entry['password'] + chr(0))
++" "$CREDENTIALS_FILE" "$_load_creds_role"
++) || die "Failed to read credentials"
 +
-+export PW_E2E_ABS_USER
-+export PW_E2E_ABS_PASSWORD
-+read -r PW_E2E_ABS_USER PW_E2E_ABS_PASSWORD <<< "$_creds_json"
++PW_E2E_ABS_USER="${_creds[0]-}"
++PW_E2E_ABS_PASSWORD="${_creds[1]-}"
++
++[[ -n "$PW_E2E_ABS_PASSWORD" ]] || die "Empty password for role '$_load_creds_role'"
 +
 +echo "[$LOAD_CRED_SCRIPT_NAME] Loaded credentials for role '$_load_creds_role' (user=$PW_E2E_ABS_USER)"
 diff --git a/pi/audiobookshelf/scripts/setup-playwright-identities.sh b/pi/audiobookshelf/scripts/setup-playwright-identities.sh
@@ -498,10 +502,10 @@ index 0000000..657109f
 +main "$@"
 diff --git a/pi/tests/test_playwright_identities.sh b/pi/tests/test_playwright_identities.sh
 new file mode 100755
-index 0000000..1ebee80
+index 0000000..981b9b8
 --- /dev/null
 +++ b/pi/tests/test_playwright_identities.sh
-@@ -0,0 +1,405 @@
+@@ -0,0 +1,430 @@
 +#!/usr/bin/env bash
 +set -euo pipefail
 +
@@ -872,6 +876,30 @@ index 0000000..1ebee80
 +  rm -rf "$tmpdir"
 +}
 +
++test_loader_exports_exact_password() {
++  local tmpdir
++  tmpdir=$(mktemp -d)
++  local cred_file="$tmpdir/.credentials.json"
++  local test_pwd="My P@ssword with spaces & special chars!"
++  mkdir -p "$tmpdir"
++  chmod 700 "$tmpdir"
++  python3 -c "
++import json
++creds = {'pw-e2e-abs-user': {'username': 'pw-e2e-abs-user', 'password': '$test_pwd'}}
++with open('$cred_file', 'w') as f: json.dump(creds, f)
++" 2>/dev/null
++  chmod 600 "$cred_file"
++  local output
++  output=$(PW_E2E_CREDENTIALS_DIR="$tmpdir" bash -c "
++source '$LOADER_UNDER_TEST' --role user >/dev/null 2>&1 || exit 1
++echo \"USER=\$PW_E2E_ABS_USER\"
++echo \"PASS=\$PW_E2E_ABS_PASSWORD\"
++")
++  echo "$output" | grep -q "USER=pw-e2e-abs-user"
++  echo "$output" | grep -q "PASS=$test_pwd"
++  rm -rf "$tmpdir"
++}
++
 +echo "=== test_playwright_identities ==="
 +run_test "refuses xtrace"                      test_refuses_xtrace
 +run_test "dry-run default"                     test_dry_run_default
@@ -903,6 +931,7 @@ index 0000000..1ebee80
 +run_test "loader exports admin creds"          test_loader_exports_admin_creds
 +run_test "loader rejects invalid role"         test_loader_rejects_invalid_role
 +run_test "loader rejects insecure perms"       test_loader_rejects_insecure_perms
++run_test "loader exports exact password"       test_loader_exports_exact_password
 +
 +echo ""
 +echo "Results: $PASS/$TESTS_RUN passed, $FAIL failed"
