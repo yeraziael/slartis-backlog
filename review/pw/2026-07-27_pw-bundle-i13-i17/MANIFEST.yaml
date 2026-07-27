@@ -2,7 +2,7 @@ project: pw
 repository: Homelab/Architecture
 canonical_pr: 106
 base_commit: 80c1a496c7b2fcd358d63f75da8526ab143f74e8
-head_commit: "476606c9040b080c36a64800ccdc4367a33892b6"
+head_commit: "5b944908a5c6d3b2be5f2904005374f7d6d4fbd8"
 author: slarti
 change_request: "PW-I13/I14/I15/I16/I17"
 statistics:
