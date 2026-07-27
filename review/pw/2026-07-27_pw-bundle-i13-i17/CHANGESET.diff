@@ -286,7 +286,7 @@ index 0000000..edd015a
 +echo "PW-I17: post-deployment smoke starting (suite=${SUITE})"
 +exec bash "${RUNNER_DIR}/run.sh" "${SUITE}"
 diff --git a/tests/playwright/evidence/artifacts/artifact-self-test.spec.ts b/tests/playwright/evidence/artifacts/artifact-self-test.spec.ts
-index ab6e3fc..f2c3cc0 100644
+index ab6e3fc..d5ec6d3 100644
 --- a/tests/playwright/evidence/artifacts/artifact-self-test.spec.ts
 +++ b/tests/playwright/evidence/artifacts/artifact-self-test.spec.ts
 @@ -1,18 +1,19 @@
@@ -297,8 +297,9 @@ index ab6e3fc..f2c3cc0 100644
  
  test("Passing test completes without assertion failure", { tag: "@pass" }, async ({ page }) => {
 -  await page.goto("file://" + path.resolve(__dirname, "../../platform/fixtures/local-page.html"));
+-  await expect(page.locator("h1")).toHaveText("PW Self-Test");
 +  await page.goto(LOCAL_PAGE);
-   await expect(page.locator("h1")).toHaveText("PW Self-Test");
++  await expect(page.locator("h1")).toHaveText("Platform Self-Test");
  });
  
  test("Failing test produces screenshot and trace", { tag: "@fail" }, async ({ page }) => {
@@ -344,7 +345,7 @@ index 0f41211..1f39dab 100644
    }
  }
 diff --git a/tests/playwright/platform/prerequisite-classification.spec.ts b/tests/playwright/platform/prerequisite-classification.spec.ts
-index e5f7cfa..16fcd1b 100644
+index e5f7cfa..ac1ad84 100644
 --- a/tests/playwright/platform/prerequisite-classification.spec.ts
 +++ b/tests/playwright/platform/prerequisite-classification.spec.ts
 @@ -1,9 +1,10 @@
@@ -359,6 +360,34 @@ index e5f7cfa..16fcd1b 100644
  const FIXTURES_DIR = path.join(PREREQ_DIR, "fixtures");
  
  function runCheckAll(mode: string, target: string): { exitCode: number; stdout: string } {
+@@ -48,11 +49,8 @@ test("Check HTTP fixture failure returns non-zero", () => {
+ });
+ 
+ test("Check-all fixture mode loads fixture.env", () => {
+-  const result = execSync(
+-    `bash "${PREREQ_DIR}/check-all.sh" fixture "${FIXTURES_DIR}/pass-all" 2>&1`,
+-    { encoding: "utf-8", timeout: 10000 }
+-  );
+-  expect(result).toContain("PW-I05: PRECHECK");
++  const result = runCheckAllCapture(0, `${FIXTURES_DIR}/pass-all`);
++  expect(result.stdout).toContain("PW-I05: PRECHECK");
+ });
+ 
+ test("Check-all missing args exits 2", () => {
+diff --git a/tests/playwright/prerequisites/fixtures/pass-all/fixture.env b/tests/playwright/prerequisites/fixtures/pass-all/fixture.env
+new file mode 100644
+index 0000000..81be509
+--- /dev/null
++++ b/tests/playwright/prerequisites/fixtures/pass-all/fixture.env
+@@ -0,0 +1,8 @@
++# PW-I05: pass-all fixture — all checks pass deterministically
++# These values are for fixture/Docker-internal testing only.
++DNS_HOSTNAME="localhost"
++HTTP_URL="http://localhost:8080/"
++TLS_HOSTNAME="localhost"
++TLS_PORT="443"
++KEYCLOAK_BASE=""
++KEYCLOAK_REALM="homelab"
 diff --git a/tests/playwright/runner/run.sh b/tests/playwright/runner/run.sh
 index b9ba5de..c878faf 100755
 --- a/tests/playwright/runner/run.sh
