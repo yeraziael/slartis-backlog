@@ -5,7 +5,7 @@
 - Papa: Jellyfin administrator and parent/curator.
 - Mama: parent/curator, not system administrator.
 - Children: age-derived access plus explicit curated grants.
-- Local `jellyfin-admin`: break-glass only; no daily use.
+- Local account `admin`: break-glass only; no daily use.
 
 ## Fail-closed rules
 - Missing or invalid age/FSK information hides content from children.
@@ -14,10 +14,14 @@
 - SSO failure must not expose a local-account fallback to regular users.
 
 ## Break glass
-- Store the secret outside Git with restrictive permissions.
+- The only local Jellyfin account is named `admin`.
+- Its password is stored on the Raspberry Pi host at `/home/michael/.creds/breakglassAdmin/jellyfin`.
+- The secret file content MUST NOT be committed, copied into Compose, emitted to logs or included in evidence artifacts.
+- The implementation MUST verify restrictive ownership and permissions before accepting the deployment.
+- The secret is read only where required for initial provisioning, controlled recovery or an approved rotation workflow.
 - Restrict direct use as far as Jellyfin/proxy capabilities allow.
-- Test on a defined schedule and after auth changes.
-- Audit every use and rotate after emergency use.
+- Test the account on a defined schedule and after authentication changes.
+- Audit every use and rotate the password after emergency use.
 
 ## Network
 - Public traffic enters only through `frontproxy` with TLS.
