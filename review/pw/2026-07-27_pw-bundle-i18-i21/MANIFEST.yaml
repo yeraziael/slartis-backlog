@@ -1,0 +1,22 @@
+manifest_version: "v1"
+project: "homelab-playwright"
+repository: "Homelab/Architecture"
+canonical_pr: 107
+author: "Slarti Branchfast <slarti@hl.maier.wtf>"
+change_request: "PW-I18 through PW-I21 (Jellyfin & Maintenance) - Final Contract Fixes #107"
+review_scope:
+  tickets: ["PW-I18", "PW-D06", "PW-I19", "PW-I20", "PW-I21"]
+  description: "Addressed final review findings: explicit stopPlayback postcondition assertion (media.paused === true), Jellyfin-specific login affordance check, and clean rebase onto main."
+head_commit: "90e9f1b298cf8ad7264e578ba7f8b0119db81a53"
+base_commit: "e74c58b2edb583819b091f4cf158e817e35fe99e"
+timestamp: "2026-07-27T20:00:00Z"
+generated:
+  tool: "validate_review_bundle.py"
+  version: "0.3.0"
+  timestamp: "2026-07-27T20:00:00Z"
+integrity:
+  changeset_sha256: "854f676a89aecb6fcacfdc3c7b2ba5c7235ac458f96cb861fd87180834c651b2"
+statistics:
+  files_changed: 8
+  insertions: 254
+  deletions: 0
