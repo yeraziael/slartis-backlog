@@ -1,0 +1,122 @@
+version: 1
+project: kitchenowl-household-intelligence
+entry_issue: 112
+status: ready
+principles:
+  - one_issue_entrypoint
+  - plan_as_code
+  - audit_every_mutation
+  - operator_overrides_win
+  - fail_closed_on_uncertain_stock_changes
+  - separate_need_from_purchasing_power
+workstreams:
+  - id: KO-001
+    title: Architecture and upstream strategy
+    status: ready
+    depends_on: []
+    deliverables:
+      - fork and upstream update strategy
+      - modular backend boundaries
+      - database migration framework
+      - local development stack
+      - health and observability contract
+  - id: KO-002
+    title: Paperless receipt ingestion
+    status: planned
+    depends_on: [KO-001]
+    deliverables:
+      - idempotent Kassenbon importer
+      - correspondent routing
+      - position-level confidence and review queue
+      - immutable provenance
+  - id: KO-003
+    title: Product normalization and catalog history
+    status: planned
+    depends_on: [KO-002]
+    deliverables:
+      - canonical products and variants
+      - normalized pack units
+      - merge and split workflows
+      - historical bootstrap and proposed initial stock
+  - id: KO-004
+    title: Inventory and consumption inference
+    status: planned
+    depends_on: [KO-003]
+    deliverables:
+      - rolling consumption model
+      - correction factors
+      - prediction confidence
+      - calibration thresholds and measurement scheduling
+  - id: KO-005
+    title: Shopping cycle engine
+    status: planned
+    depends_on: [KO-004]
+    deliverables:
+      - monthly list
+      - weekly list
+      - MM list
+      - intermediate shopping list
+      - protected and migrated positions
+  - id: KO-006
+    title: Season, weather and occasion models
+    status: planned
+    depends_on: [KO-004, KO-005]
+    deliverables:
+      - seasonal supply windows
+      - seasonal and weather-dependent demand proposals
+      - birthday and occasion sections
+      - action and opportunity purchase classification
+  - id: KO-007
+    title: Household identity and authorization
+    status: planned
+    depends_on: [KO-001]
+    deliverables:
+      - Keycloak group mapping
+      - self, family and delegated needs
+      - app-admin delegation
+      - stock-maintenance permissions
+  - id: KO-008
+    title: Matrix and Signal interaction layer
+    status: planned
+    depends_on: [KO-001, KO-007]
+    deliverables:
+      - Signal account linkage
+      - admin escalation flow
+      - stock query reply parser
+      - per-product sequential query runs
+  - id: KO-009
+    title: Admin and stock-maintenance web dashboard
+    status: planned
+    depends_on: [KO-004, KO-007]
+    deliverables:
+      - full admin quality dashboard
+      - restricted confidence product list
+      - voluntary web measurements
+      - personal watchlists
+  - id: KO-010
+    title: Cost and price intelligence
+    status: planned
+    depends_on: [KO-002, KO-003, KO-005]
+    deliverables:
+      - last regular price model
+      - promotion confirmation workflow
+      - three-month cost simulation
+      - action stocking proposals
+  - id: KO-011
+    title: Audit, privacy, resilience and recovery
+    status: planned
+    depends_on: [KO-001]
+    deliverables:
+      - append-only decision audit
+      - replay and repair procedures
+      - retention and privacy controls
+      - backup and restore tests
+  - id: KO-012
+    title: End-to-end qualification and rollout
+    status: planned
+    depends_on: [KO-002, KO-003, KO-004, KO-005, KO-006, KO-007, KO-008, KO-009, KO-010, KO-011]
+    deliverables:
+      - historical dry run
+      - shadow-mode forecast comparison
+      - staged household rollout
+      - release acceptance evidence
