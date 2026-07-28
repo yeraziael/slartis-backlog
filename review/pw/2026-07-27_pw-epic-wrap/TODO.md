@@ -1,6 +1,9 @@
-# TODO & RESTING STATE — Epic #253 Closeout
+# TODO & RESTING STATE — Epic #253 Partial Closeout
 
-- All Epic #253 tickets (PW-D01–PW-D06, PW-I01–PW-I21) are successfully closed.
+- All listed implementation changes are merged, but Epic #253 is not runtime-verified and must not be treated as fully closed by this package.
 - Future maintenance and flaky test handling follow `docs/playwright-operations.md`.
-- No further tickets remain open under Epic #253.
-- **Outstanding CI gap**: PRs #106 and #107 were merged despite `playwright-platform` and `check-scripts` failures. The `@fail` fixture exclusion and `check-scripts` stability should be resolved as follow-up work to achieve fully green CI at the epic tip.
+- Resolve the `playwright-platform` failure and obtain a successful `playwright-service` run for PW-I13–PW-I15.
+- Obtain a successful Post-Deployment Smoke run for PW-I17.
+- Resolve the `check-scripts` failure and execute the Jellyfin browser suites for PW-I19–PW-I21.
+- Add an exact successful CI binding for the PW-I18 operations-policy tests.
+- Update this package with exact source SHAs, run IDs, job names, and artifact references before declaring complete closeout.
