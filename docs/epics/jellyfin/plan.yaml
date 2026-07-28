@@ -1,0 +1,85 @@
+epic:
+  id: JF
+  issue: 109
+  title: Jellyfin Plan-as-Code Epic
+  status: ready_for_review
+  canonical_entrypoint: docs/epics/jellyfin/README.md
+  execution_policy: pull_requests_only
+  child_issues_allowed: false
+
+workstreams:
+  - id: JF-001
+    title: Confirm deployed facts
+    status: ready
+    depends_on: []
+    milestone: JF-M1
+  - id: JF-002
+    title: Build safe Pi deployment
+    status: blocked
+    depends_on: [JF-001]
+    milestone: JF-M2
+  - id: JF-003
+    title: Integrate frontproxy and TLS
+    status: blocked
+    depends_on: [JF-002]
+    milestone: JF-M2
+  - id: JF-004
+    title: Implement Keycloak authorization
+    status: blocked
+    depends_on: [JF-002]
+    milestone: JF-M3
+  - id: JF-005
+    title: Implement parental access model
+    status: blocked
+    depends_on: [JF-004]
+    milestone: JF-M3
+  - id: JF-006
+    title: Create core libraries
+    status: blocked
+    depends_on: [JF-002, JF-004]
+    milestone: JF-M4
+  - id: JF-007
+    title: Execute controlled media migration
+    status: blocked
+    depends_on: [JF-006]
+    external_dependencies: [issue-113]
+    milestone: JF-M5
+  - id: JF-008
+    title: Implement YouTube registry and approvals
+    status: blocked
+    depends_on: [JF-004, JF-006]
+    milestone: JF-M6
+  - id: JF-009
+    title: Deploy ytdl-sub pipeline
+    status: blocked
+    depends_on: [JF-008]
+    milestone: JF-M6
+  - id: JF-010
+    title: Add conditional compatibility renditions
+    status: blocked
+    depends_on: [JF-009]
+    milestone: JF-M6
+  - id: JF-011
+    title: Backup restore and monitoring
+    status: blocked
+    depends_on: [JF-002, JF-004]
+    milestone: JF-M7
+  - id: JF-012
+    title: Client and production acceptance
+    status: blocked
+    depends_on: [JF-003, JF-005, JF-006, JF-007, JF-010, JF-011]
+    milestone: JF-M8
+  - id: JF-013
+    title: Future stronger-host migration
+    status: deferred
+    trigger: suitable_always_on_hardware_available
+    depends_on: [JF-012]
+    milestone: JF-M9
+
+gates:
+  - id: JF-GATE-PLAN
+    requires: [independent_review, links_valid, yaml_valid, no_secrets]
+  - id: JF-GATE-VERTICAL-SLICE
+    requires: [read_only_mounts, fail_closed_mount_check, proxy_tls, sso, break_glass]
+  - id: JF-GATE-PRODUCTION
+    requires: [authorization_matrix, playback_matrix, backup_restore, rollback_test, operator_acceptance]
