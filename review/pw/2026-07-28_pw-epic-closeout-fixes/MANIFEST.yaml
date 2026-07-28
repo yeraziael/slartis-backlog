@@ -1,0 +1,38 @@
+manifest_version: v2
+project: homelab-playwright-closeout
+repository: Homelab/Architecture
+canonical_pr: 109
+base_commit: 6ee0b7821ed51b77b89ae679520123bc763e2654
+head_commit: efac29fd9abfa9578c8f88bfd27937eb3c05a856
+author: slarti
+change_request: "slarti/backlog#253 closeout corrections; operator follow-up slarti/backlog#283"
+statistics:
+  files_changed: 21
+  insertions: 834
+  deletions: 145
+review_scope:
+  architecture: true
+  implementation: true
+  governance: false
+  security: true
+  compatibility: true
+  documentation: true
+integrity:
+  changeset_sha256: e26d069a770ba6250c70cf9fa1437bc0bbeedd070e818c85920d1c368a637e01
+  review_verdict_sha256: dd7ed09e55bbc04773e6128bac477e7c68c18cc5f765a363e6c1418ab4cc55b9
+generated:
+  timestamp: "2026-07-28T10:23:07Z"
+  tool: "opencode/slarti"
+review_verdict:
+  schema: acp.review-verdict.v2
+  reviewed_commit: efac29fd9abfa9578c8f88bfd27937eb3c05a856
+  review_type: self-verification
+  review_basis: pull-request
+  reviewer: slarti
+  verdict: consistency-verified
+  blocking_findings: []
+  remaining_followups:
+    - "Canonical Homelab/Architecture PR #109 is awaiting independent review and merge."
+    - "Operator gate slarti/backlog#283 must produce zero-failure, zero-skip service evidence at the merged SHA."
+  supersedes_review: "https://github.com/yeraziael/slartis-backlog/pull/108 at 7bb0d8abcedf29c1ad17b38b8825f860206cfca1"
+  review_timestamp: "2026-07-28T10:23:07Z"
