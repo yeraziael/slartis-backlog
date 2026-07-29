@@ -11,6 +11,10 @@ Jellyfin receives read-only media. Delete, move, rename and metadata-sidecar mut
 
 ## Authorization
 - Authentication alone grants no library access.
+- Every unauthenticated regular-user route redirects to Keycloak `homelab`.
+- Jellyfin's local profile selection and local credential UI are disabled or
+  unreachable through the public service path; they are not an alternate sign-in
+  path.
 - Missing/unmapped claims grant no expanded access.
 - Unrated films/episodes are hidden from children unless curated.
 - FSK permits pauschal access; curated grants add individual titles or defined groups.

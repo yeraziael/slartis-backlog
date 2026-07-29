@@ -33,6 +33,8 @@ Dependencies: JF-002
 Acceptance:
 - Papa admin, parents/curators and child tiers derive from claims/groups.
 - Local regular users do not exist.
+- Unauthenticated public-service requests redirect to Keycloak `homelab`; no
+  local profile picker or local credential form is reachable.
 - Break-glass `jellyfin-admin` is tested.
 - Removed rights fail closed.
 

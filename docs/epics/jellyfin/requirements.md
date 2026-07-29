@@ -12,7 +12,7 @@
 | JF-REQ-006 | Missing NFS mounts prevent a normal Jellyfin start. | Failure test |
 | JF-REQ-007 | Internal and external access are supported through the existing frontproxy. | Playback matrix |
 | JF-REQ-008 | External hostname is `jellyfin.hl.maier.wtf`; no DNS change is required. | DNS/proxy evidence |
-| JF-REQ-009 | Regular authentication, roles and library rights derive from Keycloak. | Authorization tests |
+| JF-REQ-009 | Regular authentication, roles and library rights derive exclusively from Keycloak `homelab`. An unauthenticated request redirects to Keycloak; no local profile picker or local credential form is reachable. | Authorization tests |
 | JF-REQ-010 | The only local user is break-glass `jellyfin-admin`. | Account audit |
 | JF-REQ-011 | Papa is admin; Mama and Papa are `parents` and curators. | Claim mapping tests |
 | JF-REQ-012 | Child access follows age/FSK; unrated content is fail-closed. | Negative authorization tests |
