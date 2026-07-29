@@ -16,6 +16,9 @@
 
 ## Authentication and authorization
 Test at least:
+- Unauthenticated public-service request redirects to Keycloak `homelab`.
+- Local profile picker and local credential form are unreachable from the
+  public-service path.
 - Papa: admin + all libraries
 - Mama: parent/curator + all content, no system administration
 - Child below rating: denied

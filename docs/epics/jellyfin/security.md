@@ -12,6 +12,9 @@
 - Missing or malformed authorization claims grant no expanded access.
 - Failed NFS validation blocks startup.
 - SSO failure must not expose a local-account fallback to regular users.
+- The public service path must not expose a local profile picker or local
+  credential form. Unauthenticated regular users are redirected to Keycloak
+  `homelab` instead.
 
 ## Break glass
 - The only local Jellyfin account is named `admin`.
