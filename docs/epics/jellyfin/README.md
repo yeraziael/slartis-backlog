@@ -1,7 +1,7 @@
 # Jellyfin Plan-as-Code Epic
 
 Issue: #109
-Status: discovery complete, plan ready for review
+Status: runtime vertical slice reconciled; product workstreams remain open
 Authority: this directory defines WHAT/WHY; deployed facts remain authoritative in `Homelab/Architecture` on Gitea.
 
 ## Objective
@@ -35,6 +35,7 @@ Operate Jellyfin as the household media platform for films, series, music, music
 - [backlog.md](backlog.md)
 - [decisions.md](decisions.md)
 - [references.md](references.md)
+- [runtime-reconciliation.md](runtime-reconciliation.md)
 - [plan.yaml](plan.yaml)
 
 ## Working rule

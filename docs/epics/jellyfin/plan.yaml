@@ -2,7 +2,7 @@ epic:
   id: JF
   issue: 109
   title: Jellyfin Plan-as-Code Epic
-  status: ready_for_review
+  status: runtime_slice_reconciled
   canonical_entrypoint: docs/epics/jellyfin/README.md
   execution_policy: pull_requests_only
   child_issues_allowed: false
@@ -10,22 +10,22 @@ epic:
 workstreams:
   - id: JF-001
     title: Confirm deployed facts
-    status: ready
+    status: partially_evidenced
     depends_on: []
     milestone: JF-M1
   - id: JF-002
     title: Build safe Pi deployment
-    status: blocked
+    status: partially_evidenced
     depends_on: [JF-001]
     milestone: JF-M2
   - id: JF-003
     title: Integrate frontproxy and TLS
-    status: blocked
+    status: partially_evidenced
     depends_on: [JF-002]
     milestone: JF-M2
   - id: JF-004
     title: Implement Keycloak authorization
-    status: blocked
+    status: not_started
     depends_on: [JF-002]
     milestone: JF-M3
   - id: JF-005
@@ -35,7 +35,7 @@ workstreams:
     milestone: JF-M3
   - id: JF-006
     title: Create core libraries
-    status: blocked
+    status: partially_evidenced
     depends_on: [JF-002, JF-004]
     milestone: JF-M4
   - id: JF-007
@@ -61,7 +61,7 @@ workstreams:
     milestone: JF-M6
   - id: JF-011
     title: Backup restore and monitoring
-    status: blocked
+    status: partially_evidenced
     depends_on: [JF-002, JF-004]
     milestone: JF-M7
   - id: JF-012
