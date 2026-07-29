@@ -1,8 +1,9 @@
 # Media Ingest Contract
 
-Jellyfin is a read-only consumer. Library Curator and ytdl-sub are the only
-writers covered by this contract. They must write into their staging or target
-trees, verify results, and publish through their own approved workflows; they
+Jellyfin is a read-only consumer. Library Curator and ytdl-sub are planned
+target writers covered by this contract; neither is implied to exist or be
+deployed by this document. Their future implementations must write into staging
+or target trees, verify results, and publish through approved workflows; they
 must never ask Jellyfin to rename, move, delete, or generate sidecars.
 
 ## Library Roots
