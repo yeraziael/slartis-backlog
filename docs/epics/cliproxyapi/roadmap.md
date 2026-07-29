@@ -2,6 +2,8 @@
 
 ## M0 — Canonical migration
 
+> **CAP-P01 status (2026-07-29):** Inventory, classification, migration matrix and upstream verification are **complete**. Independent review (CAP-P02) is **ready**. Six compliance blockers and a fundamental upstream scope mismatch identified — see `references.md`.
+
 - Inventory PR #71, issue #74 and legacy `CLIProxyAPI-Homelab/` material.
 - Classify inherited statements and produce source-to-target migration matrix.
 - Verify current upstream, provider methods and host facts.

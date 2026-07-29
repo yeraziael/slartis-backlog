@@ -1,5 +1,7 @@
 # Requirements
 
+> **CAP-P01 compliance note (2026-07-29):** The upstream `router-for-me/CLIProxyAPI` v7.2.104 supports Kimi, OpenAI, Claude, Antigravity (Gemini), Grok, Codex, and OpenAI-compatible relays. It does not support "OpenCode Zen Free" as a provider concept. Requirement CAP-R010 and dependent items may need revision pending the independent review (CAP-P02). Six compliance blockers identified — see `references.md`.
+
 Requirement IDs are stable. Removal or semantic change requires an entry in `decisions.md`.
 
 ## Gateway and clients

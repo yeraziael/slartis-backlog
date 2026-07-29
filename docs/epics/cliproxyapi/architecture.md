@@ -1,5 +1,7 @@
 # Architecture
 
+> **CAP-P01 finding (2026-07-29):** Upstream `router-for-me/CLIProxyAPI` v7.2.104 is primarily a CLI subscription OAuth gateway (Claude Code, Codex, Grok Build, Kimi, Antigravity) rather than a traditional model provider API gateway. The architecture below represents the *planned* topology. Key gaps: upstream exposes 6 ports (not 1), uses OAuth credential forwarding (not API keys), has a plugin system and management API, and does not support "OpenCode Zen Free" as a provider. See `references.md` for the full migration matrix.
+
 ## Runtime topology
 
 ```mermaid
