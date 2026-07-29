@@ -1,0 +1,36 @@
+manifest_version: v2
+project: arch
+repository: Homelab/Architecture
+canonical_pr: 135
+base_commit: 3f9a22eb9b4ba97f6a2fae5d1c214a3cc3c8fa49
+head_commit: 4905414521b102e352d0790c1194bc6cd6577a69
+author: Slarti (OpenCode Agent)
+change_request: Homelab/Architecture#135
+statistics:
+  files_changed: 1
+  insertions: 2
+  deletions: 2
+review_scope:
+  architecture: false
+  implementation: true
+  governance: false
+  security: true
+  compatibility: true
+  documentation: false
+integrity:
+  changeset_sha256: 6894d2f86276953ffb2055f30046f43b29478c4b2fe8c3e84098a7754889fb5b
+generated:
+  timestamp: "2026-07-29T19:40:00Z"
+  tool: Slarti github-review skill
+review_verdict:
+  schema: acp.review-verdict.v2
+  reviewed_commit: 4905414521b102e352d0790c1194bc6cd6577a69
+  review_type: post-merge
+  review_basis: merge-commit
+  reviewer: emissaryofyeraziael
+  verdict: post-merge-audit
+  blocking_findings: []
+  remaining_followups:
+    - Confirm successful completion of Gitea Actions run 992.
+  supersedes_review: null
+  review_timestamp: "2026-07-29T19:40:00Z"
