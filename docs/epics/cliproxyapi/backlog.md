@@ -3,9 +3,9 @@
 IDs are dependency ordered. Each execution issue must add acceptance evidence, rollback and secret-handling details before implementation.
 
 | ID | Task | Depends on | Status |
-|---|---|---|---|
-| CAP-P01 | Reconcile PR #71, issue #74, legacy directory and upstream facts | — | Ready |
-| CAP-P02 | Independent architecture and security review | CAP-P01 | Blocked |
+|---|---|---|---|---|
+| CAP-P01 | Reconcile PR #71, issue #74, legacy directory and upstream facts | — | Complete |
+| CAP-P02 | Independent architecture and security review | CAP-P01 | Ready |
 | CAP-G01 | Define released governance schema and local override model | CAP-P02 | Planned |
 | CAP-G02 | Implement classification challenge and conflict governance | CAP-G01 | Planned |
 | CAP-G03 | Implement checkpoint and commit-trailer validation | CAP-G01 | Planned |
@@ -28,7 +28,18 @@ IDs are dependency ordered. Each execution issue must add acceptance evidence, r
 
 ## Issue #74 mapping
 
-Issue #74 must not be silently closed. CAP-P01 inventories every obligation and maps it to retained, superseded, split or completed status. Any runtime evidence from #74 remains linked from the corresponding execution item.
+Issue #74 must not be silently closed. CAP-P01 has inventoried every obligation:
+
+| #74 obligation | CAP-P01 status | Notes |
+|---|---|---|
+| Current releases, registry, architectures | Completed | Upstream v7.2.104 verified 2026-07-29 |
+| ARM64 build + resource usage | Retained, needs runtime | No deployment executed |
+| Per-provider port documentation | Open question | Upstream docs insufficient |
+| API/management/control-panel/plugin/debug audit | Completed | All surfaces documented in references.md |
+| API-key vs OAuth per provider assessment | Completed | OAuth is primary mechanism |
+| OpenCode endpoint test | Retained, deferred to CAP-A01 | Needs running instance |
+| Secure baseline config | Open, blocks CAP-B01 | Multiple compliance blockers identified |
+| Go/No-Go + host decision | Blocked on CAP-P02 | Requires independent review first
 
 ## Regression debt
 
