@@ -2,9 +2,9 @@
 
 **Canonical entrypoint:** this file  
 **Tracking issue:** #110  
-**Status:** Independent review complete; execution manifest being frozen
-**Current phase:** CAP-F01 manifest hash and execution-issue linking
-**Active task:** CAP-F01 — freeze Plan-as-Code and hand off executable work
+**Status:** Plan reviewed and frozen; Operator review/merge required
+**Current phase:** Execution handover
+**Active task:** CAP-G01, CAP-L01 and CAP-B01 are ready after PR #131 merge
 
 ## Purpose
 
@@ -24,7 +24,7 @@ This directory is authoritative for requirements, architecture, governance contr
 | Experiment system | Reviewed | 100% |
 | Operations and backup | Reviewed | 100% |
 | Testing and evidence | Reviewed | 100% |
-| Execution backlog | Task packets complete; issue links pending | 90% |
+| Execution backlog | 27 execution issues linked | 100% |
 | Independent review | Complete | 100% |
 | **Overall merged execution progress** | **Not started** | **0%** |
 
@@ -52,7 +52,7 @@ A task contributes 100% to overall execution progress only after implementation,
 - [References and migration map](references.md)
 - [Machine-readable plan](plan.yaml)
 - [Independent review](independent-review.md)
-- `plan.sha256` (created by CAP-F01 after issue linking)
+- [Frozen plan hash](plan.sha256)
 
 ## Scope
 
@@ -78,7 +78,7 @@ A task contributes 100% to overall execution progress only after implementation,
 
 ## Current next executable task
 
-`CAP-F01`: create and link one execution issue per non-complete CAP task, validate the acyclic manifest, commit its SHA-256 and submit PR #131 for Operator review. No runtime, DNS or credential changes are part of CAP-F01.
+After PR #131 merges, `CAP-G01` (#132), `CAP-L01` (#135) and `CAP-B01` (#140) are independently ready. Runtime, DNS and credential changes remain blocked by CAP-X01 through CAP-X04.
 
 ## Open decisions
 

@@ -2,7 +2,7 @@ epic:
   id: CAP
   issue: 110
   title: LiteLLM frontdoor with CLIProxyAPI subscription backend
-  status: freezing_execution_manifest
+  status: ready_for_operator_review
   canonical_entrypoint: docs/epics/cliproxyapi/README.md
   architecture_decision: CAP-D024
   child_issues_allowed: true
@@ -11,34 +11,34 @@ epic:
 workstreams:
   - {id: CAP-P01, title: Reconcile legacy plan and upstream facts, status: complete, depends_on: [], issue: null}
   - {id: CAP-P02, title: Independent architecture and security review, status: complete, depends_on: [CAP-P01], issue: null}
-  - {id: CAP-F01, title: Freeze manifest hash and issue links, status: in_progress, depends_on: [CAP-P02], issue: 110}
-  - {id: CAP-G01, title: Define governance schema, status: planned, depends_on: [CAP-P02], issue: null}
-  - {id: CAP-G02, title: Implement classification challenge, status: planned, depends_on: [CAP-G01], issue: null}
-  - {id: CAP-G03, title: Implement checkpoint and trailer gates, status: planned, depends_on: [CAP-G01], issue: null}
-  - {id: CAP-L01, title: Pin LiteLLM, status: planned, depends_on: [CAP-P02], issue: null}
-  - {id: CAP-L02, title: Prepare LiteLLM frontdoor deployment, status: planned, depends_on: [CAP-L01, CAP-P02], issue: null}
-  - {id: CAP-L03, title: Implement LiteLLM model and client contract, status: planned, depends_on: [CAP-L02, CAP-G01], issue: null}
-  - {id: CAP-L04, title: Implement CLIProxyAPI downstream adapter, status: planned, depends_on: [CAP-L02], issue: null}
-  - {id: CAP-L05, title: Implement LiteLLM telemetry hooks, status: planned, depends_on: [CAP-L03, CAP-G01], issue: null}
-  - {id: CAP-B01, title: Pin CLIProxyAPI, status: planned, depends_on: [CAP-P02], issue: null}
-  - {id: CAP-I01, title: Prepare hardened CLIProxyAPI deployment, status: planned, depends_on: [CAP-B01, CAP-P02], issue: null}
-  - {id: CAP-I02, title: Implement provider and account contract, status: planned, depends_on: [CAP-I01], issue: null}
-  - {id: CAP-I03, title: Implement sequential pools and affinity, status: planned, depends_on: [CAP-I02, CAP-G01], issue: null}
-  - {id: CAP-I04, title: Implement backoff and probe controller, status: planned, depends_on: [CAP-I03], issue: null}
-  - {id: CAP-R01, title: Implement deterministic decision library, status: planned, depends_on: [CAP-L04, CAP-I03, CAP-G02], issue: null}
-  - {id: CAP-O01, title: Implement audit and telemetry, status: planned, depends_on: [CAP-L05, CAP-R01], issue: null}
-  - {id: CAP-O02, title: Implement backup and degraded modes, status: planned, depends_on: [CAP-L02, CAP-I01], issue: null}
-  - {id: CAP-O03, title: Implement admission and diagnostics, status: planned, depends_on: [CAP-O01, CAP-O02], issue: null}
-  - {id: CAP-E01, title: Build experiment controller, status: planned, depends_on: [CAP-L04, CAP-I02, CAP-O03], issue: null}
-  - {id: CAP-E02, title: Implement experiment lifecycle, status: planned, depends_on: [CAP-E01], issue: null}
-  - {id: CAP-E03, title: Implement evidence package, status: planned, depends_on: [CAP-E02], issue: null}
-  - {id: CAP-E04, title: Implement reproducibility suite, status: planned, depends_on: [CAP-E03], issue: null}
-  - {id: CAP-A01, title: Prepare OpenCode pilot package, status: planned, depends_on: [CAP-R01, CAP-O02, CAP-E04], issue: null}
-  - {id: CAP-A02, title: Prepare agent adoption runbook, status: planned, depends_on: [CAP-A01], issue: null}
-  - {id: CAP-X01, title: Operator host and deployment gate, status: operator_gate, depends_on: [CAP-L02, CAP-I01, CAP-O02], issue: null}
-  - {id: CAP-X02, title: Operator provider and credential gate, status: operator_gate, depends_on: [CAP-L03, CAP-I02], issue: null}
-  - {id: CAP-X03, title: Operator OpenCode pilot gate, status: operator_gate, depends_on: [CAP-A01, CAP-X01, CAP-X02], issue: null}
-  - {id: CAP-X04, title: Operator agent adoption gate, status: operator_gate, depends_on: [CAP-A02, CAP-X03], issue: null}
+  - {id: CAP-F01, title: Freeze manifest hash and issue links, status: complete, depends_on: [CAP-P02], issue: 110}
+  - {id: CAP-G01, title: Define governance schema, status: planned, depends_on: [CAP-P02], issue: 132}
+  - {id: CAP-G02, title: Implement classification challenge, status: planned, depends_on: [CAP-G01], issue: 133}
+  - {id: CAP-G03, title: Implement checkpoint and trailer gates, status: planned, depends_on: [CAP-G01], issue: 134}
+  - {id: CAP-L01, title: Pin LiteLLM, status: planned, depends_on: [CAP-P02], issue: 135}
+  - {id: CAP-L02, title: Prepare LiteLLM frontdoor deployment, status: planned, depends_on: [CAP-L01, CAP-P02], issue: 136}
+  - {id: CAP-L03, title: Implement LiteLLM model and client contract, status: planned, depends_on: [CAP-L02, CAP-G01], issue: 137}
+  - {id: CAP-L04, title: Implement CLIProxyAPI downstream adapter, status: planned, depends_on: [CAP-L02], issue: 138}
+  - {id: CAP-L05, title: Implement LiteLLM telemetry hooks, status: planned, depends_on: [CAP-L03, CAP-G01], issue: 139}
+  - {id: CAP-B01, title: Pin CLIProxyAPI, status: planned, depends_on: [CAP-P02], issue: 140}
+  - {id: CAP-I01, title: Prepare hardened CLIProxyAPI deployment, status: planned, depends_on: [CAP-B01, CAP-P02], issue: 141}
+  - {id: CAP-I02, title: Implement provider and account contract, status: planned, depends_on: [CAP-I01], issue: 142}
+  - {id: CAP-I03, title: Implement sequential pools and affinity, status: planned, depends_on: [CAP-I02, CAP-G01], issue: 143}
+  - {id: CAP-I04, title: Implement backoff and probe controller, status: planned, depends_on: [CAP-I03], issue: 144}
+  - {id: CAP-R01, title: Implement deterministic decision library, status: planned, depends_on: [CAP-L04, CAP-I03, CAP-G02], issue: 145}
+  - {id: CAP-O01, title: Implement audit and telemetry, status: planned, depends_on: [CAP-L05, CAP-R01], issue: 146}
+  - {id: CAP-O02, title: Implement backup and degraded modes, status: planned, depends_on: [CAP-L02, CAP-I01], issue: 147}
+  - {id: CAP-O03, title: Implement admission and diagnostics, status: planned, depends_on: [CAP-O01, CAP-O02], issue: 148}
+  - {id: CAP-E01, title: Build experiment controller, status: planned, depends_on: [CAP-L04, CAP-I02, CAP-O03], issue: 149}
+  - {id: CAP-E02, title: Implement experiment lifecycle, status: planned, depends_on: [CAP-E01], issue: 150}
+  - {id: CAP-E03, title: Implement evidence package, status: planned, depends_on: [CAP-E02], issue: 151}
+  - {id: CAP-E04, title: Implement reproducibility suite, status: planned, depends_on: [CAP-E03], issue: 152}
+  - {id: CAP-A01, title: Prepare OpenCode pilot package, status: planned, depends_on: [CAP-R01, CAP-O02, CAP-E04], issue: 153}
+  - {id: CAP-A02, title: Prepare agent adoption runbook, status: planned, depends_on: [CAP-A01], issue: 154}
+  - {id: CAP-X01, title: Operator host and deployment gate, status: operator_gate, depends_on: [CAP-L02, CAP-I01, CAP-O02], issue: 155}
+  - {id: CAP-X02, title: Operator provider and credential gate, status: operator_gate, depends_on: [CAP-L03, CAP-I02], issue: 156}
+  - {id: CAP-X03, title: Operator OpenCode pilot gate, status: operator_gate, depends_on: [CAP-A01, CAP-X01, CAP-X02], issue: 157}
+  - {id: CAP-X04, title: Operator agent adoption gate, status: operator_gate, depends_on: [CAP-A02, CAP-X03], issue: 158}
 
 gates:
   - id: CAP-GATE-PLAN

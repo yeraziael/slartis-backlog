@@ -8,7 +8,7 @@
 |---|---|---|---|
 | CAP-P01 | Reconcile legacy plan and upstream facts | — | Complete |
 | CAP-P02 | Independent architecture and security review | CAP-P01 | Complete |
-| CAP-F01 | Freeze manifest, hash and execution-issue links | CAP-P02 | In progress |
+| CAP-F01 | Freeze manifest, hash and execution-issue links | CAP-P02 | Complete |
 | CAP-G01 | Define released governance schema and local override model | CAP-P02 | Planned |
 | CAP-G02 | Implement pre-routing classification challenge and conflicts | CAP-G01 | Planned |
 | CAP-G03 | Implement checkpoint and commit-trailer validation | CAP-G01 | Planned |
