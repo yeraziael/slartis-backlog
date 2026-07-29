@@ -137,9 +137,9 @@ Audiobookshelf MUST:
 
 ## Import Pipeline Contract (Planned)
 
-Library Curator owns all media migration and publication. Audiobookshelf
-defines the accepted read-only layout in [ingest-contract.md](ingest-contract.md)
-but does not execute import actions.
+Library Curator is the planned media-migration and publication writer.
+Audiobookshelf defines the accepted read-only layout in
+[ingest-contract.md](ingest-contract.md) but does not execute import actions.
 
 ### Guarantees
 

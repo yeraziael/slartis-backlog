@@ -1,9 +1,10 @@
 # Media Ingest Contract
 
-Audiobookshelf is a read-only consumer. Library Curator is the only writer into
-Curator-managed library roots: it owns staging, normalization, duplicate
-detection, quarantine, audit, and publication. Audiobookshelf must never upload,
-rename, move, delete, or write sidecars beside NAS media.
+Audiobookshelf is a read-only consumer. Library Curator is the planned sole
+writer into Curator-managed library roots; this contract does not imply that it
+exists or is deployed. Its future implementation owns staging, normalization,
+duplicate detection, quarantine, audit, and publication. Audiobookshelf must
+never upload, rename, move, delete, or write sidecars beside NAS media.
 
 ## Authority And Transition Model
 
