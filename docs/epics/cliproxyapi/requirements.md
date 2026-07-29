@@ -4,31 +4,34 @@ Requirement IDs are stable. Removal or semantic change requires an entry in `dec
 
 ## Gateway and clients
 
-- **CAP-R001:** OpenCode sees exactly one configured model-provider endpoint: CLIProxyAPI.
-- **CAP-R002:** Slarti and Lydia use CLIProxyAPI indirectly through OpenCode; workers are added only through later approved scope.
-- **CAP-R003:** All model traffic, including OpenCode Zen Free, traverses CLIProxyAPI.
-- **CAP-R004:** Each client has an isolated, revocable credential and cannot inspect or disable unrelated clients.
-- **CAP-R005:** CLIProxyAPI is not a task queue. Downtime returns explicit failure; retry or queueing is a client responsibility.
+- **CAP-R001:** OpenCode sees exactly one configured model-provider endpoint: LiteLLM.
+- **CAP-R002:** Slarti and Lydia use the gateway chain indirectly through OpenCode; workers are added only through later approved scope.
+- **CAP-R003:** All model traffic traverses LiteLLM. OpenCode Zen Free and Ollama are routed directly by LiteLLM; supported CLI/OAuth subscription traffic may be routed from LiteLLM to CLIProxyAPI.
+- **CAP-R004:** Each client has an isolated, revocable LiteLLM credential and cannot inspect or disable unrelated clients or downstream provider accounts.
+- **CAP-R005:** Neither LiteLLM nor CLIProxyAPI is a task queue. Downtime returns explicit failure; retry or queueing is a client responsibility.
 
 ## Providers, accounts and quota
 
-- **CAP-R010:** Providers include OpenAI, OpenCode Zen Free and later Gemini, subject to provider-specific compliance approval.
-- **CAP-R011:** Multiple accounts or keys per provider are supported.
+- **CAP-R010:** The gateway portfolio initially includes OpenCode Zen Free and approved Ollama models through LiteLLM, plus supported CLI/OAuth subscription providers through CLIProxyAPI. Ordinary API-key providers and Gemini may be added only after provider-specific compliance and compatibility approval.
+- **CAP-R011:** Multiple accounts, subscriptions or keys per provider are supported where the relevant downstream supports compliant pooling.
 - **CAP-R012:** Accounts are consumed sequentially: prefer one account until quota exhaustion, then select the next eligible account.
-- **CAP-R013:** Session-bound APIs use sticky routing.
+- **CAP-R013:** Session-bound multi-account routing is disabled until CAP-S01 verifies and versions an end-to-end affinity contract across LiteLLM and CLIProxyAPI. Without that contract, an approved provider uses one eligible account only or fails closed; no cross-account continuation is allowed.
 - **CAP-R014:** Provider `Retry-After` or reset metadata is authoritative.
 - **CAP-R015:** Without reset metadata, use jittered exponential backoff starting at one minute and capped at six hours.
 - **CAP-R016:** A probe is a real minimal request using exactly the model required by the waiting task. Success resets backoff to one minute and resumes the task automatically.
+- **CAP-R017:** CLIProxyAPI is private infrastructure reachable only by LiteLLM and approved operator paths; OpenCode clients do not receive direct CLIProxyAPI credentials.
+- **CAP-R018:** A model exposed through LiteLLM must declare its backend type, provider identity, authentication class, compliance state and session-affinity requirements.
+- **CAP-R019:** Failure or exhaustion of a CLIProxyAPI subscription pool must not silently reroute to a chargeable API provider unless released governance explicitly authorizes that fallback.
 
 ## Classification and routing
 
 - **CAP-R020:** Routing is derived from task classification and released governance.
-- **CAP-R021:** OpenAI-required classes include architecture/planning, review, security, secrets/identity, data migration, production infrastructure changes and complex debugging.
-- **CAP-R022:** The unattended free implementation path is DeepSeek Flash Free, then a dynamically selected equivalent Zen Free model, then Gemini with waiting accepted.
+- **CAP-R021:** Model classes, task mappings and provider priorities are loaded from released governance; gateway configuration must not hard-code a separate class policy.
+- **CAP-R022:** Free-model preference and fallback order are governance data. The gateway applies the active released order and availability constraints without embedding model names in application logic.
 - **CAP-R023:** Dynamic alternatives require tool use, structured output, sufficient context, coding suitability, stable unattended operation and no known repository-work exclusion.
-- **CAP-R024:** Manual override is allowed only from a non-OpenAI model to an OpenAI model. Governance-controlled quota/provider fallback remains automatic.
-- **CAP-R025:** Unclassified tasks are classified by CLIProxyAPI.
-- **CAP-R026:** CLIProxyAPI may challenge an OpenCode classification upward but never silently lower it. Unresolved disagreement is decided by the Operator.
+- **CAP-R024:** Manual and automatic overrides follow released governance and are audit-recorded; no gateway-local override may bypass a required operator confirmation.
+- **CAP-R025:** Unclassified tasks are classified before LiteLLM routing by the approved client-side or governance component; neither LiteLLM nor CLIProxyAPI becomes the sole semantic classification authority without a later decision.
+- **CAP-R026:** A routing component may challenge an OpenCode classification upward but never silently lower it. Unresolved disagreement is decided by the Operator.
 - **CAP-R027:** Routing quality takes precedence over quota and cost when candidates are equally suitable.
 - **CAP-R028:** The effective decision must be reproducible from normalized input, governance version and relevant system state.
 
@@ -47,7 +50,7 @@ Requirement IDs are stable. Removal or semantic change requires an entry in `dec
 - **CAP-R041:** A checkpoint commit may be non-green if expected failures are documented, but may never be the final task commit.
 - **CAP-R042:** Later regular commits reference checkpoint SHAs with repeatable `Resolves-Checkpoint:` trailers.
 - **CAP-R043:** Merge and closure are blocked while unresolved checkpoints exist or the last task commit is a checkpoint.
-- **CAP-R044:** Every implementation commit records Model, Class, Task and Governance-Version trailers.
+- **CAP-R044:** Every implementation commit for an execution task records Model, Class, Task and Governance-Version trailers. Planning-only commits before execution-manifest freeze are excluded.
 
 ## Experiments
 
