@@ -20,7 +20,7 @@ review_scope:
 integrity:
   changeset_sha256: 6894d2f86276953ffb2055f30046f43b29478c4b2fe8c3e84098a7754889fb5b
 generated:
-  timestamp: "2026-07-29T19:40:00Z"
+  timestamp: "2026-07-29T19:45:00Z"
   tool: Slarti github-review skill
 review_verdict:
   schema: acp.review-verdict.v2
@@ -31,6 +31,6 @@ review_verdict:
   verdict: post-merge-audit
   blocking_findings: []
   remaining_followups:
-    - Confirm successful completion of Gitea Actions run 992.
+    - Diagnose failing Gitea Actions run 992 smoke jobs 3704 and 3705.
   supersedes_review: null
-  review_timestamp: "2026-07-29T19:40:00Z"
+  review_timestamp: "2026-07-29T19:45:00Z"
