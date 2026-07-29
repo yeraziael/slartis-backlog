@@ -35,6 +35,7 @@ Operate Jellyfin as the household media platform for films, series, music, music
 - [backlog.md](backlog.md)
 - [decisions.md](decisions.md)
 - [references.md](references.md)
+- [ingest-contract.md](ingest-contract.md)
 - [runtime-reconciliation.md](runtime-reconciliation.md)
 - [plan.yaml](plan.yaml)
 
