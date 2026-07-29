@@ -1,0 +1,15 @@
+{
+  "schema": "acp.review-verdict.v2",
+  "reviewed_commit": "11921fb0572222e5d3ccf7652ef1b466c704bc0f",
+  "review_type": "post-merge",
+  "review_basis": "merge-commit",
+  "reviewer": "slarti",
+  "verdict": "post-merge-audit",
+  "blocking_findings": [],
+  "remaining_followups": [
+    "Operator gate slarti/backlog#284 must remove duplicate failing runner ID 3 and produce green merge-SHA Unit Tests on runner ID 4.",
+    "Operator gate slarti/backlog#283: operator work verified on SHA fd797db (Run #978, all 5 jobs success, post-deploy smokes and artifact uploads green), but manifest-content verification gap (0 failed/0 skipped not provable via Gitea 1.26.4 public API) prevents full DoD closeout. Requires Gitea upgrade, filesystem access, or operator artifact download."
+  ],
+  "supersedes_review": "https://github.com/yeraziael/slartis-backlog/pull/111 at 0ece4a119219977c2c7f1575843eaf4409f91955",
+  "review_timestamp": "2026-07-29T14:20:00Z"
+}

@@ -1,0 +1,38 @@
+manifest_version: v2
+project: homelab-playwright-closeout
+repository: Homelab/Architecture
+canonical_pr: 109
+base_commit: 6ee0b7821ed51b77b89ae679520123bc763e2654
+head_commit: 11921fb0572222e5d3ccf7652ef1b466c704bc0f
+author: slarti
+change_request: "Post-merge audit for slarti/backlog#253; operator follow-ups #283 and #284"
+statistics:
+  files_changed: 21
+  insertions: 834
+  deletions: 145
+review_scope:
+  architecture: true
+  implementation: true
+  governance: false
+  security: true
+  compatibility: true
+  documentation: true
+integrity:
+  changeset_sha256: e26d069a770ba6250c70cf9fa1437bc0bbeedd070e818c85920d1c368a637e01
+  review_verdict_sha256: 985b7c8ba3304f942333fad82adb985e30052801b8f181f051550d7647d8c816
+generated:
+  timestamp: "2026-07-29T14:20:00Z"
+  tool: "opencode/slarti"
+review_verdict:
+  schema: acp.review-verdict.v2
+  reviewed_commit: 11921fb0572222e5d3ccf7652ef1b466c704bc0f
+  review_type: post-merge
+  review_basis: merge-commit
+  reviewer: slarti
+  verdict: post-merge-audit
+  blocking_findings: []
+  remaining_followups:
+    - "Operator gate slarti/backlog#284 must remove duplicate failing runner ID 3 and produce green merge-SHA Unit Tests on runner ID 4."
+    - "Operator gate slarti/backlog#283: operator work verified on SHA fd797db (Run #978, all 5 jobs success, post-deploy smokes and artifact uploads green), but manifest-content verification gap (0 failed/0 skipped not provable via Gitea 1.26.4 public API) prevents full DoD closeout. Requires Gitea upgrade, filesystem access, or operator artifact download."
+  supersedes_review: "https://github.com/yeraziael/slartis-backlog/pull/111 at 0ece4a119219977c2c7f1575843eaf4409f91955"
+  review_timestamp: "2026-07-29T14:20:00Z"

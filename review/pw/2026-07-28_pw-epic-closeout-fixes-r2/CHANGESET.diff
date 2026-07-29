@@ -1,0 +1,1568 @@
+diff --git a/.gitea/workflows/ci.yaml b/.gitea/workflows/ci.yaml
+index 6adca24..1686e27 100644
+--- a/.gitea/workflows/ci.yaml
++++ b/.gitea/workflows/ci.yaml
+@@ -61,9 +61,12 @@ jobs:
+       - name: playwright-headed-contract
+         run: python3 tests/test_playwright_headed.py
+       - name: playwright-platform
++        env:
++          PLAYWRIGHT_RUN_AS_UID: 1000
++          PLAYWRIGHT_RUN_AS_GID: 1000
+         run: bash tests/playwright/runner/run.sh platform
+-      - name: playwright-service
+-        run: bash tests/playwright/runner/run.sh service
++      - name: playwright-operations
++        run: python3 tests/test_playwright_operations.py
+ 
+   report:
+     name: Reporting
+@@ -93,8 +96,8 @@ jobs:
+           path: reports/ci-summary.json
+           if-no-files-found: ignore
+ 
+-  post-deploy:
+-    name: Post-Deployment Smoke
++  post-deploy-audiobookshelf:
++    name: Post-Deployment Audiobookshelf
+     runs-on: ubuntu-latest
+     if: github.ref == 'refs/heads/main'
+     steps:
+@@ -106,4 +109,49 @@ jobs:
+       - name: smoke-audiobookshelf
+         env:
+           SERVICE_URL: ${{ secrets.AUDIOBOOKSHELF_URL }}
+-        run: bash tests/playwright/ci/post-deploy.sh "$SERVICE_URL"
++          PW_E2E_ABS_USER: ${{ secrets.PW_E2E_ABS_USER }}
++          PW_E2E_ABS_PASSWORD: ${{ secrets.PW_E2E_ABS_PASSWORD }}
++          PW_E2E_ABS_ADMIN_USER: ${{ secrets.PW_E2E_ABS_ADMIN_USER }}
++          PW_E2E_ABS_ADMIN_PASSWORD: ${{ secrets.PW_E2E_ABS_ADMIN_PASSWORD }}
++          PW_E2E_KNOWN_TITLE: ${{ secrets.PW_E2E_KNOWN_TITLE }}
++          PLAYWRIGHT_ENVIRONMENT: production
++          PLAYWRIGHT_RUN_AS_UID: 1000
++          PLAYWRIGHT_RUN_AS_GID: 1000
++        run: bash tests/playwright/ci/post-deploy.sh audiobookshelf "$SERVICE_URL"
++      - uses: actions/upload-artifact@v3
++        if: always()
++        with:
++          name: playwright-audiobookshelf-evidence
++          path: test-results/playwright/out/
++          if-no-files-found: error
++
++  post-deploy-jellyfin:
++    name: Post-Deployment Jellyfin
++    runs-on: ubuntu-latest
++    if: github.ref == 'refs/heads/main'
++    steps:
++      - uses: actions/checkout@v4
++        with:
++          fetch-depth: 0
++      - name: setup
++        run: apt-get update -qq && apt-get install -y -qq git jq python3 python3-yaml docker.io docker-compose
++      - name: smoke-jellyfin
++        env:
++          SERVICE_URL: ${{ secrets.JELLYFIN_URL }}
++          PW_E2E_JF_USER: ${{ secrets.PW_E2E_JF_USER }}
++          PW_E2E_JF_PASSWORD: ${{ secrets.PW_E2E_JF_PASSWORD }}
++          PW_E2E_JF_ADMIN_USER: ${{ secrets.PW_E2E_JF_ADMIN_USER }}
++          PW_E2E_JF_ADMIN_PASSWORD: ${{ secrets.PW_E2E_JF_ADMIN_PASSWORD }}
++          PW_E2E_JF_RESTRICTED_USER: ${{ secrets.PW_E2E_JF_RESTRICTED_USER }}
++          PW_E2E_JF_RESTRICTED_PASSWORD: ${{ secrets.PW_E2E_JF_RESTRICTED_PASSWORD }}
++          PW_E2E_JF_RESTRICTED_LIBRARY_ID: ${{ secrets.PW_E2E_JF_RESTRICTED_LIBRARY_ID }}
++          PLAYWRIGHT_ENVIRONMENT: production
++          PLAYWRIGHT_RUN_AS_UID: 1000
++          PLAYWRIGHT_RUN_AS_GID: 1000
++        run: bash tests/playwright/ci/post-deploy.sh jellyfin "$SERVICE_URL"
++      - uses: actions/upload-artifact@v3
++        if: always()
++        with:
++          name: playwright-jellyfin-evidence
++          path: test-results/playwright/out/
++          if-no-files-found: error
+diff --git a/Makefile b/Makefile
+index 13c61b3..38b9924 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,6 +1,6 @@
+ # Homelab Architecture – CI Checks (auto-generated from ci-manifest.yaml)
+ # shellcheck disable=all
+-.PHONY: check-compose check-git-diff check-links ci clean lint scan-secrets test test-all test-audiobookshelf-proxy test-checks test-ci-generator test-matrix-bridge-egress test-matrix-bridge-operations test-matrix-coturn test-matrix-hardening test-matrix-operations test-matrix-release-profile test-mautrix-facebook test-mautrix-instagram test-playwright-bootstrap test-playwright-headed-contract test-playwright-platform test-playwright-post-deploy test-playwright-service test-synapse-active-appservices test-synapse-media-permissions
++.PHONY: check-compose check-git-diff check-links ci clean lint scan-secrets test test-all test-audiobookshelf-proxy test-checks test-ci-generator test-matrix-bridge-egress test-matrix-bridge-operations test-matrix-coturn test-matrix-hardening test-matrix-operations test-matrix-release-profile test-mautrix-facebook test-mautrix-instagram test-playwright-bootstrap test-playwright-headed-contract test-playwright-operations test-playwright-platform test-playwright-post-deploy-audiobookshelf test-playwright-post-deploy-jellyfin test-synapse-active-appservices test-synapse-media-permissions
+ 
+ check-compose:
+ 	bash scripts/check-compose.sh
+@@ -24,10 +24,10 @@ scan-secrets:
+ 	bash scripts/scan-secrets.sh
+ 
+ test:
+-	make test-checks test-ci-generator test-matrix-hardening test-synapse-media-permissions test-synapse-active-appservices test-matrix-coturn test-matrix-operations test-matrix-release-profile test-matrix-bridge-egress test-mautrix-facebook test-mautrix-instagram test-matrix-bridge-operations test-audiobookshelf-proxy test-playwright-bootstrap test-playwright-headed-contract test-playwright-platform test-playwright-service
++	make test-checks test-ci-generator test-matrix-hardening test-synapse-media-permissions test-synapse-active-appservices test-matrix-coturn test-matrix-operations test-matrix-release-profile test-matrix-bridge-egress test-mautrix-facebook test-mautrix-instagram test-matrix-bridge-operations test-audiobookshelf-proxy test-playwright-bootstrap test-playwright-headed-contract test-playwright-platform test-playwright-operations
+ 
+ test-all:
+-	make lint test test-playwright-post-deploy
++	make lint test
+ 
+ test-audiobookshelf-proxy:
+ 	bash pi/tests/test_audiobookshelf_proxy.sh
+@@ -68,14 +68,17 @@ test-playwright-bootstrap:
+ test-playwright-headed-contract:
+ 	python3 tests/test_playwright_headed.py
+ 
++test-playwright-operations:
++	python3 tests/test_playwright_operations.py
++
+ test-playwright-platform:
+ 	bash tests/playwright/runner/run.sh platform
+ 
+-test-playwright-post-deploy:
+-	bash tests/playwright/ci/post-deploy.sh
++test-playwright-post-deploy-audiobookshelf:
++	bash tests/playwright/ci/post-deploy.sh audiobookshelf "$AUDIOBOOKSHELF_URL"
+ 
+-test-playwright-service:
+-	bash tests/playwright/runner/run.sh service
++test-playwright-post-deploy-jellyfin:
++	bash tests/playwright/ci/post-deploy.sh jellyfin "$JELLYFIN_URL"
+ 
+ test-synapse-active-appservices:
+ 	bash pi/tests/test_synapse_active_appservices.sh
+diff --git a/ci-generate.py b/ci-generate.py
+index 15d8226..d296449 100644
+--- a/ci-generate.py
++++ b/ci-generate.py
+@@ -134,6 +134,17 @@ def generate_gitea_workflow(m):
+             else:
+                 lines.append(f"        run: {tool} {target}")
+ 
++        evidence_artifact = stage.get("evidence_artifact")
++        if evidence_artifact:
++            lines += [
++                "      - uses: actions/upload-artifact@v3",
++                "        if: always()",
++                "        with:",
++                f"          name: {evidence_artifact['name']}",
++                f"          path: {evidence_artifact['path']}",
++                "          if-no-files-found: error",
++            ]
++
+         lines.append("")
+ 
+     return "\n".join(lines)
+diff --git a/ci-manifest.yaml b/ci-manifest.yaml
+index 104efc3..579f82f 100644
+--- a/ci-manifest.yaml
++++ b/ci-manifest.yaml
+@@ -190,15 +190,17 @@ stages:
+         timeout: 300s
+         enabled: true
+         tags: [playwright, platform, docker]
++        env:
++          PLAYWRIGHT_RUN_AS_UID: 1000
++          PLAYWRIGHT_RUN_AS_GID: 1000
+ 
+-      - id: playwright-service
+-        tool: bash
+-        target: tests/playwright/runner/run.sh
+-        flags: service
++      - id: playwright-operations
++        tool: python
++        target: tests/test_playwright_operations.py
+         quality_gate: exit_zero
+-        timeout: 300s
++        timeout: 30s
+         enabled: true
+-        tags: [playwright, audiobookshelf, service, docker]
++        tags: [playwright, operations, policy]
+ 
+   - id: report
+     label: Reporting
+@@ -210,21 +212,61 @@ stages:
+         quality_gate: always_pass
+         timeout: 10s
+ 
+-  - id: post-deploy
+-    label: Post-Deployment Smoke
++  - id: post-deploy-audiobookshelf
++    label: Post-Deployment Audiobookshelf
+     order: 60
+     condition: github.ref == 'refs/heads/main'
+     steps:
+       - id: smoke-audiobookshelf
+         tool: bash
+         target: tests/playwright/ci/post-deploy.sh
+-        flags: '"$SERVICE_URL"'
++        flags: 'audiobookshelf "$SERVICE_URL"'
+         quality_gate: exit_zero
+         timeout: 600s
+         enabled: true
+         tags: [playwright, audiobookshelf, smoke, deployment]
+         env:
+           SERVICE_URL: ${{ secrets.AUDIOBOOKSHELF_URL }}
++          PW_E2E_ABS_USER: ${{ secrets.PW_E2E_ABS_USER }}
++          PW_E2E_ABS_PASSWORD: ${{ secrets.PW_E2E_ABS_PASSWORD }}
++          PW_E2E_ABS_ADMIN_USER: ${{ secrets.PW_E2E_ABS_ADMIN_USER }}
++          PW_E2E_ABS_ADMIN_PASSWORD: ${{ secrets.PW_E2E_ABS_ADMIN_PASSWORD }}
++          PW_E2E_KNOWN_TITLE: ${{ secrets.PW_E2E_KNOWN_TITLE }}
++          PLAYWRIGHT_ENVIRONMENT: production
++          PLAYWRIGHT_RUN_AS_UID: 1000
++          PLAYWRIGHT_RUN_AS_GID: 1000
++    evidence_artifact:
++      name: playwright-audiobookshelf-evidence
++      path: test-results/playwright/out/
++
++  - id: post-deploy-jellyfin
++    label: Post-Deployment Jellyfin
++    order: 61
++    condition: github.ref == 'refs/heads/main'
++    steps:
++      - id: smoke-jellyfin
++        tool: bash
++        target: tests/playwright/ci/post-deploy.sh
++        flags: 'jellyfin "$SERVICE_URL"'
++        quality_gate: exit_zero
++        timeout: 600s
++        enabled: true
++        tags: [playwright, jellyfin, smoke, deployment]
++        env:
++          SERVICE_URL: ${{ secrets.JELLYFIN_URL }}
++          PW_E2E_JF_USER: ${{ secrets.PW_E2E_JF_USER }}
++          PW_E2E_JF_PASSWORD: ${{ secrets.PW_E2E_JF_PASSWORD }}
++          PW_E2E_JF_ADMIN_USER: ${{ secrets.PW_E2E_JF_ADMIN_USER }}
++          PW_E2E_JF_ADMIN_PASSWORD: ${{ secrets.PW_E2E_JF_ADMIN_PASSWORD }}
++          PW_E2E_JF_RESTRICTED_USER: ${{ secrets.PW_E2E_JF_RESTRICTED_USER }}
++          PW_E2E_JF_RESTRICTED_PASSWORD: ${{ secrets.PW_E2E_JF_RESTRICTED_PASSWORD }}
++          PW_E2E_JF_RESTRICTED_LIBRARY_ID: ${{ secrets.PW_E2E_JF_RESTRICTED_LIBRARY_ID }}
++          PLAYWRIGHT_ENVIRONMENT: production
++          PLAYWRIGHT_RUN_AS_UID: 1000
++          PLAYWRIGHT_RUN_AS_GID: 1000
++    evidence_artifact:
++      name: playwright-jellyfin-evidence
++      path: test-results/playwright/out/
+ 
+ branch_rules:
+   feature:
+@@ -232,7 +274,7 @@ branch_rules:
+     required_approvals: 0
+     allow_skip: false
+   main:
+-    stages: [lint, test-unit, report, post-deploy]
++    stages: [lint, test-unit, report, post-deploy-audiobookshelf, post-deploy-jellyfin]
+     required_approvals: 1
+     require_all_previous_green: true
+     allow_skip: false
+@@ -246,7 +288,21 @@ quality_gates:
+     type: always
+     description: Always passes (informational)
+ 
+-secrets: []
++secrets:
++  - AUDIOBOOKSHELF_URL
++  - PW_E2E_ABS_USER
++  - PW_E2E_ABS_PASSWORD
++  - PW_E2E_ABS_ADMIN_USER
++  - PW_E2E_ABS_ADMIN_PASSWORD
++  - PW_E2E_KNOWN_TITLE
++  - JELLYFIN_URL
++  - PW_E2E_JF_USER
++  - PW_E2E_JF_PASSWORD
++  - PW_E2E_JF_ADMIN_USER
++  - PW_E2E_JF_ADMIN_PASSWORD
++  - PW_E2E_JF_RESTRICTED_USER
++  - PW_E2E_JF_RESTRICTED_PASSWORD
++  - PW_E2E_JF_RESTRICTED_LIBRARY_ID
+ 
+ artifacts:
+   - id: test-reports
+@@ -327,10 +383,11 @@ local_dev:
+     test-playwright-bootstrap: python3 tests/test_playwright_bootstrap.py
+     test-playwright-headed-contract: python3 tests/test_playwright_headed.py
+     test-playwright-platform: bash tests/playwright/runner/run.sh platform
+-    test-playwright-service: bash tests/playwright/runner/run.sh service
+-    test-playwright-post-deploy: bash tests/playwright/ci/post-deploy.sh
+-    test: make test-checks test-ci-generator test-matrix-hardening test-synapse-media-permissions test-synapse-active-appservices test-matrix-coturn test-matrix-operations test-matrix-release-profile test-matrix-bridge-egress test-mautrix-facebook test-mautrix-instagram test-matrix-bridge-operations test-audiobookshelf-proxy test-playwright-bootstrap test-playwright-headed-contract test-playwright-platform test-playwright-service
+-    test-all: make lint test test-playwright-post-deploy
++    test-playwright-operations: python3 tests/test_playwright_operations.py
++    test-playwright-post-deploy-audiobookshelf: bash tests/playwright/ci/post-deploy.sh audiobookshelf "$AUDIOBOOKSHELF_URL"
++    test-playwright-post-deploy-jellyfin: bash tests/playwright/ci/post-deploy.sh jellyfin "$JELLYFIN_URL"
++    test: make test-checks test-ci-generator test-matrix-hardening test-synapse-media-permissions test-synapse-active-appservices test-matrix-coturn test-matrix-operations test-matrix-release-profile test-matrix-bridge-egress test-mautrix-facebook test-mautrix-instagram test-matrix-bridge-operations test-audiobookshelf-proxy test-playwright-bootstrap test-playwright-headed-contract test-playwright-platform test-playwright-operations
++    test-all: make lint test
+     ci: make lint test
+     clean: rm -rf reports/ logs/
+   pre_commit:
+diff --git a/docs/decisions/playwright/jellyfin-onboarding.md b/docs/decisions/playwright/jellyfin-onboarding.md
+index 7296bc7..ecfc296 100644
+--- a/docs/decisions/playwright/jellyfin-onboarding.md
++++ b/docs/decisions/playwright/jellyfin-onboarding.md
+@@ -1,8 +1,10 @@
+ # Jellyfin Onboarding & Controlled Media Contract (PW-D06)
+ 
+ ## Readiness and Boundaries
+-- **Status**: Jellyfin deployment readiness and OIDC integration verified via service epic requirements.
+-- **Scope**: Lower-layer OIDC authentication and controlled media streaming are verified via browser journeys.
++- **Contract Status**: The browser journey and evidence contract is implemented.
++- **Runtime Status**: Deployment readiness is not established until a reachable HTTPS target, synthetic identities, a restricted library, controlled media, and a successful `post-deploy-jellyfin` evidence artifact exist at one exact Architecture SHA.
++- **Operator Gate**: `slarti/backlog#283` owns deployment and runtime-input provisioning; repository code does not deploy the service or invent credentials.
++- **Scope**: The runtime gate verifies authentication, authorization, and controlled media streaming without treating code review as execution evidence.
+ 
+ ## Journeys & Selectors
+ 1. **Unauthenticated Smoke**: Access login page (`/web/index.html`), verify page title and render without credentials.
+diff --git a/docs/playwright-ci-runbook.md b/docs/playwright-ci-runbook.md
+index 804fb47..c2cee7f 100644
+--- a/docs/playwright-ci-runbook.md
++++ b/docs/playwright-ci-runbook.md
+@@ -6,7 +6,7 @@
+ Shellcheck and shfmt on all shell scripts in the repository.
+ 
+ ### test-unit
+-Three parallel groups:
++Manifest-generated checks run in order inside the Unit Tests job:
+ 
+ | Group | Scope |
+ |---|---|
+@@ -15,22 +15,29 @@ Three parallel groups:
+ | test-playwright-bootstrap | Headless project load without browser (`tests/playwright/runner/bootstrap.spec.ts`) |
+ | test-playwright-headed-contract | Headed contract tests (platform self-tests, evidence, result semantics) |
+ | test-playwright-platform | Platform tests via `npm run test:platform` (platform/ evidence/ runner/) |
+-| test-playwright-service | Service tests via `npm run test:service` (services/audiobookshelf/) |
++| test-playwright-operations | PW-I18 maintenance, quarantine, and ownership policy |
+ 
+ ### report
+ Aggregates lint and test-unit results into a CI summary artifact.
+ 
+-### post-deploy (main branch only)
+-Runs after deployment to a live environment:
++### post-deploy-audiobookshelf and post-deploy-jellyfin (main branch only)
++Each job targets one deployed service and fails closed unless its complete synthetic identity contract is available:
+ 
+-1. **smoke-audiobookshelf** — Executes `tests/playwright/ci/post-deploy.sh` which delegates to `run.sh service`. Runs all service-level Playwright tests (authenticated smoke, library/playback, authorization) against the deployed instance.
++1. **smoke-audiobookshelf** — Executes the Audiobookshelf unauthenticated, OIDC, authorization, controlled-library, and playback journeys.
++2. **smoke-jellyfin** — Executes the Jellyfin unauthenticated, standard/restricted/admin, and controlled-media journeys.
+ 
+-## Test Counts (current)
+-- provisioning: 31
+-- shared fixtures: 10
+-- OIDC: 7
+-- smoke: 5
+-- **total: 53**
++Both jobs upload `test-results/playwright/out/` using `actions/upload-artifact@v3` with `if-no-files-found: error`. The directory contains the schema-validated `manifest.json`, Playwright JSON report, and failure screenshots/traces when applicable.
++
++## Required Gitea Actions Secrets
++
++| Service | Required names |
++|---|---|
++| Audiobookshelf | `AUDIOBOOKSHELF_URL`, `PW_E2E_ABS_USER`, `PW_E2E_ABS_PASSWORD`, `PW_E2E_ABS_ADMIN_USER`, `PW_E2E_ABS_ADMIN_PASSWORD`, `PW_E2E_KNOWN_TITLE` |
++| Jellyfin | `JELLYFIN_URL`, `PW_E2E_JF_USER`, `PW_E2E_JF_PASSWORD`, `PW_E2E_JF_ADMIN_USER`, `PW_E2E_JF_ADMIN_PASSWORD`, `PW_E2E_JF_RESTRICTED_USER`, `PW_E2E_JF_RESTRICTED_PASSWORD`, `PW_E2E_JF_RESTRICTED_LIBRARY_ID` |
++
++Secret values are provisioned by the service operator. Credential values must never appear in logs, review bundles, repository files, or command arguments. Public target URLs may be passed to the wrapper but remain configured through Actions secrets.
++
++Current operator prerequisite: `slarti/backlog#283` tracks Jellyfin deployment, controlled data, synthetic identities, and Actions-secret provisioning.
+ 
+ ## CI wrapper scripts
+ 
+@@ -44,12 +51,12 @@ Runs after deployment to a live environment:
+ | Command | What it runs |
+ |---|---|
+ | `run.sh platform` | `npm run test:platform` — platform/ evidence/ runner/ tests |
+-| `run.sh service` | `npm run test:service` — services/audiobookshelf/ tests |
+-| `run.sh service:<url>` | Prerequisite checks + `npm run test:service` against live URL |
++| `run.sh service:audiobookshelf:<url>` | Prerequisites + Audiobookshelf service tests against one HTTPS target |
++| `run.sh service:jellyfin:<url>` | Prerequisites + Jellyfin service tests against one HTTPS target |
+ 
+ ## Adding a new test
+ 
+ 1. Place platform tests in `tests/playwright/platform/`
+ 2. Place service tests in `tests/playwright/services/<service>/`
+ 3. Platform tests are auto-included by `test:platform` (testDir: platform/ evidence/ runner/)
+-4. Service tests are auto-included by `test:service` (testDir: services/)
++4. Audiobookshelf and Jellyfin tests are selected by separate pinned package scripts; do not combine targets in one run.
+diff --git a/docs/playwright-operations.md b/docs/playwright-operations.md
+index 7e4b7c5..5fea23a 100644
+--- a/docs/playwright-operations.md
++++ b/docs/playwright-operations.md
+@@ -12,3 +12,9 @@
+ ## Selector Hierarchy and Test Data Cleanup
+ - **Selector Priority**: Prefer test IDs (`data-testid`), ARIA roles, and semantic attributes over brittle CSS/XPath selectors.
+ - **Test-Data Cleanup**: Ephemeral user states, cookies, and localStorage must be isolated via separate browser contexts per test. No persistent mutated state may leak between tests.
++
++## Runtime Gate Ownership
++- **CI Owner**: Homelab Architecture maintainers own platform, generator, and operations-policy failures.
++- **Service Owner**: The deployed-service operator owns endpoint availability, synthetic identities, controlled media, and repository-secret provisioning.
++- **Fail-Closed Rule**: A missing URL, identity, controlled title/library ID, evidence manifest, or artifact is a failed production gate. Merge state and code review do not substitute for browser execution.
++- **Closeout Evidence**: Final closeout requires exact source SHA, Gitea run/job IDs, successful Audiobookshelf and Jellyfin post-deploy jobs, and retained evidence artifact names.
+diff --git a/tests/playwright/ci/post-deploy.sh b/tests/playwright/ci/post-deploy.sh
+index edd015a..c7cfa4c 100644
+--- a/tests/playwright/ci/post-deploy.sh
++++ b/tests/playwright/ci/post-deploy.sh
+@@ -6,26 +6,58 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ RUNNER_DIR="$(cd "$SCRIPT_DIR/../runner" && pwd)"
+ 
+ usage() {
+-  echo "Usage: $(basename "$0") [service-url]"
+-  echo "  Runs playwright service smoke tests after deployment."
+-  echo "  If service-url is provided, passes it as service:<url> to the runner."
+-  echo "  If omitted, runs service tests without prerequisite checks."
++  echo "Usage: $(basename "$0") <audiobookshelf|jellyfin> <service-url>"
++  echo "  Runs one credentialed Playwright service gate after deployment."
+   exit 2
+ }
+ 
+-if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
++if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ] || [ "$#" -ne 2 ]; then
+   usage
+ fi
+ 
+-BASE_URL="${1:-}"
+-if [ -n "$BASE_URL" ]; then
+-  SUITE="service:${BASE_URL}"
+-elif [ "${CI:-}" = "true" ]; then
+-  echo "PW-I17: FATAL — SERVICE_URL required in CI, none provided" >&2
++SERVICE_NAME="$1"
++BASE_URL="$2"
++
++case "$SERVICE_NAME" in
++  audiobookshelf)
++    REQUIRED_ENV=(
++      PW_E2E_ABS_USER
++      PW_E2E_ABS_PASSWORD
++      PW_E2E_ABS_ADMIN_USER
++      PW_E2E_ABS_ADMIN_PASSWORD
++      PW_E2E_KNOWN_TITLE
++    )
++    ;;
++  jellyfin)
++    REQUIRED_ENV=(
++      PW_E2E_JF_USER
++      PW_E2E_JF_PASSWORD
++      PW_E2E_JF_ADMIN_USER
++      PW_E2E_JF_ADMIN_PASSWORD
++      PW_E2E_JF_RESTRICTED_USER
++      PW_E2E_JF_RESTRICTED_PASSWORD
++      PW_E2E_JF_RESTRICTED_LIBRARY_ID
++    )
++    ;;
++  *)
++    echo "PW-I17: FATAL — unsupported service: $SERVICE_NAME" >&2
++    exit 2
++    ;;
++esac
++
++if [[ ! "$BASE_URL" =~ ^https:// ]]; then
++  echo "PW-I17: FATAL — HTTPS service URL required" >&2
+   exit 2
+-else
+-  SUITE="service"
+ fi
+ 
++for name in "${REQUIRED_ENV[@]}"; do
++  if [ -z "${!name:-}" ]; then
++    echo "PW-I17: FATAL — required environment variable is unset: $name" >&2
++    exit 2
++  fi
++done
++
++SUITE="service:${SERVICE_NAME}:${BASE_URL}"
++
+ echo "PW-I17: post-deployment smoke starting (suite=${SUITE})"
+ exec bash "${RUNNER_DIR}/run.sh" "${SUITE}"
+diff --git a/tests/playwright/evidence/artifacts/artifact-self-test.spec.ts b/tests/playwright/evidence/artifacts/artifact-self-test.spec.ts
+index d5ec6d3..6971269 100644
+--- a/tests/playwright/evidence/artifacts/artifact-self-test.spec.ts
++++ b/tests/playwright/evidence/artifacts/artifact-self-test.spec.ts
+@@ -1,6 +1,6 @@
+ import { test, expect } from "@playwright/test";
+ 
+-const LOCAL_PAGE = "file:///workspace/tests/playwright/platform/fixtures/local-page.html";
++const LOCAL_PAGE = new URL("../../platform/fixtures/local-page.html", import.meta.url).href;
+ 
+ test("Passing test completes without assertion failure", { tag: "@pass" }, async ({ page }) => {
+   await page.goto(LOCAL_PAGE);
+diff --git a/tests/playwright/evidence/result-summary.py b/tests/playwright/evidence/result-summary.py
+new file mode 100644
+index 0000000..026d087
+--- /dev/null
++++ b/tests/playwright/evidence/result-summary.py
+@@ -0,0 +1,45 @@
++#!/usr/bin/env python3
++"""Extract final Playwright test counts from the JSON reporter output."""
++
++import json
++import sys
++
++
++def iter_tests(suite):
++    for spec in suite.get("specs", []):
++        yield from spec.get("tests", [])
++    for child in suite.get("suites", []):
++        yield from iter_tests(child)
++
++
++def main():
++    if len(sys.argv) != 2:
++        raise SystemExit("Usage: result-summary.py <playwright-report.json>")
++
++    with open(sys.argv[1], encoding="utf-8") as handle:
++        report = json.load(handle)
++
++    counts = {
++        "total": 0,
++        "passed": 0,
++        "failed": 0,
++        "prerequisite_errors": 0,
++        "skipped": 0,
++    }
++    for suite in report.get("suites", []):
++        for test in iter_tests(suite):
++            results = test.get("results", [])
++            status = results[-1].get("status") if results else "skipped"
++            counts["total"] += 1
++            if status == "passed":
++                counts["passed"] += 1
++            elif status == "skipped":
++                counts["skipped"] += 1
++            else:
++                counts["failed"] += 1
++
++    print(json.dumps(counts, separators=(",", ":")))
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/tests/playwright/package.json b/tests/playwright/package.json
+index 1f39dab..7a0bacb 100644
+--- a/tests/playwright/package.json
++++ b/tests/playwright/package.json
+@@ -11,6 +11,7 @@
+   },
+   "scripts": {
+     "test:platform": "playwright test --config=playwright.config.ts --project=chromium platform/ evidence/ runner/",
+-    "test:service": "playwright test --config=playwright.config.ts --project=chromium services/"
++    "test:service:audiobookshelf": "playwright test --config=playwright.config.ts --project=chromium services/audiobookshelf/",
++    "test:service:jellyfin": "playwright test --config=playwright.config.ts --project=chromium services/jellyfin/"
+   }
+ }
+diff --git a/tests/playwright/platform/self-test.spec.ts b/tests/playwright/platform/self-test.spec.ts
+index e1cf3f4..e61a339 100644
+--- a/tests/playwright/platform/self-test.spec.ts
++++ b/tests/playwright/platform/self-test.spec.ts
+@@ -1,6 +1,6 @@
+ import { test, expect } from "@playwright/test";
+ 
+-const LOCAL_PAGE = "file:///workspace/tests/playwright/platform/fixtures/local-page.html";
++const LOCAL_PAGE = new URL("./fixtures/local-page.html", import.meta.url).href;
+ 
+ test("Chromium starts and loads a local page", async ({ page }) => {
+   await page.goto(LOCAL_PAGE);
+diff --git a/tests/playwright/playwright.config.ts b/tests/playwright/playwright.config.ts
+index cc744cf..5c9e391 100644
+--- a/tests/playwright/playwright.config.ts
++++ b/tests/playwright/playwright.config.ts
+@@ -5,10 +5,15 @@ export default defineConfig({
+   retries: 0,
+   chromiumSandbox: false,
+   outputDir: process.env.PLAYWRIGHT_RESULTS_DIR,
++  reporter: [
++    ["line"],
++    ["json", { outputFile: process.env.PLAYWRIGHT_JSON_OUTPUT_FILE }],
++  ],
+   projects: [
+     {
+       name: "chromium",
+       use: {
++        baseURL: process.env.SERVICE_URL || undefined,
+         channel: undefined,
+         headless: process.env.PLAYWRIGHT_HEADLESS !== "false",
+         screenshot: "only-on-failure",
+diff --git a/tests/playwright/runner/run.sh b/tests/playwright/runner/run.sh
+index db8f767..71c84ef 100755
+--- a/tests/playwright/runner/run.sh
++++ b/tests/playwright/runner/run.sh
+@@ -11,9 +11,9 @@ RESULTS_NAME="playwright"
+ 
+ usage() {
+   echo "Usage: $(basename "$0") <suite> [filter|pass|fail|prerequisite_error|error]"
+-  echo "Suite: platform | service:<base-url>"
++  echo "Suite: platform | service:<service-name>:<base-url>"
+   echo "  platform: run platform self-tests"
+-  echo "  service:<base-url>: run prerequisites then service tests"
++  echo "  service:<service-name>:<base-url>: run one live service suite"
+   echo "  filter: --grep pattern for Playwright"
+   echo "  pass:   forced pass (--grep @pass)"
+   echo "  fail:   forced fail (--grep @fail)"
+@@ -36,11 +36,32 @@ RESULTS_DIR="${REPOSITORY_ROOT}/test-results/${RESULTS_NAME}"
+ 
+ RUN_START_EPOCH="$(date -u +%s)"
+ RUN_TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
++RUN_ENVIRONMENT="local"
++if [ "${CI:-}" = "true" ]; then
++  RUN_ENVIRONMENT="ci"
++fi
++if [ -n "${PLAYWRIGHT_ENVIRONMENT:-}" ]; then
++  case "$PLAYWRIGHT_ENVIRONMENT" in
++    local|ci|staging|production) RUN_ENVIRONMENT="$PLAYWRIGHT_ENVIRONMENT" ;;
++    *)
++      echo "ERROR: Invalid PLAYWRIGHT_ENVIRONMENT: $PLAYWRIGHT_ENVIRONMENT" >&2
++      exit 2
++      ;;
++  esac
++fi
++
++MANIFEST_SUITE="platform"
++case "$SUITE" in service*) MANIFEST_SUITE="service-acceptance" ;; esac
+ 
+ _generate_forced_manifest() {
+   local result="$1" exit_code="$2"
+   local sn="playwright-platform"
+-  case "$SUITE" in service*) sn="playwright-service" ;; esac
++  case "$SUITE" in
++    service:*)
++      local service_spec="${SUITE#service:}"
++      sn="${service_spec%%:*}"
++      ;;
++  esac
+   local out="${RESULTS_DIR}/out/manifest.json"
+   local duration=$(( $(date -u +%s) - RUN_START_EPOCH ))
+   python3 "${EVIDENCE_DIR}/manifest-generate.py" --out "$out" << ENVEOF
+@@ -54,8 +75,8 @@ _generate_forced_manifest() {
+   "service_version": "v1.61.1-noble",
+   "service_version_source": "runner_image",
+   "runner_image": "${PLAYWRIGHT_IMAGE}",
+-  "environment": "${CI:-local}",
+-  "suite": "${SUITE}",
++  "environment": "${RUN_ENVIRONMENT}",
++  "suite": "${MANIFEST_SUITE}",
+   "result": "${result}",
+   "exit_code": ${exit_code},
+   "duration_seconds": ${duration},
+@@ -104,26 +125,112 @@ case "$EXTRA" in
+ esac
+ 
+ NODE_MODULES_VOLUME="pw-$(od -An -N8 -tx1 /dev/urandom | tr -d ' \n')-nm"
++RESULTS_VOLUME=""
++RESULTS_COPY_CONTAINER=""
+ CIDFILE_DIR="$(mktemp -d)"
+ DEP_CIDFILE="${CIDFILE_DIR}/dependency.cid"
+ TEST_CIDFILE="${CIDFILE_DIR}/test.cid"
+-EXIT_CODE=0
+ mkdir -p "$RESULTS_DIR/out" && chmod 777 "$RESULTS_DIR" "$RESULTS_DIR/out"
++# Docker cannot create a child volume target below a read-only checkout mount.
++mkdir -p "$REPOSITORY_ROOT/tests/playwright/node_modules"
+ 
+ HOST_UID="$(id -u)"
+ HOST_GID="$(id -g)"
++CI_SOURCE_CONTAINER=""
+ 
+ if [ "$HOST_UID" -eq 0 ] || [ "$HOST_GID" -eq 0 ]; then
+-  echo "ERROR: Refusing to run as UID 0 or GID 0" >&2
+-  exit 2
++  if [ "${CI:-}" = "true" ] \
++    && [[ "${PLAYWRIGHT_RUN_AS_UID:-}" =~ ^[1-9][0-9]*$ ]] \
++    && [[ "${PLAYWRIGHT_RUN_AS_GID:-}" =~ ^[1-9][0-9]*$ ]]; then
++    HOST_UID="$PLAYWRIGHT_RUN_AS_UID"
++    HOST_GID="$PLAYWRIGHT_RUN_AS_GID"
++    CI_SOURCE_CONTAINER="$(hostname -s)"
++  else
++    echo "ERROR: Refusing root execution without explicit non-root CI identity" >&2
++    exit 2
++  fi
++fi
++
++CONTAINER_REPOSITORY_ROOT="/workspace"
++WORKSPACE_MOUNT=(--mount "type=bind,src=${REPOSITORY_ROOT},dst=${CONTAINER_REPOSITORY_ROOT},readonly")
++RESULTS_MOUNT=(--mount "type=bind,src=${RESULTS_DIR},dst=/results")
++
++if [ -n "$CI_SOURCE_CONTAINER" ]; then
++  if ! docker container inspect "$CI_SOURCE_CONTAINER" >/dev/null 2>&1; then
++    echo "ERROR: Cannot resolve CI job container from hostname: $CI_SOURCE_CONTAINER" >&2
++    exit 2
++  fi
++  CI_MOUNT_TYPE=""
++  CI_MOUNT_NAME=""
++  CI_MOUNT_SOURCE=""
++  CI_MOUNT_DESTINATION=""
++  while IFS='|' read -r mount_type mount_name mount_source mount_destination; do
++    if [ "$mount_destination" != "/" ] \
++      && { [ "$REPOSITORY_ROOT" = "$mount_destination" ] \
++        || [[ "$REPOSITORY_ROOT" == "$mount_destination/"* ]]; } \
++      && [ "${#mount_destination}" -gt "${#CI_MOUNT_DESTINATION}" ]; then
++      CI_MOUNT_TYPE="$mount_type"
++      CI_MOUNT_NAME="$mount_name"
++      CI_MOUNT_SOURCE="$mount_source"
++      CI_MOUNT_DESTINATION="$mount_destination"
++    fi
++  done < <(docker container inspect \
++    --format '{{range .Mounts}}{{printf "%s|%s|%s|%s\n" .Type .Name .Source .Destination}}{{end}}' \
++    "$CI_SOURCE_CONTAINER")
++
++  # The nested daemon resolves sources on its host. Import only the checkout
++  # mount, not the Gitea job container's auxiliary runtime volumes.
++  case "$CI_MOUNT_TYPE" in
++    volume)
++      WORKSPACE_MOUNT=(--mount "type=volume,src=${CI_MOUNT_NAME},dst=${CI_MOUNT_DESTINATION},readonly")
++      ;;
++    bind)
++      WORKSPACE_MOUNT=(--mount "type=bind,src=${CI_MOUNT_SOURCE},dst=${CI_MOUNT_DESTINATION},readonly")
++      ;;
++    *)
++      echo "ERROR: Cannot resolve the CI checkout mount for $REPOSITORY_ROOT" >&2
++      exit 2
++      ;;
++  esac
++  CONTAINER_REPOSITORY_ROOT="$REPOSITORY_ROOT"
++  RESULTS_VOLUME="${NODE_MODULES_VOLUME%-nm}-results"
++  RESULTS_MOUNT=(--mount "type=volume,src=${RESULTS_VOLUME},dst=/results")
+ fi
+ 
++# shellcheck disable=SC2317 # Invoked indirectly by the EXIT trap.
+ cleanup() {
++  if [ -n "$RESULTS_COPY_CONTAINER" ]; then
++    docker rm -f "$RESULTS_COPY_CONTAINER" >/dev/null 2>&1 || true
++  fi
+   docker volume rm -f "$NODE_MODULES_VOLUME" >/dev/null 2>&1 || true
++  if [ -n "$RESULTS_VOLUME" ]; then
++    docker volume rm -f "$RESULTS_VOLUME" >/dev/null 2>&1 || true
++  fi
+   rm -rf "$CIDFILE_DIR"
+ }
+ trap cleanup EXIT
+ 
++if [ -n "$RESULTS_VOLUME" ]; then
++  RESULTS_INIT_EXIT=0
++  docker volume create "$RESULTS_VOLUME" >/dev/null || RESULTS_INIT_EXIT=125
++  if [ "$RESULTS_INIT_EXIT" -eq 0 ]; then
++    docker run --rm \
++      --platform "$PLAYWRIGHT_PLATFORM" \
++      --network none \
++      --cap-drop ALL \
++      --security-opt no-new-privileges:true \
++      --mount "type=volume,src=${RESULTS_VOLUME},dst=/results" \
++      "$PLAYWRIGHT_IMAGE" \
++      /bin/bash -lc 'mkdir -p /results/out && chmod 0777 /results /results/out' || RESULTS_INIT_EXIT=$?
++  fi
++  RESULTS_INIT_MAPPED=0
++  bash "$SCRIPT_DIR/map-result.sh" "$RESULTS_INIT_EXIT" dependency || RESULTS_INIT_MAPPED=$?
++  if [ "$RESULTS_INIT_MAPPED" -ne 0 ]; then
++    echo "PW-I03: results init phase mapped result code $RESULTS_INIT_MAPPED" >&2
++    exit "$RESULTS_INIT_MAPPED"
++  fi
++fi
++
+ # Dependency phase
+ DEP_EXIT=0
+ docker run --rm --init \
+@@ -132,9 +239,9 @@ docker run --rm --init \
+   --cap-drop ALL \
+   --security-opt no-new-privileges:true \
+   --tmpfs /tmp:rw,nosuid,nodev,size=512m,mode=1777 \
+-  --workdir /workspace/tests/playwright \
+-  --mount "type=bind,src=${REPOSITORY_ROOT},dst=/workspace,readonly" \
+-  --mount "type=volume,src=${NODE_MODULES_VOLUME},dst=/workspace/tests/playwright/node_modules" \
++  --workdir "${CONTAINER_REPOSITORY_ROOT}/tests/playwright" \
++  "${WORKSPACE_MOUNT[@]}" \
++  --mount "type=volume,src=${NODE_MODULES_VOLUME},dst=${CONTAINER_REPOSITORY_ROOT}/tests/playwright/node_modules" \
+   --cidfile "$DEP_CIDFILE" \
+   --env CI=true \
+   --env HOME=/tmp/pw-home \
+@@ -143,23 +250,36 @@ docker run --rm --init \
+   "$PLAYWRIGHT_IMAGE" \
+   /bin/bash -lc 'mkdir -p "$HOME" "$npm_config_cache" && test "$(node --version)" = v24.17.0 && test "$(npm --version)" = 11.13.0 && node runner/validate-lock.mjs && npm ci --ignore-scripts --no-audit --no-fund' || DEP_EXIT=$?
+ 
+-bash "$SCRIPT_DIR/map-result.sh" "$DEP_EXIT" dependency || true
+-DEP_MAPPED=$?
++DEP_MAPPED=0
++bash "$SCRIPT_DIR/map-result.sh" "$DEP_EXIT" dependency || DEP_MAPPED=$?
+ if [ "$DEP_MAPPED" -ne 0 ]; then
+   echo "PW-I03: dependency phase mapped result code $DEP_MAPPED"
+   exit "$DEP_MAPPED"
+ fi
+ 
+ # PW-I05: Run prerequisite checks for service suites
+-PREREQ_MODE=""
++SERVICE_NAME=""
+ SERVICE_URL=""
+ case "$SUITE" in
+-  service:*)
+-    SERVICE_URL="${SUITE#service:}"
+-    PREREQ_MODE="service"
+-    echo "PW-I05: running prerequisite checks for $SERVICE_URL" >&2
++  service:*:*)
++    SERVICE_SPEC="${SUITE#service:}"
++    SERVICE_NAME="${SERVICE_SPEC%%:*}"
++    SERVICE_URL="${SERVICE_SPEC#*:}"
++    case "$SERVICE_NAME" in
++      audiobookshelf|jellyfin) ;;
++      *)
++        echo "ERROR: Unsupported service name: $SERVICE_NAME" >&2
++        exit 2
++        ;;
++    esac
++    if [[ ! "$SERVICE_URL" =~ ^https:// ]]; then
++      echo "ERROR: Service URL must use https://" >&2
++      exit 2
++    fi
++    echo "PW-I05: running prerequisite checks for $SERVICE_NAME at $SERVICE_URL" >&2
+     if ! bash "${EVIDENCE_DIR}/../prerequisites/check-all.sh" service "$SERVICE_URL"; then
+       echo "PW-I05: prerequisites failed — exiting with prerequisite_error" >&2
++      _generate_forced_manifest "prerequisite_error" 2
+       exit 2
+     fi
+     echo "PW-I05: all prerequisites passed" >&2
+@@ -168,16 +288,22 @@ esac
+ 
+ # Select npm script based on suite
+ case "$SUITE" in
+-  service*)
+-    TEST_SCRIPT="test:service"
++  service:audiobookshelf:*)
++    TEST_SCRIPT="test:service:audiobookshelf"
++    TEST_NETWORK="bridge"
++    ;;
++  service:jellyfin:*)
++    TEST_SCRIPT="test:service:jellyfin"
++    TEST_NETWORK="bridge"
+     ;;
+   *)
+     TEST_SCRIPT="test:platform"
++    TEST_NETWORK="none"
+     ;;
+ esac
+ 
+ # Build test command with optional grep filter
+-TEST_CMD='mkdir -p "$HOME" "$npm_config_cache" && npm run '"${TEST_SCRIPT}"
++TEST_CMD="mkdir -p \"\$HOME\" \"\$npm_config_cache\" && npm run ${TEST_SCRIPT}"
+ if [ -n "${GREP_FILTER:-}" ]; then
+   TEST_CMD="$TEST_CMD -- --grep '${GREP_FILTER}'"
+ else
+@@ -187,23 +313,60 @@ fi
+ TEST_EXIT=0
+ docker run --rm --init --shm-size=1g \
+   --platform "$PLAYWRIGHT_PLATFORM" \
+-  --network none \
++  --network "$TEST_NETWORK" \
+   --cap-drop ALL \
+   --security-opt no-new-privileges:true \
+   --user "${HOST_UID}:${HOST_GID}" \
+   --tmpfs /tmp:rw,nosuid,nodev,size=512m,mode=1777 \
+-  --workdir /workspace/tests/playwright \
+-  --mount "type=bind,src=${REPOSITORY_ROOT},dst=/workspace,readonly" \
+-  --mount "type=volume,src=${NODE_MODULES_VOLUME},dst=/workspace/tests/playwright/node_modules,readonly" \
+-  --mount "type=bind,src=${RESULTS_DIR},dst=/results" \
++  --workdir "${CONTAINER_REPOSITORY_ROOT}/tests/playwright" \
++  "${WORKSPACE_MOUNT[@]}" \
++  --mount "type=volume,src=${NODE_MODULES_VOLUME},dst=${CONTAINER_REPOSITORY_ROOT}/tests/playwright/node_modules,readonly" \
++  "${RESULTS_MOUNT[@]}" \
+   --cidfile "$TEST_CIDFILE" \
+   --env CI=true \
+   --env HOME=/tmp/pw-home \
+   --env npm_config_cache=/tmp/npm-cache \
+   --env PLAYWRIGHT_RESULTS_DIR=/results/out \
++  --env PLAYWRIGHT_JSON_OUTPUT_FILE=/results/out/playwright-report.json \
++  --env "SERVICE_URL=${SERVICE_URL}" \
++  --env "SERVICE_NAME=${SERVICE_NAME}" \
++  --env PW_E2E_ABS_USER \
++  --env PW_E2E_ABS_PASSWORD \
++  --env PW_E2E_ABS_ADMIN_USER \
++  --env PW_E2E_ABS_ADMIN_PASSWORD \
++  --env PW_E2E_KNOWN_TITLE \
++  --env PW_E2E_JF_USER \
++  --env PW_E2E_JF_PASSWORD \
++  --env PW_E2E_JF_ADMIN_USER \
++  --env PW_E2E_JF_ADMIN_PASSWORD \
++  --env PW_E2E_JF_RESTRICTED_USER \
++  --env PW_E2E_JF_RESTRICTED_PASSWORD \
++  --env PW_E2E_JF_RESTRICTED_LIBRARY_ID \
+   "$PLAYWRIGHT_IMAGE" \
+   /bin/bash -lc "$TEST_CMD" || TEST_EXIT=$?
+ 
++if [ -n "$RESULTS_VOLUME" ]; then
++  COPY_EXIT=0
++  RESULTS_COPY_CONTAINER="${RESULTS_VOLUME}-copy"
++  docker create \
++    --name "$RESULTS_COPY_CONTAINER" \
++    --platform "$PLAYWRIGHT_PLATFORM" \
++    --mount "type=volume,src=${RESULTS_VOLUME},dst=/results,readonly" \
++    "$PLAYWRIGHT_IMAGE" \
++    /bin/true >/dev/null || COPY_EXIT=$?
++  if [ "$COPY_EXIT" -eq 0 ]; then
++    rm -rf "$RESULTS_DIR/out"
++    mkdir -p "$RESULTS_DIR/out"
++    docker cp "${RESULTS_COPY_CONTAINER}:/results/out/." "$RESULTS_DIR/out" || COPY_EXIT=$?
++  fi
++  docker rm -f "$RESULTS_COPY_CONTAINER" >/dev/null 2>&1 || true
++  RESULTS_COPY_CONTAINER=""
++  if [ "$COPY_EXIT" -ne 0 ]; then
++    echo "ERROR: Failed to copy Playwright evidence from the CI results volume" >&2
++    TEST_EXIT=125
++  fi
++fi
++
+ # Read and validate cidfiles
+ DEP_CID=""
+ TEST_CID=""
+@@ -225,17 +388,27 @@ DURATION=$(( RUN_END_EPOCH - RUN_START_EPOCH ))
+ 
+ # Determine service name from suite
+ case "$SUITE" in
+-  service*) SERVICE_NAME="playwright-service" ;;
++  service*) : "${SERVICE_NAME:=playwright-service}" ;;
+   *)        SERVICE_NAME="playwright-platform" ;;
+ esac
+ 
+ # Map final exit to result string
+ case "$FINAL_EXIT" in
+   0) RESULT_STR="pass" ;;
++  1) RESULT_STR="fail" ;;
+   2) RESULT_STR="prerequisite_error" ;;
+   *) RESULT_STR="error" ;;
+ esac
+ 
++TEST_COUNTS='{"total":0,"passed":0,"failed":0,"prerequisite_errors":0,"skipped":0}'
++PLAYWRIGHT_REPORT="${RESULTS_DIR}/out/playwright-report.json"
++if [ -f "$PLAYWRIGHT_REPORT" ]; then
++  if ! TEST_COUNTS="$(python3 "${EVIDENCE_DIR}/result-summary.py" "$PLAYWRIGHT_REPORT")"; then
++    echo "PW-I04: result summary extraction failed" >&2
++    exit 1
++  fi
++fi
++
+ # Build trusted envelope and generate manifest
+ MANIFEST_OUT="${RESULTS_DIR}/out/manifest.json"
+ python3 "${EVIDENCE_DIR}/manifest-generate.py" --out "$MANIFEST_OUT" << ENVELOPE
+@@ -249,19 +422,13 @@ python3 "${EVIDENCE_DIR}/manifest-generate.py" --out "$MANIFEST_OUT" << ENVELOPE
+   "service_version": "v1.61.1-noble",
+   "service_version_source": "runner_image",
+   "runner_image": "${PLAYWRIGHT_IMAGE}",
+-  "environment": "${CI:-local}",
+-  "suite": "${SUITE}",
++  "environment": "${RUN_ENVIRONMENT}",
++  "suite": "${MANIFEST_SUITE}",
+   "result": "${RESULT_STR}",
+   "exit_code": ${FINAL_EXIT},
+   "duration_seconds": ${DURATION},
+   "timestamp": "${RUN_TIMESTAMP}",
+-  "tests": {
+-    "total": 0,
+-    "passed": 0,
+-    "failed": 0,
+-    "prerequisite_errors": 0,
+-    "skipped": 0
+-  },
++  "tests": ${TEST_COUNTS},
+   "runtime": {
+     "runner_containers": [
+       {
+diff --git a/tests/playwright/services/audiobookshelf/pages/authorization.ts b/tests/playwright/services/audiobookshelf/pages/authorization.ts
+index 20fafe1..cf2dee6 100644
+--- a/tests/playwright/services/audiobookshelf/pages/authorization.ts
++++ b/tests/playwright/services/audiobookshelf/pages/authorization.ts
+@@ -10,16 +10,19 @@ export class AuthorizationPage {
+ 
+   async tryLogin(username: string, password: string): Promise<boolean> {
+     const login = new LoginPage(this.page);
+-    await login.navigateToRoot();
+-    const hasButton = await login.hasKeycloakButton();
+-    if (!hasButton) return false;
+-    await (await login.getKeycloakButton()).click();
+-    await this.page.waitForURL(/realms\/homelab/, { timeout: 15_000 });
++    await login.openKeycloakLogin();
+     await this.page.fill('input[name="username"]', username);
+     await this.page.fill('input[name="password"]', password);
+     await this.page.getByRole("button", { name: /sign in/i }).click();
+-    await this.page.waitForURL(/audiobookshelf|realms/, { timeout: 10_000 });
+-    return this.page.url().includes("audiobookshelf");
++    const serviceHost = new URL(login.absBaseUrl).hostname;
++    const error = this.page.locator("#kc-error-msg, .alert-error, .kc-feedback-text").first();
++    await Promise.race([
++      this.page.waitForURL((url) => url.hostname === serviceHost, { timeout: 10_000 }),
++      error.waitFor({ state: "visible", timeout: 10_000 }),
++    ]).catch(() => undefined);
++
++    const current = new URL(this.page.url());
++    return current.hostname === serviceHost && !current.pathname.includes("/realms/");
+   }
+ 
+   async isAdminSectionVisible(): Promise<boolean> {
+diff --git a/tests/playwright/services/audiobookshelf/pages/login.ts b/tests/playwright/services/audiobookshelf/pages/login.ts
+index 9c13062..2b96ddc 100644
+--- a/tests/playwright/services/audiobookshelf/pages/login.ts
++++ b/tests/playwright/services/audiobookshelf/pages/login.ts
+@@ -26,6 +26,20 @@ export class LoginPage {
+     });
+   }
+ 
++  async openKeycloakLogin(): Promise<void> {
++    await this.navigateToRoot();
++    if (await this.isKeycloakLoginVisible()) return;
++
++    const button = await this.getKeycloakButton();
++    await button.click();
++    await this.page.waitForURL(/realms\/homelab/, { timeout: 15_000 });
++  }
++
++  async isKeycloakLoginVisible(): Promise<boolean> {
++    const username = this.page.locator('input[name="username"]');
++    return username.isVisible().catch(() => false);
++  }
++
+   async isOnLoginPage(): Promise<boolean> {
+     const url = this.page.url();
+     return url.includes("/login") || url.includes("/auth/openid");
+diff --git a/tests/playwright/services/audiobookshelf/smoke-authenticated.spec.ts b/tests/playwright/services/audiobookshelf/smoke-authenticated.spec.ts
+index 8fa03ca..d73956a 100644
+--- a/tests/playwright/services/audiobookshelf/smoke-authenticated.spec.ts
++++ b/tests/playwright/services/audiobookshelf/smoke-authenticated.spec.ts
+@@ -8,12 +8,7 @@ test.describe("PW-I13: Audiobookshelf authenticated login and logout smoke", ()
+ 
+   test("SSO button redirects to Keycloak realm", async ({ page }) => {
+     const login = new LoginPage(page);
+-    await login.navigateToRoot();
+-    const hasButton = await login.hasKeycloakButton();
+-    expect(hasButton).toBeTruthy();
+-    const button = await login.getKeycloakButton();
+-    await button.click();
+-    await page.waitForURL(/realms\/homelab/, { timeout: 15_000 });
++    await login.openKeycloakLogin();
+     expect(page.url()).toContain("realms/homelab");
+   });
+ 
+@@ -23,9 +18,7 @@ test.describe("PW-I13: Audiobookshelf authenticated login and logout smoke", ()
+     test.skip(!user || !pass, "PW_E2E_ABS_USER and PW_E2E_ABS_PASSWORD must be set");
+ 
+     const login = new LoginPage(page);
+-    await login.navigateToRoot();
+-    await (await login.getKeycloakButton()).click();
+-    await page.waitForURL(/realms\/homelab/, { timeout: 15_000 });
++    await login.openKeycloakLogin();
+ 
+     await page.fill('input[name="username"]', user);
+     await page.fill('input[name="password"]', pass);
+@@ -43,9 +36,7 @@ test.describe("PW-I13: Audiobookshelf authenticated login and logout smoke", ()
+     test.skip(!user || !pass, "credentials required");
+ 
+     const login = new LoginPage(page);
+-    await login.navigateToRoot();
+-    await (await login.getKeycloakButton()).click();
+-    await page.waitForURL(/realms\/homelab/, { timeout: 15_000 });
++    await login.openKeycloakLogin();
+     await page.fill('input[name="username"]', user);
+     await page.fill('input[name="password"]', pass);
+     await page.getByRole("button", { name: /sign in/i }).click();
+@@ -64,9 +55,7 @@ test.describe("PW-I13: Audiobookshelf authenticated login and logout smoke", ()
+     test.skip(!user || !pass, "credentials required");
+ 
+     const login = new LoginPage(page);
+-    await login.navigateToRoot();
+-    await (await login.getKeycloakButton()).click();
+-    await page.waitForURL(/realms\/homelab/, { timeout: 15_000 });
++    await login.openKeycloakLogin();
+     await page.fill('input[name="username"]', user);
+     await page.fill('input[name="password"]', pass);
+     await page.getByRole("button", { name: /sign in/i }).click();
+@@ -87,9 +76,7 @@ test.describe("PW-I13: Audiobookshelf authenticated login and logout smoke", ()
+ 
+   test("callback failure (wrong credentials) shows error", async ({ page }) => {
+     const login = new LoginPage(page);
+-    await login.navigateToRoot();
+-    await (await login.getKeycloakButton()).click();
+-    await page.waitForURL(/realms\/homelab/, { timeout: 15_000 });
++    await login.openKeycloakLogin();
+ 
+     await page.fill('input[name="username"]', "nonexistent-user");
+     await page.fill('input[name="password"]', "wrong-password");
+diff --git a/tests/playwright/services/audiobookshelf/smoke-unauthenticated.spec.ts b/tests/playwright/services/audiobookshelf/smoke-unauthenticated.spec.ts
+index 1328165..bd537d1 100644
+--- a/tests/playwright/services/audiobookshelf/smoke-unauthenticated.spec.ts
++++ b/tests/playwright/services/audiobookshelf/smoke-unauthenticated.spec.ts
+@@ -40,13 +40,11 @@ test.describe("PW-I12: Audiobookshelf unauthenticated smoke", () => {
+     expect(isRendered).toBeTruthy();
+   });
+ 
+-  test("Keycloak SSO button is present (if on login page)", async ({ page }) => {
++  test("Keycloak login or SSO handoff is present", async ({ page }) => {
+     await login.navigateToRoot();
+-    const url = page.url();
+-    if (url.includes("/login") || url.includes("/auth/openid")) {
+-      const hasButton = await login.hasKeycloakButton();
+-      expect(hasButton).toBeTruthy();
+-    }
++    const hasButton = await login.hasKeycloakButton();
++    const hasKeycloakForm = await login.isKeycloakLoginVisible();
++    expect(hasButton || hasKeycloakForm).toBeTruthy();
+   });
+ 
+   test("page title or main content area exists", async ({ page }) => {
+@@ -54,6 +52,7 @@ test.describe("PW-I12: Audiobookshelf unauthenticated smoke", () => {
+     await page.waitForLoadState("networkidle");
+     const title = await page.title();
+     const hasMain = (await login.getMainContent().then((m) => m.count())) > 0;
+-    expect(title.length > 0 || hasMain).toBeTruthy();
++    const hasKeycloakForm = await login.isKeycloakLoginVisible();
++    expect(title.length > 0 || hasMain || hasKeycloakForm).toBeTruthy();
+   });
+ });
+diff --git a/tests/test_checks.sh b/tests/test_checks.sh
+index 1ef1cf3..b88c6a5 100755
+--- a/tests/test_checks.sh
++++ b/tests/test_checks.sh
+@@ -175,9 +175,23 @@ test_git_diff_check_passes_clean() {
+ # Test: check-git-diff CI push mode (no GITHUB_BASE_REF)
+ # ---------------------------------------------------------------------------
+ test_git_diff_ci_push_passes_clean() {
+-  local output exit_code
++  local tmpdir output exit_code
++  tmpdir="$(mktemp -d)"
++  trap 'rm -rf "$tmpdir"' RETURN
+ 
+-  output=$(CI=true env -u GITHUB_BASE_REF bash "$REPO_ROOT/scripts/check-git-diff.sh" 2>&1)
++  git -C "$tmpdir" init -q
++  git -C "$tmpdir" config user.email "test@test"
++  git -C "$tmpdir" config user.name "test"
++  echo "base" > "$tmpdir/base.txt"
++  git -C "$tmpdir" add base.txt
++  git -C "$tmpdir" commit -m "base" -q
++  echo "clean" > "$tmpdir/feature.txt"
++  git -C "$tmpdir" add feature.txt
++  git -C "$tmpdir" commit -m "clean feature" -q
++  mkdir -p "$tmpdir/scripts"
++  cp "$REPO_ROOT/scripts/check-git-diff.sh" "$tmpdir/scripts/check-git-diff.sh"
++
++  output=$(cd "$tmpdir" && CI=true env -u GITHUB_BASE_REF bash scripts/check-git-diff.sh 2>&1)
+   exit_code=$?
+ 
+   if [[ $exit_code -eq 0 ]]; then
+@@ -195,9 +209,27 @@ test_git_diff_ci_push_passes_clean() {
+ # Test: check-git-diff CI pull_request mode with valid base
+ # ---------------------------------------------------------------------------
+ test_git_diff_ci_pull_request_passes_clean() {
+-  local output exit_code
++  local tmpdir remote_dir output exit_code
++  tmpdir="$(mktemp -d)"
++  remote_dir="$(mktemp -d)"
++  trap 'rm -rf "$tmpdir" "$remote_dir"' RETURN
++
++  git -C "$remote_dir" init --bare -q
++  git clone "$remote_dir" "$tmpdir/wc" -q
++  git -C "$tmpdir/wc" config user.email "test@test"
++  git -C "$tmpdir/wc" config user.name "test"
++  echo "base" > "$tmpdir/wc/base.txt"
++  git -C "$tmpdir/wc" add base.txt
++  git -C "$tmpdir/wc" commit -m "base" -q
++  git -C "$tmpdir/wc" push origin HEAD:main -q
++  git -C "$tmpdir/wc" switch -c clean-feature -q
++  echo "clean" > "$tmpdir/wc/feature.txt"
++  git -C "$tmpdir/wc" add feature.txt
++  git -C "$tmpdir/wc" commit -m "clean feature" -q
++  mkdir -p "$tmpdir/wc/scripts"
++  cp "$REPO_ROOT/scripts/check-git-diff.sh" "$tmpdir/wc/scripts/check-git-diff.sh"
+ 
+-  output=$(CI=true GITHUB_BASE_REF=main bash "$REPO_ROOT/scripts/check-git-diff.sh" 2>&1)
++  output=$(cd "$tmpdir/wc" && CI=true GITHUB_BASE_REF=main bash scripts/check-git-diff.sh 2>&1)
+   exit_code=$?
+ 
+   if [[ $exit_code -eq 0 ]]; then
+diff --git a/tests/test_ci_generator.py b/tests/test_ci_generator.py
+index fce48fe..0a5915b 100644
+--- a/tests/test_ci_generator.py
++++ b/tests/test_ci_generator.py
+@@ -184,16 +184,20 @@ def test_playwright_steps_have_explicit_arguments():
+     assert "run: bash tests/playwright/runner/run.sh platform" in workflow, (
+         "playwright-platform must pass 'platform' argument"
+     )
+-    assert "- name: playwright-service" in workflow
+-    assert "run: bash tests/playwright/runner/run.sh service" in workflow, (
+-        "playwright-service must pass 'service' argument"
++    assert "PLAYWRIGHT_RUN_AS_UID: 1000" in workflow
++    assert "PLAYWRIGHT_RUN_AS_GID: 1000" in workflow
++    assert "- name: playwright-operations" in workflow
++    assert "run: python3 tests/test_playwright_operations.py" in workflow, (
++        "PW-I18 operations policy tests must be an explicit CI step"
+     )
+     assert "- name: smoke-audiobookshelf" in workflow
+-    assert "run: bash tests/playwright/ci/post-deploy.sh" in workflow
++    assert "post-deploy.sh audiobookshelf" in workflow
++    assert "- name: smoke-jellyfin" in workflow
++    assert "post-deploy.sh jellyfin" in workflow
+ 
+ 
+ def test_post_deploy_has_branch_condition():
+-    """Post-deploy job must run only on main branch and pass deployed URL."""
++    """Each post-deploy job must run only on main with explicit targets."""
+     import importlib.util
+ 
+     spec = importlib.util.spec_from_file_location("ci_generate", GENERATOR)
+@@ -201,16 +205,50 @@ def test_post_deploy_has_branch_condition():
+     spec.loader.exec_module(module)
+     workflow = module.generate_gitea_workflow(module.load_manifest(MANIFEST))
+ 
+-    assert "  post-deploy:" in workflow
+-    assert "if: github.ref == 'refs/heads/main'" in workflow, (
+-        "post-deploy job must have a main-branch condition"
++    assert "  post-deploy-audiobookshelf:" in workflow
++    assert "  post-deploy-jellyfin:" in workflow
++    assert workflow.count("if: github.ref == 'refs/heads/main'") >= 2, (
++        "both post-deploy jobs must have a main-branch condition"
+     )
+     assert "secrets.AUDIOBOOKSHELF_URL" in workflow, (
+         "post-deploy must reference AUDIOBOOKSHELF_URL secret"
+     )
+-    assert "post-deploy.sh" in workflow and '"$SERVICE_URL"' in workflow, (
+-        "post-deploy must call post-deploy.sh with SERVICE_URL argument"
++    assert "secrets.JELLYFIN_URL" in workflow, (
++        "post-deploy must reference JELLYFIN_URL secret"
+     )
++    for secret_name in (
++        "PW_E2E_ABS_USER",
++        "PW_E2E_ABS_PASSWORD",
++        "PW_E2E_ABS_ADMIN_USER",
++        "PW_E2E_ABS_ADMIN_PASSWORD",
++        "PW_E2E_KNOWN_TITLE",
++        "PW_E2E_JF_USER",
++        "PW_E2E_JF_PASSWORD",
++        "PW_E2E_JF_ADMIN_USER",
++        "PW_E2E_JF_ADMIN_PASSWORD",
++        "PW_E2E_JF_RESTRICTED_USER",
++        "PW_E2E_JF_RESTRICTED_PASSWORD",
++        "PW_E2E_JF_RESTRICTED_LIBRARY_ID",
++    ):
++        assert f"secrets.{secret_name}" in workflow
++    assert 'post-deploy.sh audiobookshelf "$SERVICE_URL"' in workflow
++    assert 'post-deploy.sh jellyfin "$SERVICE_URL"' in workflow
++    assert workflow.count("PLAYWRIGHT_ENVIRONMENT: production") == 2
++
++
++def test_post_deploy_uploads_exact_sha_evidence():
++    """Runtime gates must retain inspectable manifests and browser artifacts."""
++    import importlib.util
++
++    spec = importlib.util.spec_from_file_location("ci_generate", GENERATOR)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    workflow = module.generate_gitea_workflow(module.load_manifest(MANIFEST))
++
++    assert "playwright-audiobookshelf-evidence" in workflow
++    assert "playwright-jellyfin-evidence" in workflow
++    assert "test-results/playwright/out/" in workflow
++    assert "if-no-files-found: error" in workflow
+ 
+ 
+ if __name__ == "__main__":
+@@ -225,6 +263,7 @@ if __name__ == "__main__":
+         test_matrix_coturn_is_registered,
+         test_playwright_steps_have_explicit_arguments,
+         test_post_deploy_has_branch_condition,
++        test_post_deploy_uploads_exact_sha_evidence,
+     ]
+     failures = 0
+     for t in tests:
+diff --git a/tests/test_playwright_bootstrap.py b/tests/test_playwright_bootstrap.py
+index 7ff3f27..76dfe27 100644
+--- a/tests/test_playwright_bootstrap.py
++++ b/tests/test_playwright_bootstrap.py
+@@ -7,6 +7,7 @@ Verifies invariants defined in PW-D01 and PW-D02 without running Docker.
+ import json
+ import os
+ import re
++import shutil
+ import stat
+ import subprocess
+ import sys
+@@ -23,11 +24,13 @@ BUNDLE_DIR = os.path.join(EVIDENCE_DIR, "bundle")
+ PACKAGE_JSON = os.path.join(PLAYWRIGHT_DIR, "package.json")
+ PLAYWRIGHT_CONFIG = os.path.join(PLAYWRIGHT_DIR, "playwright.config.ts")
+ RUN_SH = os.path.join(RUNNER_DIR, "run.sh")
++POST_DEPLOY_SH = os.path.join(PLAYWRIGHT_DIR, "ci", "post-deploy.sh")
+ BOOTSTRAP_SPEC = os.path.join(RUNNER_DIR, "bootstrap.spec.ts")
+ VALIDATE_LOCK = os.path.join(RUNNER_DIR, "validate-lock.mjs")
+ MANIFEST_SCHEMA = os.path.join(EVIDENCE_DIR, "manifest.schema.json")
+ MANIFEST_GENERATE = os.path.join(EVIDENCE_DIR, "manifest-generate.py")
+ MANIFEST_VALIDATE_SH = os.path.join(EVIDENCE_DIR, "manifest-validate.sh")
++RESULT_SUMMARY = os.path.join(EVIDENCE_DIR, "result-summary.py")
+ GITIGNORE = os.path.join(REPO_ROOT, ".gitignore")
+ 
+ FIXED_IMAGE = "mcr.microsoft.com/playwright:v1.61.1-noble@sha256:cf0daee9b994042e011bc29f20cdff1a9f682a039b43fcd738f7d8a9d3bcd9d6"
+@@ -142,7 +145,8 @@ def test_package_json_parses():
+     assert pkg.get("devDependencies") == {"@playwright/test": "1.61.1"}
+     assert pkg.get("scripts") == {
+         "test:platform": "playwright test --config=playwright.config.ts --project=chromium platform/ evidence/ runner/",
+-        "test:service": "playwright test --config=playwright.config.ts --project=chromium services/"
++        "test:service:audiobookshelf": "playwright test --config=playwright.config.ts --project=chromium services/audiobookshelf/",
++        "test:service:jellyfin": "playwright test --config=playwright.config.ts --project=chromium services/jellyfin/",
+     }
+ 
+ 
+@@ -179,6 +183,7 @@ def test_playwright_config_content():
+     assert "retries: 0" in config, "Missing retries: 0"
+     assert "chromiumSandbox: false" in config, "Missing chromiumSandbox: false"
+     assert "PLAYWRIGHT_RESULTS_DIR" in config, "Missing PLAYWRIGHT_RESULTS_DIR env reference"
++    assert "PLAYWRIGHT_JSON_OUTPUT_FILE" in config, "Missing machine-readable result reporter"
+     assert "outputDir:" in config, "Missing outputDir"
+     assert "firefox" not in config.lower(), "Firefox should not be present"
+     assert "webkit" not in config.lower(), "WebKit should not be present"
+@@ -542,10 +547,20 @@ def test_local_page_exists():
+ 
+ 
+ def test_self_test_uses_local_content():
+-    with open(SELF_TEST_SPEC) as f:
+-        content = f.read()
+-    assert "file:///" in content, "Self-test must use local file:// URLs"
+-    assert "local-page.html" in content, "Self-test must reference local-page.html"
++    specs = [
++        SELF_TEST_SPEC,
++        os.path.join(ARTIFACTS_DIR, "artifact-self-test.spec.ts"),
++    ]
++    for spec in specs:
++        with open(spec) as f:
++            content = f.read()
++        assert "new URL" in content and "import.meta.url" in content, (
++            f"{spec} must resolve local content relative to its module"
++        )
++        assert "file:///workspace" not in content, (
++            f"{spec} must not assume a fixed container workspace"
++        )
++        assert "local-page.html" in content, f"{spec} must reference local-page.html"
+ 
+ 
+ def test_self_test_has_chromium_startup():
+@@ -826,6 +841,184 @@ def test_run_sh_grep_filter_in_test_cmd():
+         assert "custom.test.pattern" in calls, "Custom grep filter not passed to docker"
+ 
+ 
++def test_run_sh_ci_root_uses_explicit_non_root_container_identity():
++    """A root-hosted CI job must keep the nested browser container non-root."""
++    with tempfile.TemporaryDirectory() as tmpdir:
++        temp_repo = os.path.join(tmpdir, "repo")
++        temp_playwright = os.path.join(temp_repo, "tests", "playwright")
++        shutil.copytree(
++            PLAYWRIGHT_DIR,
++            temp_playwright,
++            ignore=shutil.ignore_patterns("node_modules"),
++        )
++        temp_run_sh = os.path.join(temp_playwright, "runner", "run.sh")
++        fake_docker = os.path.join(tmpdir, "docker")
++        fake_log = os.path.join(tmpdir, "docker.log")
++        with open(fake_docker, "w") as f:
++            f.write(
++                "#!/usr/bin/env bash\n"
++                "echo \"$@\" >> \"$FAKE_DOCKER_LOG\"\n"
++                "if [ \"${1:-} ${2:-}\" = 'container inspect' ]; then\n"
++                f"  printf 'volume|ci-workspace|/host/workspace|{tmpdir}\\n'\n"
++                "fi\n"
++                "exit 0\n"
++            )
++        os.chmod(fake_docker, 0o755)
++        fake_id = os.path.join(tmpdir, "id")
++        with open(fake_id, "w") as f:
++            f.write("#!/usr/bin/env bash\necho 0\n")
++        os.chmod(fake_id, 0o755)
++        env = os.environ.copy()
++        env.update(
++            {
++                "PATH": f"{tmpdir}:{env['PATH']}",
++                "FAKE_DOCKER_LOG": fake_log,
++                "CI": "true",
++                "PLAYWRIGHT_RUN_AS_UID": "1001",
++                "PLAYWRIGHT_RUN_AS_GID": "1002",
++            }
++        )
++        result = subprocess.run(
++            ["bash", temp_run_sh, "platform"],
++            cwd=temp_repo,
++            capture_output=True,
++            text=True,
++            env=env,
++            timeout=30,
++        )
++        assert result.returncode == 0, result.stderr
++        with open(fake_log) as f:
++            calls = f.read().splitlines()
++        assert any("--user 1001:1002" in call for call in calls), calls
++        assert not any("--volumes-from" in call for call in calls), calls
++        assert any(
++            f"type=volume,src=ci-workspace,dst={tmpdir},readonly" in call
++            for call in calls
++        ), calls
++        assert not any(
++            f"type=bind,src={temp_repo},dst=/workspace" in call for call in calls
++        ), calls
++        assert any("type=volume" in call and "dst=/results" in call for call in calls), calls
++        assert any("chmod 0777 /results /results/out" in call for call in calls), calls
++        dependency_calls = [call for call in calls if "--network bridge" in call]
++        assert not any("dst=/results" in call for call in dependency_calls), calls
++        assert any("cp " in call and ":/results/out/." in call for call in calls), calls
++        assert os.path.isdir(os.path.join(temp_playwright, "node_modules"))
++
++
++def test_run_sh_stops_after_dependency_docker_failure():
++    """A dependency infrastructure failure must not start the browser phase."""
++    with tempfile.TemporaryDirectory() as tmpdir:
++        fake_docker = os.path.join(tmpdir, "docker")
++        fake_log = os.path.join(tmpdir, "docker.log")
++        failure_marker = os.path.join(tmpdir, "dependency-failed")
++        with open(fake_docker, "w") as f:
++            f.write(
++                "#!/usr/bin/env bash\n"
++                "echo \"$@\" >> \"$FAKE_DOCKER_LOG\"\n"
++                "if [ \"${1:-}\" = run ] && [ ! -e \"$FAILURE_MARKER\" ]; then\n"
++                "  touch \"$FAILURE_MARKER\"\n"
++                "  exit 125\n"
++                "fi\n"
++                "exit 0\n"
++            )
++        os.chmod(fake_docker, 0o755)
++        fake_id = os.path.join(tmpdir, "id")
++        with open(fake_id, "w") as f:
++            f.write("#!/usr/bin/env bash\necho 1001\n")
++        os.chmod(fake_id, 0o755)
++        env = os.environ.copy()
++        env.update(
++            {
++                "PATH": f"{tmpdir}:{env['PATH']}",
++                "FAKE_DOCKER_LOG": fake_log,
++                "FAILURE_MARKER": failure_marker,
++            }
++        )
++        result = subprocess.run(
++            ["bash", RUN_SH, "platform"],
++            cwd=REPO_ROOT,
++            capture_output=True,
++            text=True,
++            env=env,
++            timeout=30,
++        )
++        assert result.returncode == 1, result.stderr
++        with open(fake_log) as f:
++            run_calls = [line for line in f.read().splitlines() if line.startswith("run ")]
++        assert len(run_calls) == 1, run_calls
++
++
++def test_run_sh_service_target_uses_network_and_service_specific_suite():
++    """Live service runs must forward one explicit target to one service suite."""
++    with tempfile.TemporaryDirectory() as tmpdir:
++        fake_docker = os.path.join(tmpdir, "docker")
++        fake_log = os.path.join(tmpdir, "docker.log")
++        with open(fake_docker, "w") as f:
++            f.write("#!/usr/bin/env bash\necho \"$@\" >> \"$FAKE_DOCKER_LOG\"\nexit 0\n")
++        os.chmod(fake_docker, 0o755)
++        fake_id = os.path.join(tmpdir, "id")
++        with open(fake_id, "w") as f:
++            f.write("#!/usr/bin/env bash\necho 1001\n")
++        os.chmod(fake_id, 0o755)
++        fake_bash = os.path.join(tmpdir, "bash")
++        with open(fake_bash, "w") as f:
++            f.write(
++                "#!/bin/bash\n"
++                "if [[ ${1:-} == */prerequisites/check-all.sh ]]; then exit 0; fi\n"
++                "exec /usr/bin/bash \"$@\"\n"
++            )
++        os.chmod(fake_bash, 0o755)
++        env = os.environ.copy()
++        env.update({"PATH": f"{tmpdir}:{env['PATH']}", "FAKE_DOCKER_LOG": fake_log})
++        result = subprocess.run(
++            [
++                "bash",
++                RUN_SH,
++                "service:audiobookshelf:https://audiobookshelf.example.test",
++            ],
++            cwd=REPO_ROOT,
++            capture_output=True,
++            text=True,
++            env=env,
++            timeout=30,
++        )
++        assert result.returncode == 0, result.stderr
++        with open(fake_log) as f:
++            calls = f.read().splitlines()
++        test_call = next(call for call in calls if "--user" in call)
++        assert "--network bridge" in test_call, test_call
++        assert "SERVICE_URL=https://audiobookshelf.example.test" in test_call, test_call
++        assert "npm run test:service:audiobookshelf" in test_call, test_call
++
++
++def test_post_deploy_fails_closed_without_service_credentials():
++    """A live authenticated gate may not silently skip when secrets are absent."""
++    env = os.environ.copy()
++    for name in (
++        "PW_E2E_ABS_USER",
++        "PW_E2E_ABS_PASSWORD",
++        "PW_E2E_ABS_ADMIN_USER",
++        "PW_E2E_ABS_ADMIN_PASSWORD",
++    ):
++        env.pop(name, None)
++    result = subprocess.run(
++        [
++            "bash",
++            POST_DEPLOY_SH,
++            "audiobookshelf",
++            "https://audiobookshelf.example.test",
++        ],
++        cwd=REPO_ROOT,
++        capture_output=True,
++        text=True,
++        env=env,
++        timeout=10,
++    )
++    assert result.returncode == 2
++    assert "PW_E2E_ABS_USER" in result.stderr
++
++
+ # ---------------------------------------------------------------------------
+ # 13. Evidence manifest tests (PW-I04)
+ # ---------------------------------------------------------------------------
+@@ -998,6 +1191,39 @@ def test_manifest_generate_accepts_ac_fields():
+         assert manifest["acceptance_criteria"][0]["id"] == "PWR-001"
+ 
+ 
++def test_result_summary_counts_final_test_outcomes():
++    report = {
++        "suites": [
++            {
++                "suites": [],
++                "specs": [
++                    {"tests": [{"results": [{"status": "passed"}]}]},
++                    {"tests": [{"results": [{"status": "failed"}]}]},
++                    {"tests": [{"results": [{"status": "skipped"}]}]},
++                ],
++            }
++        ]
++    }
++    with tempfile.TemporaryDirectory() as tmpdir:
++        report_path = os.path.join(tmpdir, "report.json")
++        with open(report_path, "w") as f:
++            json.dump(report, f)
++        result = subprocess.run(
++            ["python3", RESULT_SUMMARY, report_path],
++            capture_output=True,
++            text=True,
++            timeout=10,
++        )
++    assert result.returncode == 0, result.stderr
++    assert json.loads(result.stdout) == {
++        "total": 3,
++        "passed": 1,
++        "failed": 1,
++        "prerequisite_errors": 0,
++        "skipped": 1,
++    }
++
++
+ def test_run_sh_invokes_manifest():
+     """run.sh must invoke manifest-generate.py."""
+     with open(RUN_SH) as f:
+@@ -1463,6 +1689,10 @@ if __name__ == "__main__":
+         test_run_sh_forced_pass_subcommand,
+         test_run_sh_forced_fail_subcommand,
+         test_run_sh_grep_filter_in_test_cmd,
++        test_run_sh_ci_root_uses_explicit_non_root_container_identity,
++        test_run_sh_stops_after_dependency_docker_failure,
++        test_run_sh_service_target_uses_network_and_service_specific_suite,
++        test_post_deploy_fails_closed_without_service_credentials,
+         test_evidence_dir_exists,
+         test_manifest_schema_exists,
+         test_manifest_generate_exists,
+@@ -1476,6 +1706,7 @@ if __name__ == "__main__":
+         test_manifest_generate_rejects_missing_field,
+         test_manifest_generate_rejects_invalid_exit_code,
+         test_manifest_generate_accepts_ac_fields,
++        test_result_summary_counts_final_test_outcomes,
+         test_run_sh_invokes_manifest,
+         test_run_sh_manifest_out_dir,
+         test_prereq_dir_exists,
