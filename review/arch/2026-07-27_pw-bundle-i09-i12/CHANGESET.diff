@@ -66,17 +66,17 @@ index 0000000..81a3c90
 +- No Audiobookshelf-specific logic enters shared fixtures (PWR-074)
 diff --git a/docs/playwright-synthetic-identities.md b/docs/playwright-synthetic-identities.md
 new file mode 100644
-index 0000000..8246fc7
+index 0000000..6bf98f2
 --- /dev/null
 +++ b/docs/playwright-synthetic-identities.md
-@@ -0,0 +1,71 @@
+@@ -0,0 +1,114 @@
 +# Synthetic Playwright Identities — Contract
 +
 +## Overview
 +
 +Idempotent provisioning contract for three synthetic Audiobookshelf identities
 +used by Playwright E2E tests. The provisioning script creates/manages Keycloak
-+users without exposing credentials.
++users, rotates passwords, and reconciles group membership.
 +
 +## Identities
 +
@@ -101,8 +101,27 @@ index 0000000..8246fc7
 +
 +| Mode | Flag | Behavior |
 +|------|------|----------|
-+| Dry-run | `--dry-run` (default) | Mock kcadm calls, prove realm/groups exist |
-+| Commit | `--commit` | Execute real provisioning (operator runtime only) |
++| Dry-run | `--dry-run` (default) | Read-only checks: verify realm, groups, client exist via kcadm |
++| Commit | `--commit` | Full provisioning: create users, rotate passwords, reconcile groups |
++
++### Commit Mode Behavior
++
++1. Assert realm, groups, client exist (fail-closed)
++2. For each identity:
++   - Create user if not exists
++   - Rotate password (new random 24-char password per run)
++   - Add to target group if not already a member
++   - Denied identity remains ungrouped
++3. Idempotent: existing users are not recreated; already-in-group is no-op
++
++### Dry-run Behavior
++
++Read-only validation — invokes real kcadm calls to verify:
++- Realm `homelab` exists
++- Groups `audiobookshelf-users` and `audiobookshelf-admins` exist
++- Client `audiobookshelf` exists
++
++Fails immediately if any prerequisite is missing.
 +
 +### Security Constraints
 +
@@ -122,37 +141,153 @@ index 0000000..8246fc7
 +
 +**Path:** `pi/tests/test_playwright_identities.sh`
 +
-+13 mock tests covering:
++31 mock tests covering:
 +- xtrace refusal
 +- dry-run and commit modes
 +- Help flag and argument validation
-+- Realm/group/client assertions
-+- Idempotent execution
++- Dry-run read-only checks (realm, groups, client)
++- Dry-run failure on missing prerequisites
++- Commit mode: user creation, password rotation, group reconciliation
++- Commit mode: denied identity stays ungrouped
++- Idempotency (existing user, already-in-group)
 +- Secret-free output
-+- Identity provisioning order
++- Credentials file creation, permissions, JSON validity, completeness
++- Credential loader: role selection, env var export, invalid role rejection, insecure perms rejection, exact password match with special characters
++
++**Note:** The previous version listed 13 tests. The count increased to 21 after
++adding fail-closed password provisioning, group reconciliation, and dry-run
++read-only prerequisite checks.
 +
 +Run: `bash pi/tests/test_playwright_identities.sh`
 +
 +## Runtime Injection
 +
-+Credentials are injected at container start via environment variables:
++### Credentials File (commit mode)
++
++After provisioning, the script writes a credentials file to:
++`$PW_E2E_CREDENTIALS_DIR/.credentials.json` (default: `~/.playwright-e2e/.credentials.json`)
++
++File permissions: `0600` (owner-only read/write).
++
++```json
++{
++  "pw-e2e-abs-user": {"username": "pw-e2e-abs-user", "password": "<generated>"},
++  "pw-e2e-abs-admin": {"username": "pw-e2e-abs-admin", "password": "<generated>"},
++  "pw-e2e-abs-denied": {"username": "pw-e2e-abs-denied", "password": "<generated>"}
++}
++```
++
++### Environment Variables
++
++The Playwright test runner reads the credentials file at startup and injects:
 +- `PW_E2E_ABS_USER` — username
 +- `PW_E2E_ABS_PASSWORD` — password
 +
-+The provisioning script generates and stores passwords in Keycloak; the test
-+runner receives them at runtime. Passwords are never committed to code.
++Passwords are never committed to code or printed to stdout/stderr.
+diff --git a/pi/audiobookshelf/scripts/load-playwright-credentials.sh b/pi/audiobookshelf/scripts/load-playwright-credentials.sh
+new file mode 100755
+index 0000000..e84bc7f
+--- /dev/null
++++ b/pi/audiobookshelf/scripts/load-playwright-credentials.sh
+@@ -0,0 +1,84 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++readonly LOAD_CRED_SCRIPT_NAME="load-playwright-credentials"
++readonly CREDENTIALS_DIR="${PW_E2E_CREDENTIALS_DIR:-$HOME/.playwright-e2e}"
++readonly CREDENTIALS_FILE="$CREDENTIALS_DIR/.credentials.json"
++
++usage() {
++  cat <<'USAGE' >&2
++Usage: source load-playwright-credentials.sh [--role user|admin|denied]
++
++Reads .credentials.json written by setup-playwright-identities.sh and exports
++PW_E2E_ABS_USER and PW_E2E_ABS_PASSWORD environment variables for the
++requested role.
++
++Modes:
++  --role user    Load pw-e2e-abs-user credentials (default)
++  --role admin   Load pw-e2e-abs-admin credentials
++  --role denied  Load pw-e2e-abs-denied credentials
++
++Must be sourced, not executed:
++  source pi/audiobookshelf/scripts/load-playwright-credentials.sh --role user
++
++Security:
++  * Refuses set -x (xtrace) to prevent secret leakage.
++  * Credentials file must exist and have mode 0600.
++  * Never prints passwords to stdout/stderr.
++USAGE
++}
++
++die() {
++  echo "ERROR: $*" >&2
++  return 1 2>/dev/null || exit 1
++}
++
++if [[ "${BASH_XTRACEFD:-}" ]] || [[ $- == *x* ]]; then
++  die "xtrace is forbidden — prevents secret leakage"
++fi
++
++_load_creds_role="user"
++while [[ $# -gt 0 ]]; do
++  case "${1:-}" in
++    --role) shift; _load_creds_role="${1:-user}" ;;
++    --help|-h) usage; return 0 ;;
++    *) usage; return 1 ;;
++  esac
++  shift
++done
++
++[[ "$_load_creds_role" =~ ^(user|admin|denied)$ ]] || die "Invalid role: $_load_creds_role (expected user, admin, or denied)"
++
++[[ -f "$CREDENTIALS_FILE" ]] || die "Credentials file not found: $CREDENTIALS_FILE (run setup-playwright-identities.sh --commit first)"
++
++export PW_E2E_ABS_USER PW_E2E_ABS_PASSWORD
++mapfile -t -d '' _creds < <(
++  python3 -c "
++import json, sys, os
++
++path = sys.argv[1]
++mode = oct(os.stat(path).st_mode)[-3:]
++if mode != '600':
++    print(f'ERROR: Credentials file has insecure permissions: {mode} (expected 600)', file=sys.stderr)
++    sys.exit(1)
++
++with open(path) as f:
++    data = json.load(f)
++
++role = sys.argv[2]
++if role not in data:
++    print(f'ERROR: Role {role} not found in credentials file', file=sys.stderr)
++    sys.exit(1)
++
++entry = data[role]
++sys.stdout.write(entry['username'] + chr(0))
++sys.stdout.write(entry['password'] + chr(0))
++" "$CREDENTIALS_FILE" "$_load_creds_role"
++) || die "Failed to read credentials"
++
++PW_E2E_ABS_USER="${_creds[0]-}"
++PW_E2E_ABS_PASSWORD="${_creds[1]-}"
++
++[[ -n "$PW_E2E_ABS_PASSWORD" ]] || die "Empty password for role '$_load_creds_role'"
++
++echo "[$LOAD_CRED_SCRIPT_NAME] Loaded credentials for role '$_load_creds_role' (user=$PW_E2E_ABS_USER)"
 diff --git a/pi/audiobookshelf/scripts/setup-playwright-identities.sh b/pi/audiobookshelf/scripts/setup-playwright-identities.sh
 new file mode 100755
-index 0000000..b42cd5f
+index 0000000..657109f
 --- /dev/null
 +++ b/pi/audiobookshelf/scripts/setup-playwright-identities.sh
-@@ -0,0 +1,127 @@
+@@ -0,0 +1,220 @@
 +#!/usr/bin/env bash
 +set -euo pipefail
 +
 +readonly SCRIPT_NAME="setup-playwright-identities"
 +readonly REALM="homelab"
 +readonly CLIENT_ID="audiobookshelf"
++readonly CREDENTIALS_DIR="${PW_E2E_CREDENTIALS_DIR:-$HOME/.playwright-e2e}"
++readonly CREDENTIALS_FILE="$CREDENTIALS_DIR/.credentials.json"
 +
 +IDENTITIES=("pw-e2e-abs-user" "pw-e2e-abs-admin" "pw-e2e-abs-denied")
 +
@@ -171,14 +306,21 @@ index 0000000..b42cd5f
 +unless the operator explicitly passes --commit in a managed runtime.
 +
 +Modes:
-+  --dry-run   Mock execution; prove realm/groups/attributes exist (default)
-+  --commit    Allow mock kcadm calls to proceed (operator runtime only)
++  --dry-run   Read-only prerequisite checks; prove realm/groups/client exist
++  --commit    Provision users, rotate passwords, reconcile group membership
++
++Output (commit mode):
++  Writes structured credentials to $CREDENTIALS_FILE with mode 0600.
++  Each entry contains username and password for the provisioned identity.
++  The Playwright test runner reads this file at startup to inject
++  PW_E2E_ABS_USER / PW_E2E_ABS_PASSWORD env vars.
 +
 +Security:
 +  * Refuses set -x (xtrace) to prevent secret leakage.
 +  * Never accepts secrets via command-line arguments.
 +  * Never prints existing passwords or client credentials.
 +  * Requires KCADM to be set to a mocked or real kcadm binary.
++  * Credentials file is written with mode 0600 (owner-only read/write).
 +USAGE
 +}
 +
@@ -201,74 +343,158 @@ index 0000000..b42cd5f
 +
 +[[ -n "$KCADM" ]] || die "KCADM must be set to a kcadm binary or mock"
 +
++generate_password() {
++  head -c 32 /dev/urandom | base64 | tr -d '/+=' | head -c 24
++}
++
++get_user_id() {
++  local username="$1"
++  "$KCADM" get users --fields id -q username="$username" 2>/dev/null \
++    | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[0]['id'] if d else '')" 2>/dev/null \
++    || echo ""
++}
++
++get_group_id() {
++  local group_name="$1"
++  "$KCADM" get groups --fields id -q search="$group_name" 2>/dev/null \
++    | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[0]['id'] if d else '')" 2>/dev/null \
++    || echo ""
++}
++
++user_in_group() {
++  local user_id="$1"
++  local group_id="$2"
++  "$KCADM" get "groups/$group_id/members" --fields id -q id="$user_id" 2>/dev/null \
++    | python3 -c "import sys,json; d=json.load(sys.stdin); print('yes' if d else '')" 2>/dev/null \
++    | grep -q "yes"
++}
++
 +assert_realm() {
 +  echo "[$SCRIPT_NAME] Checking realm '$REALM' exists"
-+  if [[ "$DRY_RUN" == "true" ]]; then
-+    echo "  [mock] kcadm get realms/$REALM"
-+  else
-+    "$KCADM" get "realms/$REALM" --fields id >/dev/null 2>&1 || die "Realm $REALM not found"
-+  fi
++  "$KCADM" get "realms/$REALM" --fields id >/dev/null 2>&1 || die "Realm $REALM not found"
 +}
 +
 +assert_groups() {
 +  for group in "$GROUP_USERS" "$GROUP_ADMINS"; do
 +    echo "[$SCRIPT_NAME] Checking group '$group' exists"
-+    if [[ "$DRY_RUN" == "true" ]]; then
-+      echo "  [mock] kcadm get groups/$group"
-+    else
-+      "$KCADM" get "groups" --fields name | grep -q "$group" || die "Group $group not found in realm $REALM"
-+    fi
++    local gid
++    gid=$(get_group_id "$group")
++    [[ -n "$gid" ]] || die "Group $group not found in realm $REALM"
 +  done
 +}
 +
 +assert_client() {
 +  echo "[$SCRIPT_NAME] Checking client '$CLIENT_ID' exists"
-+  if [[ "$DRY_RUN" == "true" ]]; then
-+    echo "  [mock] kcadm get clients/$CLIENT_ID"
-+  else
-+    "$KCADM" get "clients" --fields clientId | grep -q "$CLIENT_ID" || die "Client $CLIENT_ID not found"
-+  fi
++  "$KCADM" get clients --fields clientId -q q="$CLIENT_ID" 2>/dev/null \
++    | python3 -c "import sys,json; d=json.load(sys.stdin); exit(0 if any(c.get('clientId')=='$CLIENT_ID' for c in d) else 1)" 2>/dev/null \
++    || die "Client $CLIENT_ID not found"
 +}
 +
-+create_or_update_identity() {
++provision_identity() {
 +  local username="$1"
-+  local group="$2"
++  local target_group="$2"
++  local password
++  local result_var="$3"
 +
-+  echo "[$SCRIPT_NAME] Provisioning identity '$username' in group '$group'"
-+
-+  if [[ "$DRY_RUN" == "true" ]]; then
-+    echo "  [mock] Create/update user $username, group=$group, password=***"
-+    return 0
++  echo "[$SCRIPT_NAME] Provisioning identity '$username'"
++  if [[ -n "$target_group" ]]; then
++    echo "  Target group: $target_group"
++  else
++    echo "  Target group: (none — denied identity)"
 +  fi
 +
-+  local user_id
-+  user_id=$("$KCADM" get users --fields id -q username="$username" | python3 -c "import sys,json; print(json.load(sys.stdin)[0]['id'])" 2>/dev/null || echo "")
++  local user_id=""
++  user_id=$(get_user_id "$username")
 +
 +  if [[ -z "$user_id" ]]; then
 +    echo "  Creating user '$username'"
-+    "$KCADM" create users \
++    local create_output
++    create_output=$("$KCADM" create users \
 +      -s username="$username" \
 +      -s enabled=true \
 +      -s emailVerified=true \
 +      -s email="${username}@homelab.test" \
 +      -s firstName="$username" \
-+      -s lastName="E2E"
++      -s lastName="E2E")
++    user_id=$(echo "$create_output" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null || echo "")
++    if [[ -z "$user_id" ]]; then
++      user_id=$(get_user_id "$username")
++    fi
++    [[ -n "$user_id" ]] || die "Failed to create user '$username'"
++    echo "  Created user (id=$user_id)"
 +  else
 +    echo "  User '$username' already exists (id=$user_id)"
 +  fi
++
++  password=$(generate_password)
++  echo "  Rotating password for '$username'"
++  "$KCADM" set-password --username "$username" --new-password "$password" \
++    || die "Failed to set password for '$username'"
++
++  if [[ -n "$target_group" ]]; then
++    local group_id
++    group_id=$(get_group_id "$target_group")
++    [[ -n "$group_id" ]] || die "Group '$target_group' not found"
++
++    if user_in_group "$user_id" "$group_id"; then
++      echo "  User '$username' already in group '$target_group'"
++    else
++      echo "  Adding '$username' to group '$target_group' via users/$user_id/groups/$group_id"
++      "$KCADM" update "users/$user_id/groups/$group_id" \
++        || die "Failed to add '$username' to group '$target_group'"
++    fi
++  fi
++
++  eval "$result_var"="$password"
++}
++
++write_credentials() {
++  local user_pass="$1"
++  local admin_pass="$2"
++  local denied_pass="$3"
++
++  mkdir -p "$CREDENTIALS_DIR"
++  chmod 700 "$CREDENTIALS_DIR"
++
++  python3 -c "
++import json, sys, os
++
++creds = {
++    'pw-e2e-abs-user': {'username': 'pw-e2e-abs-user', 'password': sys.argv[1]},
++    'pw-e2e-abs-admin': {'username': 'pw-e2e-abs-admin', 'password': sys.argv[2]},
++    'pw-e2e-abs-denied': {'username': 'pw-e2e-abs-denied', 'password': sys.argv[3]}
++}
++
++path = sys.argv[4]
++with open(path, 'w') as f:
++    json.dump(creds, f, indent=2)
++os.chmod(path, 0o600)
++" "$user_pass" "$admin_pass" "$denied_pass" "$CREDENTIALS_FILE"
++
++  echo "[$SCRIPT_NAME] Credentials written to $CREDENTIALS_FILE (mode 0600)"
 +}
 +
 +main() {
 +  echo "=== $SCRIPT_NAME ==="
 +  echo "Mode: $(if [[ "$DRY_RUN" == "true" ]]; then echo "dry-run"; else echo "commit"; fi)"
 +
-+  assert_realm
-+  assert_groups
-+  assert_client
++  if [[ "$DRY_RUN" == "true" ]]; then
++    assert_realm
++    assert_groups
++    assert_client
++    echo "[$SCRIPT_NAME] Prerequisite checks passed"
++  else
++    assert_realm
++    assert_groups
++    assert_client
 +
-+  create_or_update_identity "pw-e2e-abs-user"  "$GROUP_USERS"
-+  create_or_update_identity "pw-e2e-abs-admin"  "$GROUP_ADMINS"
-+  create_or_update_identity "pw-e2e-abs-denied" ""
++    local pw_user pw_admin pw_denied
++    provision_identity "pw-e2e-abs-user"  "$GROUP_USERS"  pw_user
++    provision_identity "pw-e2e-abs-admin"  "$GROUP_ADMINS" pw_admin
++    provision_identity "pw-e2e-abs-denied" ""             pw_denied
++
++    write_credentials "$pw_user" "$pw_admin" "$pw_denied"
++  fi
 +
 +  echo "=== $SCRIPT_NAME: done ==="
 +}
@@ -276,19 +502,140 @@ index 0000000..b42cd5f
 +main "$@"
 diff --git a/pi/tests/test_playwright_identities.sh b/pi/tests/test_playwright_identities.sh
 new file mode 100755
-index 0000000..0ff0b68
+index 0000000..981b9b8
 --- /dev/null
 +++ b/pi/tests/test_playwright_identities.sh
-@@ -0,0 +1,123 @@
+@@ -0,0 +1,430 @@
 +#!/usr/bin/env bash
 +set -euo pipefail
 +
 +readonly TEST_DIR="$(cd "$(dirname "$0")" && pwd)"
 +readonly SCRIPT_UNDER_TEST="$TEST_DIR/../audiobookshelf/scripts/setup-playwright-identities.sh"
++readonly LOADER_UNDER_TEST="$TEST_DIR/../audiobookshelf/scripts/load-playwright-credentials.sh"
++readonly MOCK_DIR="$(mktemp -d)"
 +
 +PASS=0
 +FAIL=0
 +TESTS_RUN=0
++
++cleanup() {
++  rm -rf "$MOCK_DIR"
++}
++trap cleanup EXIT
++
++create_mock_kcadm() {
++  local call_log="$MOCK_DIR/calls.log"
++  local state_file="$MOCK_DIR/state"
++  > "$call_log"
++  > "$state_file"
++  cat > "$MOCK_DIR/kcadm" << MOCKEOF
++#!/usr/bin/env bash
++echo "\$@" >> "$call_log"
++
++REALM_EXISTS="\${REALM_EXISTS:-true}"
++GROUP_USERS_EXISTS="\${GROUP_USERS_EXISTS:-true}"
++GROUP_ADMINS_EXISTS="\${GROUP_ADMINS_EXISTS:-true}"
++CLIENT_EXISTS="\${CLIENT_EXISTS:-true}"
++EXISTING_USER="\${EXISTING_USER:-}"
++EXISTING_USER_ID="\${EXISTING_USER_ID:-}"
++STATE_FILE="$state_file"
++
++declare -A TRACKED_USERS
++if [[ -f "\$STATE_FILE" ]]; then
++  while IFS='=' read -r k v; do
++    [[ -n "\$k" ]] && TRACKED_USERS["\$k"]="\$v"
++  done < "\$STATE_FILE"
++fi
++
++track_user() { echo "\$1=\$2" >> "\$STATE_FILE"; }
++
++resolve_user() {
++  local u="\$1"
++  if [[ -n "\${TRACKED_USERS[\$u]:-}" ]]; then
++    echo "\${TRACKED_USERS[\$u]}"
++  elif [[ "\$u" == "\$EXISTING_USER" && -n "\$EXISTING_USER_ID" ]]; then
++    echo "\$EXISTING_USER_ID"
++  else
++    echo ""
++  fi
++}
++
++handle_get() {
++  local key="\$1"
++  shift
++  case "\$key" in
++    realms/homelab)
++      [[ "\$REALM_EXISTS" == "true" ]] && echo '[{"id":"test-realm-id"}]' || { echo '[]'; exit 1; }
++      ;;
++    groups)
++      local search_name=""
++      while [[ \$# -gt 0 ]]; do
++        case "\$1" in
++          -q) shift; search_name="\${1#search=}" ;;
++          search=*) search_name="\${1#search=}" ;;
++        esac
++        shift
++      done
++      if [[ "\$GROUP_USERS_EXISTS" == "true" && "\$GROUP_ADMINS_EXISTS" == "true" ]]; then
++        if [[ -n "\$search_name" ]]; then
++          case "\$search_name" in
++            *users*)     echo '[{"id":"group-users-id","name":"audiobookshelf-users"}]' ;;
++            *admins*)    echo '[{"id":"group-admins-id","name":"audiobookshelf-admins"}]' ;;
++            *)           echo '[]' ;;
++          esac
++        else
++          echo '[{"id":"group-users-id","name":"audiobookshelf-users"},{"id":"group-admins-id","name":"audiobookshelf-admins"}]'
++        fi
++      else
++        echo '[]'; exit 1
++      fi
++      ;;
++    clients)
++      [[ "\$CLIENT_EXISTS" == "true" ]] && echo '[{"clientId":"audiobookshelf"}]' || { echo '[]'; exit 1; }
++      ;;
++    users)
++      local q_user=""
++      while [[ \$# -gt 0 ]]; do
++        case "\$1" in
++          -q) shift; q_user="\${1#username=}" ;;
++          username=*) q_user="\${1#username=}" ;;
++        esac
++        shift
++      done
++      local uid
++      uid=\$(resolve_user "\$q_user")
++      if [[ -n "\$uid" ]]; then
++        echo "[{\"id\":\"\$uid\"}]"
++      else
++        echo '[]'
++      fi
++      ;;
++    groups/*/members) echo '[]' ;;
++    *) echo '[]' ;;
++  esac
++}
++
++handle_create() {
++  local new_user=""
++  for arg in "\$@"; do
++    case "\$arg" in
++      username=*) new_user="\${arg#username=}" ;;
++    esac
++  done
++  local new_id="id-\${new_user}"
++  echo "{\"id\":\"\$new_id\"}"
++  track_user "\$new_user" "\$new_id"
++}
++
++case "\$1" in
++  get) shift; handle_get "\$@" ;;
++  create) shift; handle_create "\$@" ;;
++  set-password) echo "Password set" ;;
++  update) echo "Group updated" ;;
++esac
++MOCKEOF
++  chmod +x "$MOCK_DIR/kcadm"
++}
 +
 +run_test() {
 +  local name="$1"
@@ -309,14 +656,16 @@ index 0000000..0ff0b68
 +}
 +
 +test_dry_run_default() {
++  create_mock_kcadm
 +  local output
-+  output=$(KCADM=/bin/true bash "$SCRIPT_UNDER_TEST" --dry-run 2>&1)
++  output=$(KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --dry-run 2>&1)
 +  echo "$output" | grep -q "Mode: dry-run"
 +}
 +
 +test_commit_mode() {
++  create_mock_kcadm
 +  local output
-+  output=$(KCADM=/bin/true bash "$SCRIPT_UNDER_TEST" --commit 2>&1)
++  output=$(KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit 2>&1)
 +  echo "$output" | grep -q "Mode: commit"
 +}
 +
@@ -332,57 +681,223 @@ index 0000000..0ff0b68
 +  ! KCADM="" bash "$SCRIPT_UNDER_TEST" --dry-run 2>/dev/null
 +}
 +
-+test_dry_run_shows_mock_marker() {
-+  local output
-+  output=$(KCADM=/bin/true bash "$SCRIPT_UNDER_TEST" --dry-run 2>&1)
-+  echo "$output" | grep -q "\[mock\]"
++test_dry_run_checks_realm() {
++  create_mock_kcadm
++  KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --dry-run >/dev/null 2>&1
++  grep -q "realms/homelab" "$MOCK_DIR/calls.log"
++}
++
++test_dry_run_checks_groups() {
++  create_mock_kcadm
++  KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --dry-run >/dev/null 2>&1
++  grep -q "groups" "$MOCK_DIR/calls.log"
++}
++
++test_dry_run_checks_client() {
++  create_mock_kcadm
++  KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --dry-run >/dev/null 2>&1
++  grep -q "clients" "$MOCK_DIR/calls.log"
++}
++
++test_dry_run_fails_without_realm() {
++  create_mock_kcadm
++  REALM_EXISTS="false" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --dry-run 2>/dev/null
++  [[ $? -ne 0 ]]
++}
++
++test_dry_run_fails_without_groups() {
++  create_mock_kcadm
++  GROUP_USERS_EXISTS="false" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --dry-run 2>/dev/null
++  [[ $? -ne 0 ]]
++}
++
++test_dry_run_fails_without_client() {
++  create_mock_kcadm
++  CLIENT_EXISTS="false" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --dry-run 2>/dev/null
++  [[ $? -ne 0 ]]
++}
++
++test_commit_creates_user() {
++  create_mock_kcadm
++  KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  grep -q "create users" "$MOCK_DIR/calls.log"
++}
++
++test_commit_sets_password() {
++  create_mock_kcadm
++  KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  grep -q "set-password" "$MOCK_DIR/calls.log"
++}
++
++test_commit_adds_user_to_group() {
++  create_mock_kcadm
++  KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  grep -q "users/id-pw-e2e-abs-user/groups/group-users-id" "$MOCK_DIR/calls.log"
++}
++
++test_commit_adds_admin_to_group() {
++  create_mock_kcadm
++  KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  grep -q "users/id-pw-e2e-abs-admin/groups/group-admins-id" "$MOCK_DIR/calls.log"
++}
++
++test_commit_denied_ungrouped() {
++  create_mock_kcadm
++  KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  local denied_lines
++  denied_lines=$(grep "pw-e2e-abs-denied" "$MOCK_DIR/calls.log" || true)
++  [[ -n "$denied_lines" ]]
++  ! echo "$denied_lines" | grep -q "groups/"
++}
++
++test_commit_idempotent_existing_user() {
++  create_mock_kcadm
++  # Pre-create all 3 identities in mock state
++  echo "pw-e2e-abs-user=id-pw-e2e-abs-user" >> "$MOCK_DIR/state"
++  echo "pw-e2e-abs-admin=id-pw-e2e-abs-admin" >> "$MOCK_DIR/state"
++  echo "pw-e2e-abs-denied=id-pw-e2e-abs-denied" >> "$MOCK_DIR/state"
++  EXISTING_USER="pw-e2e-abs-user" EXISTING_USER_ID="existing-id" \
++    KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  local creates
++  creates=$(grep -c "create users" "$MOCK_DIR/calls.log" || true)
++  [[ "$creates" -eq 0 ]]
++}
++
++test_commit_password_rotated_for_existing() {
++  create_mock_kcadm
++  EXISTING_USER="pw-e2e-abs-user" EXISTING_USER_ID="existing-id" \
++    KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  grep -q "set-password" "$MOCK_DIR/calls.log"
 +}
 +
 +test_no_secret_in_output() {
++  create_mock_kcadm
 +  local output
-+  output=$(KCADM=/bin/true bash "$SCRIPT_UNDER_TEST" --dry-run 2>&1)
++  output=$(KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --dry-run 2>&1)
 +  ! echo "$output" | grep -qE "(password|secret|token)\s*[:=]\s*[^*]"
 +}
 +
-+test_realms_checked_first() {
-+  local output
-+  output=$(KCADM=/bin/true bash "$SCRIPT_UNDER_TEST" --dry-run 2>&1)
-+  local first_mock
-+  first_mock=$(echo "$output" | grep -m1 "\[mock\]")
-+  echo "$first_mock" | grep -q "realms"
-+}
-+
-+test_groups_checked() {
-+  local output
-+  output=$(KCADM=/bin/true bash "$SCRIPT_UNDER_TEST" --dry-run 2>&1)
-+  echo "$output" | grep -q "\[mock\].*groups"
-+}
-+
-+test_client_checked() {
-+  local output
-+  output=$(KCADM=/bin/true bash "$SCRIPT_UNDER_TEST" --dry-run 2>&1)
-+  echo "$output" | grep -q "\[mock\].*clients"
-+}
-+
-+test_all_identities_provisioned() {
-+  local output
-+  output=$(KCADM=/bin/true bash "$SCRIPT_UNDER_TEST" --dry-run 2>&1)
-+  echo "$output" | grep -q "pw-e2e-abs-user"
-+  echo "$output" | grep -q "pw-e2e-abs-admin"
-+  echo "$output" | grep -q "pw-e2e-abs-denied"
-+}
-+
-+test_idempotent_output() {
-+  local out1 out2
-+  out1=$(KCADM=/bin/true bash "$SCRIPT_UNDER_TEST" --dry-run 2>&1)
-+  out2=$(KCADM=/bin/true bash "$SCRIPT_UNDER_TEST" --dry-run 2>&1)
-+  [[ "$out1" == "$out2" ]]
-+}
-+
 +test_done_marker() {
++  create_mock_kcadm
 +  local output
-+  output=$(KCADM=/bin/true bash "$SCRIPT_UNDER_TEST" --dry-run 2>&1)
++  output=$(KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --dry-run 2>&1)
 +  echo "$output" | grep -q "done"
++}
++
++test_commit_creates_credentials_file() {
++  create_mock_kcadm
++  local tmpdir
++  tmpdir=$(mktemp -d)
++  PW_E2E_CREDENTIALS_DIR="$tmpdir" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  [[ -f "$tmpdir/.credentials.json" ]]
++  rm -rf "$tmpdir"
++}
++
++test_commit_credentials_mode_0600() {
++  create_mock_kcadm
++  local tmpdir
++  tmpdir=$(mktemp -d)
++  PW_E2E_CREDENTIALS_DIR="$tmpdir" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  local perms
++  perms=$(stat -c '%a' "$tmpdir/.credentials.json")
++  [[ "$perms" == "600" ]]
++  rm -rf "$tmpdir"
++}
++
++test_commit_credentials_valid_json() {
++  create_mock_kcadm
++  local tmpdir
++  tmpdir=$(mktemp -d)
++  PW_E2E_CREDENTIALS_DIR="$tmpdir" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  python3 -c "import json; json.load(open('$tmpdir/.credentials.json'))"
++  rm -rf "$tmpdir"
++}
++
++test_commit_credentials_has_all_identities() {
++  create_mock_kcadm
++  local tmpdir
++  tmpdir=$(mktemp -d)
++  PW_E2E_CREDENTIALS_DIR="$tmpdir" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  python3 -c "
++import json
++d = json.load(open('$tmpdir/.credentials.json'))
++assert 'pw-e2e-abs-user' in d, 'user missing'
++assert 'pw-e2e-abs-admin' in d, 'admin missing'
++assert 'pw-e2e-abs-denied' in d, 'denied missing'
++assert d['pw-e2e-abs-user']['password'], 'user password empty'
++"
++  rm -rf "$tmpdir"
++}
++
++test_loader_requires_credentials() {
++  ! PW_E2E_CREDENTIALS_DIR="/nonexistent" bash "$LOADER_UNDER_TEST" --role user 2>/dev/null
++}
++
++test_loader_exports_user_creds() {
++  create_mock_kcadm
++  local tmpdir
++  tmpdir=$(mktemp -d)
++  PW_E2E_CREDENTIALS_DIR="$tmpdir" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  local output
++  output=$(PW_E2E_CREDENTIALS_DIR="$tmpdir" bash "$LOADER_UNDER_TEST" --role user 2>&1)
++  echo "$output" | grep -q "Loaded credentials for role 'user'"
++  echo "$output" | grep -q "pw-e2e-abs-user"
++  rm -rf "$tmpdir"
++}
++
++test_loader_exports_admin_creds() {
++  create_mock_kcadm
++  local tmpdir
++  tmpdir=$(mktemp -d)
++  PW_E2E_CREDENTIALS_DIR="$tmpdir" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  local output
++  output=$(PW_E2E_CREDENTIALS_DIR="$tmpdir" bash "$LOADER_UNDER_TEST" --role admin 2>&1)
++  echo "$output" | grep -q "Loaded credentials for role 'admin'"
++  echo "$output" | grep -q "pw-e2e-abs-admin"
++  rm -rf "$tmpdir"
++}
++
++test_loader_rejects_invalid_role() {
++  create_mock_kcadm
++  local tmpdir
++  tmpdir=$(mktemp -d)
++  PW_E2E_CREDENTIALS_DIR="$tmpdir" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  ! PW_E2E_CREDENTIALS_DIR="$tmpdir" bash "$LOADER_UNDER_TEST" --role invalid 2>/dev/null
++  rm -rf "$tmpdir"
++}
++
++test_loader_rejects_insecure_perms() {
++  create_mock_kcadm
++  local tmpdir
++  tmpdir=$(mktemp -d)
++  PW_E2E_CREDENTIALS_DIR="$tmpdir" KCADM="$MOCK_DIR/kcadm" bash "$SCRIPT_UNDER_TEST" --commit >/dev/null 2>&1
++  chmod 644 "$tmpdir/.credentials.json"
++  ! PW_E2E_CREDENTIALS_DIR="$tmpdir" bash "$LOADER_UNDER_TEST" --role user 2>/dev/null
++  rm -rf "$tmpdir"
++}
++
++test_loader_exports_exact_password() {
++  local tmpdir
++  tmpdir=$(mktemp -d)
++  local cred_file="$tmpdir/.credentials.json"
++  local test_pwd="My P@ssword with spaces & special chars!"
++  mkdir -p "$tmpdir"
++  chmod 700 "$tmpdir"
++  python3 -c "
++import json
++creds = {'pw-e2e-abs-user': {'username': 'pw-e2e-abs-user', 'password': '$test_pwd'}}
++with open('$cred_file', 'w') as f: json.dump(creds, f)
++" 2>/dev/null
++  chmod 600 "$cred_file"
++  local output
++  output=$(PW_E2E_CREDENTIALS_DIR="$tmpdir" bash -c "
++source '$LOADER_UNDER_TEST' --role user >/dev/null 2>&1 || exit 1
++echo \"USER=\$PW_E2E_ABS_USER\"
++echo \"PASS=\$PW_E2E_ABS_PASSWORD\"
++")
++  echo "$output" | grep -q "USER=pw-e2e-abs-user"
++  echo "$output" | grep -q "PASS=$test_pwd"
++  rm -rf "$tmpdir"
 +}
 +
 +echo "=== test_playwright_identities ==="
@@ -392,13 +907,31 @@ index 0000000..0ff0b68
 +run_test "help flag"                           test_help_flag
 +run_test "rejects unknown arg"                 test_rejects_unknown_arg
 +run_test "refuses empty kcadm"                 test_refuses_empty_kcadm
-+run_test "dry-run shows mock marker"           test_dry_run_shows_mock_marker
++run_test "dry-run checks realm"                test_dry_run_checks_realm
++run_test "dry-run checks groups"               test_dry_run_checks_groups
++run_test "dry-run checks client"               test_dry_run_checks_client
++run_test "dry-run fails without realm"         test_dry_run_fails_without_realm
++run_test "dry-run fails without groups"        test_dry_run_fails_without_groups
++run_test "dry-run fails without client"        test_dry_run_fails_without_client
++run_test "commit creates user"                 test_commit_creates_user
++run_test "commit sets password"                test_commit_sets_password
++run_test "commit adds user to group"           test_commit_adds_user_to_group
++run_test "commit adds admin to group"          test_commit_adds_admin_to_group
++run_test "commit denied ungrouped"             test_commit_denied_ungrouped
++run_test "commit idempotent existing user"     test_commit_idempotent_existing_user
++run_test "commit password rotated for existing" test_commit_password_rotated_for_existing
 +run_test "no secret in output"                 test_no_secret_in_output
-+run_test "realms checked first"                test_realms_checked_first
-+run_test "groups checked"                      test_groups_checked
-+run_test "client checked"                      test_client_checked
-+run_test "all identities provisioned"          test_all_identities_provisioned
 +run_test "done marker"                         test_done_marker
++run_test "commit creates credentials file"     test_commit_creates_credentials_file
++run_test "commit credentials mode 0600"        test_commit_credentials_mode_0600
++run_test "commit credentials valid json"       test_commit_credentials_valid_json
++run_test "commit credentials has all ids"      test_commit_credentials_has_all_identities
++run_test "loader requires credentials file"    test_loader_requires_credentials
++run_test "loader exports user creds"           test_loader_exports_user_creds
++run_test "loader exports admin creds"          test_loader_exports_admin_creds
++run_test "loader rejects invalid role"         test_loader_rejects_invalid_role
++run_test "loader rejects insecure perms"       test_loader_rejects_insecure_perms
++run_test "loader exports exact password"       test_loader_exports_exact_password
 +
 +echo ""
 +echo "Results: $PASS/$TESTS_RUN passed, $FAIL failed"
