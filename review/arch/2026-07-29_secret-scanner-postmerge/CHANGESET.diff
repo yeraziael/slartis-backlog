@@ -1,0 +1,16 @@
+diff --git a/tests/test_safe_summary.py b/tests/test_safe_summary.py
+index 33febb0..02d8f84 100644
+--- a/tests/test_safe_summary.py
++++ b/tests/test_safe_summary.py
+@@ -265,9 +265,9 @@ def test_malicious_extra_fields_not_in_output():
+     """Extra manifest fields with secret-like values must not leak into safe summary."""
+     with tempfile.TemporaryDirectory() as tmpdir:
+         evil = dict(VALID_MANIFEST)
+-        evil["access_token"] = "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
++        evil["access_token"] = "ghp_" + ("x" * 36)
+         evil["password"] = "super-secret-password-12345"
+-        evil["api_key"] = "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
++        evil["api_key"] = "sk-" + ("x" * 40)
+         evil["authorization"] = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNnw"
+         evil["credentials"] = "https://user:pass@gitea.example.com/"
+         evil["private_key"] = "-----BEGIN RSA PRIVATE KEY-----\nABCDEF\n-----END RSA PRIVATE KEY-----"

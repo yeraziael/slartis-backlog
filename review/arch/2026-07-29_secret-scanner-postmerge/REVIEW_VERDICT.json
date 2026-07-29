@@ -1,0 +1,14 @@
+{
+  "schema": "acp.review-verdict.v2",
+  "reviewed_commit": "4905414521b102e352d0790c1194bc6cd6577a69",
+  "review_type": "post-merge",
+  "review_basis": "merge-commit",
+  "reviewer": "emissaryofyeraziael",
+  "verdict": "post-merge-audit",
+  "blocking_findings": [],
+  "remaining_followups": [
+    "Diagnose failing Gitea Actions run 992 smoke jobs 3704 and 3705."
+  ],
+  "supersedes_review": null,
+  "review_timestamp": "2026-07-29T19:45:00Z"
+}
