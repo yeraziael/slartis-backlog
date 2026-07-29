@@ -4,7 +4,7 @@
 **Tracking issue:** #110  
 **Status:** Scope corrected; implementation not authorized  
 **Current phase:** Architecture review and execution decomposition  
-**Active task:** CAP-P01 — complete review after gateway-scope correction
+**Active task:** CAP-P02 — independent architecture and security review
 
 ## Purpose
 
@@ -18,13 +18,13 @@ This directory is authoritative for requirements, architecture, governance contr
 
 | Area | Status | Progress |
 |---|---:|---:|
-| Requirements | Scope correction drafted | 75% |
-| Architecture | Scope correction required | 65% |
-| Routing governance | Drafted | 75% |
-| Experiment system | Drafted | 85% |
-| Operations and backup | Drafted | 70% |
-| Testing and evidence | Drafted | 60% |
-| Execution backlog | Rework required | 55% |
+| Requirements | Scope correction complete | 100% |
+| Architecture | Scope correction complete | 100% |
+| Routing governance | Scope correction complete | 100% |
+| Experiment system | Scope correction complete | 100% |
+| Operations and backup | Scope correction complete | 100% |
+| Testing and evidence | Scope correction complete | 100% |
+| Execution backlog | Scope correction complete | 100% |
 | Independent review | Open | 0% |
 | **Overall merged execution progress** | **Not started** | **0%** |
 
@@ -75,7 +75,7 @@ A task contributes 100% to overall execution progress only after implementation,
 
 ## Current next executable task
 
-`CAP-P01`: reconcile architecture, governance, operations, testing, roadmap and backlog with CAP-D024; validate LiteLLM support for Zen Free and Ollama, validate CLIProxyAPI as a downstream OAuth/subscription bridge, and produce the independent architecture/security review without changing runtime state.
+`CAP-P02`: complete the independent architecture and security review of the corrected Plan-as-Code baseline; validate LiteLLM support for Zen Free and Ollama, validate CLIProxyAPI as a downstream OAuth/subscription bridge, and verify consistency across all plan documents without changing runtime state.
 
 ## Open decisions
 

@@ -7,6 +7,7 @@
 - Issue #74 — architecture, security and compatibility spike; must be explicitly mapped before closure or replacement.
 - Legacy directory `CLIProxyAPI-Homelab/` — retained as provenance until CAP-P01 classifies every file.
 - `router-for-me/CLIProxyAPI` — upstream implementation; exact supported version remains an open decision pending dated verification.
+- `BerriAI/litellm` — upstream LiteLLM implementation; exact supported version remains an open decision pending dated verification.
 - `yeraziael/ai-governance` — released global governance source.
 - Homelab architecture repository on Gitea — runtime authority.
 

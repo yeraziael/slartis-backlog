@@ -14,7 +14,7 @@ Equal-specificity conflicts select the higher model class, preserve execution an
 
 ## Classification challenge
 
-OpenCode supplies classification when possible. CLIProxyAPI may propose an upward correction but may not silently lower. OpenCode reviews the proposal. Operator decides unresolved disagreement. Five repeated errors for the same task type and functional area generate a versioned governance change proposal.
+OpenCode supplies classification when possible. The governance layer or an approved component may propose an upward correction before LiteLLM routing. Neither LiteLLM nor CLIProxyAPI becomes the sole semantic classification authority without a later decision. OpenCode reviews the proposal. Operator decides unresolved disagreement. Five repeated errors for the same task type and functional area generate a versioned governance change proposal.
 
 Dynamically discovered functional areas must be assigned to an existing parent area and approved in dedicated governance review before activation.
 
@@ -46,17 +46,17 @@ Performance regression is measured against a verified baseline: up to 10% nit, a
 
 ## Baselines and task size
 
-Baselines are separated by repository × model × task type × functional area × task size. Sizes are XS, S, M, L and XL. Plan-as-Code supplies initial size; CLIProxyAPI may propose at most one class up or down. Operator decides unresolved objections.
+Baselines are separated by repository × model × task type × functional area × task size. Sizes are XS, S, M, L and XL. Plan-as-Code supplies initial size; LiteLLM or a downstream gateway may propose at most one class up or down after routing. Operator decides unresolved objections.
 
 Before 20 completed tasks in a size class, inference is observation-only. Afterwards proposals may be made. Heuristics update in batches of 20 new tasks per class using P75 as primary, P50 as reference and P90/P95 for outliers.
 
 ## Released governance adoption
 
-Only released governance is active. A new release becomes active for running tasks at the next safe interruption point after a commit. The task is reclassified and rerouted. A required model switch produces a repository checkpoint before work continues.
+Only released governance is active. A new release becomes active for running tasks at the next safe interruption point after a commit. The task is reclassified and rerouted through the gateway chain. A required model switch produces a repository checkpoint before work continues.
 
 ## Audit and telemetry
 
-- Routing audit: global ring buffer of 250 complete assignment entries.
+- Routing audit: global ring buffer of 250 complete assignment entries, annotated with gateway hop (LiteLLM or CLIProxyAPI).
 - Heuristic telemetry: persistent local database on the Pi; included in Homelab backup but not committed.
 - Git contains schemas, migrations, configuration, reproducible aggregation logic and a human-readable explanation of only the latest heuristic change.
 - Each explanation records timestamp, old and new rule, data basis, percentiles, expected effect and review reference.

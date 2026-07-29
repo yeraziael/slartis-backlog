@@ -5,7 +5,7 @@
 1. Experimenter defines the complete run before start.
 2. Admission control predicts duration and checks host capacity.
 3. Predicted duration above five minutes is rejected unless an Operator grants a run-specific override.
-4. A separate test container starts with fixed hard resource limits.
+4. Separate LiteLLM and/or CLIProxyAPI test containers start with fixed hard resource limits.
 5. Results remain available until explicit finish, 12 hours of idle time or the absolute duration limit.
 6. Hard stop starts a 12-hour download-only window.
 7. The service then destroys container state and package unless an Operator reactivates during that window.
@@ -41,7 +41,7 @@ Every failed admission check creates a diagnostic snapshot containing Run ID, at
 
 ## Fixtures and test endpoints
 
-The `test-service` role may load versioned fixtures, reset the isolated test state and set spoofed quota, provider, telemetry, availability and quality values. Spoofing is nonpersistent, clearly distinguished from real state and marked as test in audit output. Production state and secrets remain unreachable.
+The `test-service` role may load versioned fixtures, reset the isolated test state and set spoofed quota, provider, telemetry, availability and quality values. Spoofing is nonpersistent, clearly distinguished from real state and marked as test in audit output. Production state and secrets remain unreachable. Fixtures cover both LiteLLM and CLIProxyAPI test containers.
 
 ## Reproducible package
 
@@ -52,7 +52,7 @@ The package is named `cliproxyapi-experiment-<run-id>.tar.gz` and includes:
 - SHA-256 hash over the canonical JSON manifest
 - Run ID, attempt history and timestamps
 - repository, branch and commit SHA
-- container image and digest
+- container images and digests (LiteLLM and/or CLIProxyAPI)
 - global and local governance versions
 - fixture versions
 - configuration, flags and normalized inputs
