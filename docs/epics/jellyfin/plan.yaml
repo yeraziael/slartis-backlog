@@ -35,7 +35,7 @@ workstreams:
     milestone: JF-M3
   - id: JF-006
     title: Create core libraries
-    status: partially_evidenced
+    status: blocked
     depends_on: [JF-002, JF-004]
     milestone: JF-M4
   - id: JF-007
@@ -61,7 +61,7 @@ workstreams:
     milestone: JF-M6
   - id: JF-011
     title: Backup restore and monitoring
-    status: partially_evidenced
+    status: blocked
     depends_on: [JF-002, JF-004]
     milestone: JF-M7
   - id: JF-012

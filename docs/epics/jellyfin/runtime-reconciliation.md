@@ -28,12 +28,12 @@ backup archives. It also records credential-safe evidence publication.
 | JF-003 | Partially evidenced | `jellyfin.hl.maier.wtf` HTTPS and controlled-media playback smoke | WebSocket, range-request and long-stream acceptance |
 | JF-004 | Not started | Break-glass and synthetic runtime identities only | Keycloak claims, roles, regular-user model and rights-removal behavior |
 | JF-005 | Blocked by JF-004 | None | FSK, unrated-content, curated-grant and age-transition contracts |
-| JF-006 | Partially evidenced | Four intended read-only media paths are mounted | Authorized core-library creation and music visibility contract |
+| JF-006 | Blocked by JF-004; preliminary deployment evidence | Four intended read-only media paths are mounted | Authorized core-library creation and music visibility contract |
 | JF-007 | Blocked by JF-006 and #113 | No production media was touched | Approved, verified batches of at most 100 files |
 | JF-008 | Blocked by JF-004 and JF-006 | None | Channel registry, audience grants and approval workflow |
 | JF-009 | Blocked by JF-008 | None | ytdl-sub deployment and approved-channel synchronization |
 | JF-010 | Blocked by JF-009 | None | Compatibility probing, secondary renditions and grouping |
-| JF-011 | Partially evidenced | Two verified configuration archives, documented rollback, service health smoke | Daily two-generation retention, restore tests, replacement-host restore and monitoring |
+| JF-011 | Blocked by JF-004; preliminary operations evidence | Two verified configuration archives, documented rollback, service health smoke | Daily two-generation retention, restore tests, replacement-host restore and monitoring |
 | JF-012 | Blocked by incomplete dependencies | Bounded post-deployment authorization/playback smoke | Full authorization and client matrices, rollback/restore tests, independent review and frozen manifest |
 | JF-013 | Deferred | None | Trigger only after JF-012 and suitable always-on hardware |
 
