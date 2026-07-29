@@ -60,6 +60,8 @@ Acceptance:
 - Batches contain at most 100 files.
 - Sources remain untouched until verification and operator approval.
 - Jellyfin never becomes the media mutator.
+- Library Curator validates its output against `ingest-contract.md` before
+  publication; Jellyfin performs no migration action.
 
 ## JF-008 — Implement YouTube registry and approvals
 Dependencies: JF-004, JF-006
@@ -77,6 +79,7 @@ Acceptance:
 - Approved channels sync automatically in best available quality.
 - Removing a channel stops future downloads without deleting existing files.
 - Files remain until manual parent-approved deletion.
+- ytdl-sub emits only paths and metadata accepted by `ingest-contract.md`.
 
 ## JF-010 — Add conditional compatibility renditions
 Dependencies: JF-009

@@ -3,6 +3,10 @@
 ## Media immutability
 Jellyfin receives read-only media. Delete, move, rename and metadata-sidecar mutation through Jellyfin are prohibited. External writers must be explicit, approved and audited.
 
+Library Curator owns migration; ytdl-sub owns channel downloads. Both writers
+must conform to [ingest-contract.md](ingest-contract.md); Jellyfin defines that
+contract but does not execute either workflow.
+
 ## Availability
 - Missing media mounts: fail closed before normal application start.
 - Keycloak unavailable: existing sessions may follow documented token lifetime; new regular login must not fall back to local users.
