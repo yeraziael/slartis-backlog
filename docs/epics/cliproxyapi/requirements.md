@@ -26,10 +26,10 @@ Requirement IDs are stable. Removal or semantic change requires an entry in `dec
 ## Classification and routing
 
 - **CAP-R020:** Routing is derived from task classification and released governance.
-- **CAP-R021:** OpenAI-required classes include architecture/planning, review, security, secrets/identity, data migration, production infrastructure changes and complex debugging.
-- **CAP-R022:** The unattended free implementation path is DeepSeek Flash Free through OpenCode Zen, then a dynamically selected equivalent Zen Free model, then Gemini with waiting accepted.
+- **CAP-R021:** Model classes, task mappings and provider priorities are loaded from released governance; gateway configuration must not hard-code a separate class policy.
+- **CAP-R022:** Free-model preference and fallback order are governance data. The gateway applies the active released order and availability constraints without embedding model names in application logic.
 - **CAP-R023:** Dynamic alternatives require tool use, structured output, sufficient context, coding suitability, stable unattended operation and no known repository-work exclusion.
-- **CAP-R024:** Manual override is allowed only from a non-OpenAI model to an OpenAI model. Governance-controlled quota/provider fallback remains automatic.
+- **CAP-R024:** Manual and automatic overrides follow released governance and are audit-recorded; no gateway-local override may bypass a required operator confirmation.
 - **CAP-R025:** Unclassified tasks are classified before LiteLLM routing by the approved client-side or governance component; neither LiteLLM nor CLIProxyAPI becomes the sole semantic classification authority without a later decision.
 - **CAP-R026:** A routing component may challenge an OpenCode classification upward but never silently lower it. Unresolved disagreement is decided by the Operator.
 - **CAP-R027:** Routing quality takes precedence over quota and cost when candidates are equally suitable.
@@ -50,7 +50,7 @@ Requirement IDs are stable. Removal or semantic change requires an entry in `dec
 - **CAP-R041:** A checkpoint commit may be non-green if expected failures are documented, but may never be the final task commit.
 - **CAP-R042:** Later regular commits reference checkpoint SHAs with repeatable `Resolves-Checkpoint:` trailers.
 - **CAP-R043:** Merge and closure are blocked while unresolved checkpoints exist or the last task commit is a checkpoint.
-- **CAP-R044:** Every implementation commit records Model, Class, Task and Governance-Version trailers.
+- **CAP-R044:** Every implementation commit for an execution task records Model, Class, Task and Governance-Version trailers. Planning-only commits before execution-manifest freeze are excluded.
 
 ## Experiments
 

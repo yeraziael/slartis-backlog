@@ -46,7 +46,7 @@ Performance regression is measured against a verified baseline: up to 10% nit, a
 
 ## Baselines and task size
 
-Baselines are separated by repository × model × task type × functional area × task size. Sizes are XS, S, M, L and XL. Plan-as-Code supplies initial size; LiteLLM or a downstream gateway may propose at most one class up or down after routing. Operator decides unresolved objections.
+Baselines are separated by repository × model × task type × functional area × task size. Sizes are XS, S, M, L and XL. Plan-as-Code supplies initial size; the approved governance component may propose at most one class up or down before LiteLLM selects a route. Gateways may report evidence for a later proposal but do not reclassify an in-flight request. Operator decides unresolved objections.
 
 Before 20 completed tasks in a size class, inference is observation-only. Afterwards proposals may be made. Heuristics update in batches of 20 new tasks per class using P75 as primary, P50 as reference and P90/P95 for outliers.
 

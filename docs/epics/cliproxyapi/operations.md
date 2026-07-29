@@ -33,6 +33,8 @@ The Operator dashboard exposes `run backup now` for each gateway independently: 
 
 Provider onboarding, account locking, credential rotation and revocation are Operator-only. Credentials never enter Git, issues, logs, reports or test packages. Each provider adapter requires a documented authentication method and compliance decision before activation. LiteLLM provider adapters (Zen Free, Ollama, API-key) and CLIProxyAPI provider adapters (subscription/CLI/OAuth) are managed separately.
 
+CLIProxyAPI starts with plugins, control-panel download and update, cloaking, remote management and debug endpoints disabled. Its API binds only to the private service network required by LiteLLM; no default all-interface binding or provider OAuth callback port is accepted without an explicit per-port decision. Management credentials and provider auth files use separate restricted secret mounts and are never shared with LiteLLM or experiment containers.
+
 ## Governance rollout
 
 Production automatically selects the latest released compatible governance. New releases affect new work immediately and running work only at a safe interruption point after commit. Regular governance updates are prohibited while either gateway is degraded.

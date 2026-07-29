@@ -8,6 +8,7 @@
 - Validate LiteLLM support for Zen Free and Ollama.
 - Validate CLIProxyAPI as a downstream OAuth/subscription bridge.
 - Complete independent architecture and security review.
+- Freeze `plan.yaml`, execution-issue links and SHA-256.
 
 ## M1 — Governance and contracts
 
@@ -37,7 +38,7 @@
 ## M4 — Routing pilot
 
 - Connect OpenCode to LiteLLM as the sole configured endpoint.
-- Validate OpenAI-required classes and free-model implementation path.
+- Validate released-governance task mappings and the configured free-model path.
 - Verify end-to-end quota rollover, sticky sessions, Retry-After, backoff and model-specific probes.
 - Verify LiteLLM-to-CLIProxyAPI forwarding for subscription-bound traffic.
 - Do not add Slarti or Lydia until pilot acceptance is complete.
@@ -65,5 +66,12 @@
 
 - Resolve all blocking review findings.
 - Record final execution manifest hash.
-- Link merged implementation PRs and operational evidence.
+- Link every executable CAP issue; implementation PRs and operational evidence are added by those tasks.
 - Mark superseded legacy planning without deleting provenance.
+
+## Operator-only runtime gates
+
+- CAP-X01 chooses the host after an approved credential-free deployment candidate is measured.
+- CAP-X02 approves provider terms and provisions real credentials and callback ports.
+- CAP-X03 deploys and runs the OpenCode pilot.
+- CAP-X04 enables Slarti and Lydia after pilot acceptance.

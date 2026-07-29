@@ -2,6 +2,8 @@
 
 ## Runtime topology
 
+The diagram is the target contract, not evidence of deployed services. Exact hosts, ports, images and credentials remain operator-gated runtime decisions.
+
 ```mermaid
 flowchart LR
   S[Slarti] --> O[OpenCode]
@@ -38,12 +40,15 @@ flowchart LR
 5. Keycloak controls dashboard, management API and experiment authorization.
 6. Runtime telemetry is persistent production state but remains outside Git; only schema, migrations, aggregation logic and compact approved summaries are versioned.
 7. Experiment artifacts are run-local, ephemeral and confined to the canonical run directory.
+8. CLIProxyAPI plugins, control-panel downloads, auto-update, cloaking and remote management are disabled by default. Any later exception requires a separate security decision and review.
 
 ## Production data paths
 
 - Incoming OpenCode request is authenticated by a per-client LiteLLM credential.
 - Task classification is accepted, challenged upward or generated when absent.
 - LiteLLM routes directly for Zen Free and Ollama targets; subscription/CLI/OAuth-bound requests are forwarded to CLIProxyAPI.
+- OpenCode model IDs are explicitly mapped to LiteLLM model groups; automatic discovery is not assumed.
+- CLIProxyAPI uses `fill-first` routing where sequential account consumption is approved. End-to-end affinity keys are preserved across LiteLLM and CLIProxyAPI.
 - Released global governance and approved project-local additions produce the candidate set.
 - Account state, quota, backoff, stickiness and quality metrics select provider, model and account at each gateway layer.
 - Routing audit records assignment metadata only: task, class, model, provider, gateway, governance version, override/fallback and reason.
@@ -69,7 +74,7 @@ May execute read-only real-state dry-runs without spoofing.
 
 ## Decision engine
 
-The dashboard and dry-run API use the same routing engine as production. With identical normalized input, governance and effective system state, the result is deterministic and includes a stable Decision Hash. The hash changes only when the effective routing decision changes.
+The planned management layer exposes dashboard and dry-run functions over the same routing-decision library used by production integration. Neither LiteLLM nor CLIProxyAPI provides this contract natively. With identical normalized input, governance and effective system state, the custom decision result is deterministic and includes a stable Decision Hash. The hash changes only when the effective routing decision changes.
 
 ## Resilience
 

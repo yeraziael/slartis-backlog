@@ -10,7 +10,9 @@
 - Provider/account isolation across LiteLLM and CLIProxyAPI.
 - LiteLLM direct routing to Zen Free and Ollama.
 - LiteLLM-to-CLIProxyAPI forwarding for subscription/CLI/OAuth backends.
+- Explicit OpenCode model-ID mapping to LiteLLM model groups; tests must not assume automatic custom-provider discovery.
 - Sticky routing and sequential quota rollover end-to-end.
+- CLIProxyAPI `fill-first` configuration for sequential account use and stable affinity-key propagation across both hops.
 - Retry-After handling, exponential backoff, model-specific probe and automatic resume.
 - Classification challenge, conflict precedence and released-governance adoption.
 - Checkpoint commit and `Resolves-Checkpoint:` merge gates.
@@ -32,6 +34,8 @@ Playwright uses only the separate experiment containers and test endpoints. Vers
 - Unauthorized spoofing, provider management, backup and override operations fail closed.
 - Operator overrides never bypass fixed CPU/RAM limits or artifact isolation.
 - LiteLLM cannot access CLIProxyAPI-internal credentials; CLIProxyAPI cannot access LiteLLM Zen Free or Ollama credentials.
+- CLIProxyAPI binds only to the approved private network; plugins, control-panel download/update, cloaking, remote management and debug endpoints remain disabled.
+- Provider OAuth callback ports fail closed unless the tested provider contract explicitly enables that exact port.
 
 ## Admission tests
 

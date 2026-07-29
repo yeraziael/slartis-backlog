@@ -27,5 +27,9 @@
 - **CAP-D025 — LiteLLM frontdoor topology:** OpenCode connects exclusively to LiteLLM. LiteLLM is the sole configured provider endpoint. CLIProxyAPI is reachable only through LiteLLM and approved operator paths. LiteLLM routes directly to Zen Free and Ollama; CLI/OAuth/subscription traffic is forwarded to CLIProxyAPI.
 - **CAP-D026 — Independent gateway degraded modes:** LiteLLM and CLIProxyAPI may enter degraded mode independently. LiteLLM degraded blocks CLIProxyAPI routing but continues Zen Free and Ollama. CLIProxyAPI degraded blocks only subscription/OAuth backends.
 - **CAP-D027 — Gateway-layer credential isolation:** Each gateway (LiteLLM and CLIProxyAPI) holds credentials only for its own provider scope. No gateway receives credentials for the other gateway's providers. OpenCode clients receive only LiteLLM credentials.
+- **CAP-D028 — Governance-owned model policy:** Model classes, task mappings, free-model preference and fallback order come only from released governance. LiteLLM executes the resulting route; neither gateway embeds a competing model ladder.
+- **CAP-D029 — Secure CLIProxyAPI baseline:** Plugins, control-panel download/update, cloaking, remote management and debug endpoints are disabled by default. CLIProxyAPI binds only to the private LiteLLM service path. Every additional OAuth callback port requires an explicit provider-specific decision.
+- **CAP-D030 — Custom control functions:** Deterministic dry-run, Decision Hash, model-specific probes and the 250-entry cross-gateway audit ring are custom management-layer requirements, not assumed native LiteLLM or CLIProxyAPI features.
+- **CAP-D031 — Sequential pool strategy:** Approved subscription pools use CLIProxyAPI `fill-first` routing. End-to-end sticky routing requires one normalized affinity key preserved by LiteLLM and consumed by CLIProxyAPI.
 
 Open decisions remain listed in the canonical README.
