@@ -1,10 +1,10 @@
 # Decision Log
 
-- **CAP-D001 — Single gateway:** OpenCode uses only CLIProxyAPI; all provider traffic traverses it.
+- **CAP-D001 — Single gateway:** Superseded by CAP-D024. OpenCode uses one configured endpoint, but that endpoint is LiteLLM rather than CLIProxyAPI.
 - **CAP-D002 — Client topology:** Slarti and Lydia consume through OpenCode; workers are later scope.
 - **CAP-D003 — Sequential account consumption:** Prefer one account until exhausted, with sticky routing where required.
 - **CAP-D004 — Reset authority:** Provider reset metadata is authoritative; otherwise use jittered 1-minute to 6-hour exponential backoff and model-specific real probes.
-- **CAP-D005 — Classification authority:** OpenCode classifies first; CLIProxyAPI may challenge upward; Operator resolves disagreement.
+- **CAP-D005 — Classification authority:** Superseded in part by CAP-D024. OpenCode or an approved governance component classifies before gateway routing; CLIProxyAPI is not assumed to classify every task.
 - **CAP-D006 — Quality priority:** At equal suitability, quality outranks quota and cost.
 - **CAP-D007 — Released governance only:** Latest released compatible governance is active; running tasks switch only after a commit.
 - **CAP-D008 — Repository checkpoints:** Every model switch creates and commits `docs/checkpoints/<task-id>.md`; merge requires later resolution trailers.
@@ -23,5 +23,6 @@
 - **CAP-D021 — Dry-run protection:** Dry-runs do not extend idle lifetime and are rate, concurrency and resource bounded.
 - **CAP-D022 — Backup semantics:** Drain for up to 15 minutes; never abort a running request solely for backup; failed backup enters degraded mode.
 - **CAP-D023 — Governance locality:** Project-local model rules may move class up or down but cannot weaken security, secrets, authorization or audit.
+- **CAP-D024 — Gateway Scope Definition:** LiteLLM is the single model-provider endpoint configured in OpenCode and the policy-enforcement and routing frontdoor for the gateway chain. LiteLLM connects directly to OpenCode Zen Free, approved Ollama models and approved ordinary provider APIs. CLIProxyAPI remains a private downstream specialization for upstream-supported CLI/OAuth subscriptions, multiple subscription accounts and provider-specific sticky routing. CLIProxyAPI is not responsible for Zen Free or Ollama and is not exposed directly to OpenCode. End-to-end routing must preserve provider identity, authentication class, compliance state, quota semantics and session affinity. A subscription pool may not silently fail over to a chargeable API path without explicit released-governance authorization.
 
 Open decisions remain listed in the canonical README.
