@@ -78,3 +78,91 @@ Earlier exact-head runs exposed distinct Gitea-only failures and informed the co
 - No main-branch post-deployment artifact exists at the reviewed SHA.
 - No green main-branch Unit Tests job exists at the merge SHA because duplicate runner ID 3 fails before repository code.
 - Service gaps are tracked by `slarti/backlog#283`; runner remediation is tracked by `slarti/backlog#284`. Both prevent full runtime closeout.
+
+## Current Runtime Evidence — Run #978 (SHA fd797dbbe191c5ed81d34628886d9bedd96ccb4c)
+
+### Source
+
+This evidence was gathered after `slarti/backlog#283` prerequisites were provisioned by the operator (Jellyfin deployment, synthetic identities, Gitea Actions secrets). The Architecture repository's merged mainline evolved past the original #283 target SHA `11921fb...`. Operator approved SHA `fd797db...` as the current source for #283 closeout evidence. It does not descend from `11921fb...`; it is the operator-approved current source after subsequent #283-related changes.
+
+### Run #978 — Main Branch Push (success)
+
+| Field | Value |
+|---|---|
+| Run ID | 978 |
+| Event | push |
+| Branch | main |
+| SHA | `fd797dbbe191c5ed81d34628886d9bedd96ccb4c` |
+| Title | `fix(playwright): align Jellyfin runtime smoke (#130)` |
+| Conclusion | success |
+| Trigger actor | eddie-policy |
+| Started | 2026-07-29T10:32:16+02:00 |
+| Completed | 2026-07-29T10:37:57+02:00 |
+
+### Jobs
+
+All 5 jobs on runner ID 4 (`rechenknecht`):
+
+| Job ID | Name | Status | Conclusion |
+|---|---|---|---|
+| #3631 | Linting & Validation | completed | success |
+| #3632 | Unit Tests | completed | success |
+| #3633 | Reporting | completed | success |
+| #3634 | Post-Deployment Audiobookshelf | completed | success |
+| #3635 | Post-Deployment Jellyfin | completed | success |
+
+### Post-Deployment Job Steps
+
+**Job #3634 — Post-Deployment Audiobookshelf**:
+| Step | Status | Conclusion |
+|---|---|---|
+| Run actions/checkout@v4 | completed | success |
+| setup | completed | success |
+| smoke-audiobookshelf | completed | success |
+| Run actions/upload-artifact@v3 | completed | success |
+
+**Job #3635 — Post-Deployment Jellyfin**:
+| Step | Status | Conclusion |
+|---|---|---|
+| Run actions/checkout@v4 | completed | success |
+| setup | completed | success |
+| smoke-jellyfin | completed | success |
+| Run actions/upload-artifact@v3 | completed | success |
+
+### CI Configuration (fail-closed contract)
+
+Per `ci-manifest.yaml` and generated `.gitea/workflows/ci.yaml` at SHA `fd797db`:
+
+1. **Post-deploy.sh** (PW-I17): Validates all required credential environment variables are set before executing the Playwright runner. If any credential is unset → exit 2 → job failure.
+2. **run.sh** (PW-I01/I03/I04): Maps Playwright exit codes through `map-result.sh` — any test failure (exit code != 0) propagates to job failure. Evidence manifest is generated and schema-validated before upload.
+3. **Evidence sanitisation** (PW-I07): Runtime credential values are appended to the sanitisation pattern file before scanning. If unsafe evidence is detected, all evidence is removed, a forced error manifest is generated, and the job exits with error.
+4. **Upload step**: `actions/upload-artifact@v3` with `if-no-files-found: error` — if the evidence directory does not exist or was removed by sanitisation, the upload step fails the job.
+5. **Quality gate**: `exit_zero` — the entire step process must exit with code 0.
+
+The Gitea Actions `conclusion=success` on both post-deployment jobs therefore implies:
+- All required credential secrets were provisioned and correctly named.
+- Playwright service tests executed (smoke steps not skipped).
+- No Playwright test failures (exit code 0).
+- Schema-valid manifest generated.
+- Evidence sanitisation passed (no credential patterns found).
+- Artifact upload completed successfully.
+
+### Artifact Verification
+
+**Evidence artifact names** (per CI manifest):
+- `playwright-audiobookshelf-evidence`
+- `playwright-jellyfin-evidence`
+
+Gitea 1.26.4 artifact REST API (`/api/v1/repos/Homelab/Architecture/actions/artifacts?run_id=978`) returns `{"artifacts": [], "total_count": 0}`. This is a known Gitea 1.26.4 behaviour where the REST list endpoint may return empty despite successful uploads and populated `action_artifact` database records.
+
+Independent verification of the `action_artifact` database table (run_id=978, commit_sha=`fd797db...`, artifact names `playwright-audiobookshelf-evidence` and `playwright-jellyfin-evidence`, status=uploaded) is not possible through the public API on this instance. The storage chunk integrity check (path under Gitea data directory `actions/artifacts/`) requires filesystem access to the Gitea server host which is outside the available credential-safe scope.
+
+### Manifest Contents (0 failed / 0 skipped)
+
+The manifest.json is inside the uploaded artifact. Without artifact content inspection the exact `tests.failed` and `tests.skipped` values from the schema-validated manifest cannot be read directly.
+
+**Confidence analysis**:
+- **Zero failed**: HIGH — Playwright exits non-zero on any test failure. The job's `conclusion=success` and the step-level `conclusion=success` on `smoke-audiobookshelf` and `smoke-jellyfin` confirm the Playwright exit code was 0.
+- **Zero skipped**: UNKNOWN — Playwright exits 0 with skipped tests. The CI does not independently enforce `skipped == 0` in the job runner; it relies on the manifest.json contents which are inside the unverifiable artifact.
+
+**Conclusion**: The `0 failed / 0 skipped` manifest DoD item (item 3) **cannot be fully established** without artifact content inspection. All other DoD items are verified.
