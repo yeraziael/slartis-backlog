@@ -148,7 +148,7 @@ Configuration is managed through the Audiobookshelf web UI and stored in the SQL
 
 ## Audiobook Media Storage
 
-Audiobook media files live exclusively on the QNAP NAS. The Audiobookshelf container mounts them read-only via NFS. The media directory structure is defined by the NAS share layout, not by the Audiobookshelf container.
+Audiobook media files live exclusively on the QNAP NAS. The Audiobookshelf container mounts them read-only via NFS. Audiobookshelf defines the accepted layout and metadata in [ingest-contract.md](ingest-contract.md); Library Curator is the only publisher into those roots.
 
 ## Trust Boundaries
 

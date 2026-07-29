@@ -79,6 +79,7 @@ Audiobookshelf planning spans three repositories. Each has a distinct authority 
 | `operations.md` | Epic | Operational runbooks |
 | `decisions.md` | Epic | Decision register |
 | `references.md` | Epic | Cross-references to external documentation |
+| `ingest-contract.md` | Epic | Read-only consumer and Library Curator publication contract |
 
 ## Relationship to GitHub Issues
 
