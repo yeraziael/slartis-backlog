@@ -15,7 +15,7 @@ Requirement IDs are stable. Removal or semantic change requires an entry in `dec
 - **CAP-R010:** The gateway portfolio initially includes OpenCode Zen Free and approved Ollama models through LiteLLM, plus supported CLI/OAuth subscription providers through CLIProxyAPI. Ordinary API-key providers and Gemini may be added only after provider-specific compliance and compatibility approval.
 - **CAP-R011:** Multiple accounts, subscriptions or keys per provider are supported where the relevant downstream supports compliant pooling.
 - **CAP-R012:** Accounts are consumed sequentially: prefer one account until quota exhaustion, then select the next eligible account.
-- **CAP-R013:** Session-bound APIs use end-to-end sticky routing across LiteLLM and CLIProxyAPI.
+- **CAP-R013:** Session-bound multi-account routing is disabled until CAP-S01 verifies and versions an end-to-end affinity contract across LiteLLM and CLIProxyAPI. Without that contract, an approved provider uses one eligible account only or fails closed; no cross-account continuation is allowed.
 - **CAP-R014:** Provider `Retry-After` or reset metadata is authoritative.
 - **CAP-R015:** Without reset metadata, use jittered exponential backoff starting at one minute and capped at six hours.
 - **CAP-R016:** A probe is a real minimal request using exactly the model required by the waiting task. Success resets backoff to one minute and resumes the task automatically.

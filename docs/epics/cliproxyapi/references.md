@@ -43,7 +43,7 @@ Zen Free offers have no availability SLA and may be time-limited. Their use is a
 | Plugin system | Native in-process plugins can access process capabilities | Compliance blocker; disabled under CAP-D029 |
 | Control panel | Bundled management asset with update/download behavior | Compliance blocker; disabled under CAP-D029 |
 | Cloaking | Request-modification/cloaking functionality exists | Compliance blocker; disabled under CAP-D029 |
-| Routing | Multi-credential pools support strategies including `fill-first`; session affinity is configurable | CAP-D031 selects `fill-first` and requires normalized affinity propagation |
+| Routing | CLIProxyAPI documents pool strategies including `fill-first` and has affinity-related inputs; no reviewed source proves LiteLLM preserves a matching field end to end | Stateless `fill-first` only; CAP-S01 must establish or reject the version-bound end-to-end contract |
 | Retry behavior | Native retries, cooldown and quota switching exist | Exact 1-minute to 6-hour probe contract is custom CAP-I04 work |
 | Architecture support | Linux ARM64 artifacts/build path exist | Build feasibility confirmed; host suitability remains operator-gated CAP-X01 |
 
@@ -105,7 +105,7 @@ Issue #74 is superseded as an execution packet only after PR #131 merges and all
 | 22 | Management/plugin/debug audit | Completed; secure defaults decided | CAP-D029 |
 | 23 | API-key versus OAuth assessed per provider | Technical inventory complete, compliance open | CAP-X02 |
 | 24 | OpenCode internal endpoint tested | Runtime-gated | CAP-X03 |
-| 25 | Secure baseline defined | Completed as plan decision | CAP-D027, CAP-D029, CAP-D031 |
+| 25 | Secure baseline defined | Completed except affinity interface | CAP-D027, CAP-D029, CAP-D031, CAP-D032, CAP-S01 |
 | 26 | Go/No-Go and host selected | Operator-gated | CAP-X01 |
 
 ## Independent review disposition
@@ -121,6 +121,8 @@ Three read-only reviews were completed on PR #131 head `8635f78`: LiteLLM/OpenCo
 | Probe, dry-run and audit were implied native | CAP-D030 marks them custom implementation |
 | Plugin, control-panel, cloaking and remote management controls were incomplete | CAP-D029, operations and tests fail closed |
 | OpenCode custom-provider model discovery was assumed | Explicit mapping and drift test assigned to CAP-L03 |
+
+The Operator review on PR #131 head `ee15d9d` identified one further blocker: CAP-R013/CAP-D031 asserted normalized affinity propagation without a version-bound LiteLLM hook, transport schema and matching CLIProxyAPI behavior. CAP-D032 and CAP-S01 now make this an explicit pre-adapter spike. Stateful multi-account operation remains disabled until the spike is accepted.
 
 ## Verification rule
 

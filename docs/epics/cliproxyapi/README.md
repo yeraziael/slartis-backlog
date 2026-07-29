@@ -24,7 +24,7 @@ This directory is authoritative for requirements, architecture, governance contr
 | Experiment system | Reviewed | 100% |
 | Operations and backup | Reviewed | 100% |
 | Testing and evidence | Reviewed | 100% |
-| Execution backlog | 27 execution issues linked | 100% |
+| Execution backlog | 28 execution issues linked | 100% |
 | Independent review | Complete | 100% |
 | **Overall merged execution progress** | **Not started** | **0%** |
 
@@ -78,7 +78,7 @@ A task contributes 100% to overall execution progress only after implementation,
 
 ## Current next executable task
 
-After PR #131 merges, `CAP-G01` (#132), `CAP-L01` (#135) and `CAP-B01` (#140) are independently ready. Runtime, DNS and credential changes remain blocked by CAP-X01 through CAP-X04.
+After PR #131 merges, `CAP-G01` (#132), `CAP-L01` (#135) and `CAP-B01` (#140) are independently ready. CAP-S01 (#159) then blocks stateful multi-account routing until both upstreams are pinned and the affinity contract is proven or rejected. Runtime, DNS and credential changes remain blocked by CAP-X01 through CAP-X04.
 
 ## Open decisions
 

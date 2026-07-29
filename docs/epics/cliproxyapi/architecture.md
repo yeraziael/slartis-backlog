@@ -48,11 +48,15 @@ flowchart LR
 - Task classification is accepted, challenged upward or generated when absent.
 - LiteLLM routes directly for Zen Free and Ollama targets; subscription/CLI/OAuth-bound requests are forwarded to CLIProxyAPI.
 - OpenCode model IDs are explicitly mapped to LiteLLM model groups; automatic discovery is not assumed.
-- CLIProxyAPI uses `fill-first` routing where sequential account consumption is approved. End-to-end affinity keys are preserved across LiteLLM and CLIProxyAPI.
+- CLIProxyAPI may use `fill-first` for approved stateless pools. End-to-end affinity is not assumed: CAP-S01 must verify a version-bound LiteLLM hook, transport schema and CLIProxyAPI selection behavior before stateful multi-account routing is enabled.
 - Released global governance and approved project-local additions produce the candidate set.
 - Account state, quota, backoff, stickiness and quality metrics select provider, model and account at each gateway layer.
 - Routing audit records assignment metadata only: task, class, model, provider, gateway, governance version, override/fallback and reason.
 - Prompts, responses, secrets and account identifiers are not persisted by planning contract.
+
+## Affinity safety gate
+
+No canonical affinity header or metadata field is selected by this plan. Candidate fields and hooks are evidence for CAP-S01, not an interface contract. Until CAP-S01 completes, stateful providers are restricted to one eligible account per configured pool or fail closed. Losing an account must return an explicit retryable error; it must not continue the same session on another account or silently choose a paid fallback.
 
 ## Experiment control plane
 

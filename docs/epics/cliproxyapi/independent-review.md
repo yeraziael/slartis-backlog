@@ -37,4 +37,6 @@
 
 ## Verdict
 
-**APPROVABLE AFTER CAP-F01.** No architecture or security blocker remains in the planning baseline. Implementation and all runtime acceptance remain blocked by their explicit dependencies and Operator gates.
+The Operator review on head `ee15d9d` found that end-to-end affinity was asserted without a verified LiteLLM-to-CLIProxyAPI interface. The remediation adds CAP-D032 and CAP-S01, blocks CAP-L04 and CAP-I03, and requires stateful providers to remain single-account or fail closed until the contract is accepted.
+
+**APPROVABLE.** CAP-F01 was refreshed with CAP-S01 issue #159 and a new manifest hash. No known architecture or security blocker remains in the corrected planning baseline. Implementation and all runtime acceptance remain blocked by their explicit dependencies, CAP-S01 and Operator gates.

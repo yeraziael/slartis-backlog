@@ -30,6 +30,7 @@
 ## M3 — CLIProxyAPI downstream
 
 - Pin CLIProxyAPI image or reproducible build.
+- Complete CAP-S01 and accept a version-bound affinity contract or retain single-account/fail-closed stateful routing.
 - Deploy CLIProxyAPI as private downstream backend.
 - Implement provider/account isolation, credential management and CLI/OAuth authentication.
 - Implement sequential quota rollover and sticky routing within CLIProxyAPI.

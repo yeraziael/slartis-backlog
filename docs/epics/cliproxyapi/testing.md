@@ -12,7 +12,9 @@
 - LiteLLM-to-CLIProxyAPI forwarding for subscription/CLI/OAuth backends.
 - Explicit OpenCode model-ID mapping to LiteLLM model groups; tests must not assume automatic custom-provider discovery.
 - Sticky routing and sequential quota rollover end-to-end.
-- CLIProxyAPI `fill-first` configuration for sequential account use and stable affinity-key propagation across both hops.
+- CLIProxyAPI `fill-first` configuration for approved stateless sequential pools.
+- CAP-S01 contract tests for the exact version-bound LiteLLM hook, header/metadata schema and CLIProxyAPI account-selection behavior before any stateful multi-account test is enabled.
+- Negative tests proving stateful providers stay single-account or fail closed when affinity is missing, malformed, unsupported or lost.
 - Retry-After handling, exponential backoff, model-specific probe and automatic resume.
 - Classification challenge, conflict precedence and released-governance adoption.
 - Checkpoint commit and `Resolves-Checkpoint:` merge gates.

@@ -13,14 +13,15 @@
 | CAP-G02 | Implement pre-routing classification challenge and conflicts | CAP-G01 | Planned |
 | CAP-G03 | Implement checkpoint and commit-trailer validation | CAP-G01 | Planned |
 | CAP-L01 | Pin LiteLLM source, image and compatibility matrix | CAP-P02 | Planned |
+| CAP-S01 | Verify or reject end-to-end affinity contract | CAP-L01, CAP-B01 | Planned |
 | CAP-L02 | Prepare reproducible LiteLLM frontdoor deployment | CAP-L01, CAP-P02 | Planned |
 | CAP-L03 | Implement LiteLLM model map, client-key schema and Keycloak contract | CAP-L02, CAP-G01 | Planned |
-| CAP-L04 | Implement LiteLLM-to-CLIProxyAPI forwarding contract | CAP-L02 | Planned |
+| CAP-L04 | Implement LiteLLM-to-CLIProxyAPI forwarding contract | CAP-L02, CAP-S01 | Planned |
 | CAP-L05 | Implement LiteLLM routing audit and telemetry hooks | CAP-L03, CAP-G01 | Planned |
 | CAP-B01 | Pin CLIProxyAPI source, image and capability matrix | CAP-P02 | Planned |
 | CAP-I01 | Prepare hardened private CLIProxyAPI deployment | CAP-B01, CAP-P02 | Planned |
 | CAP-I02 | Implement provider/account schema and OAuth secret-mount contract | CAP-I01 | Planned |
-| CAP-I03 | Implement `fill-first` pools and end-to-end affinity | CAP-I02, CAP-G01 | Planned |
+| CAP-I03 | Implement approved pools and end-to-end affinity | CAP-I02, CAP-G01, CAP-S01 | Planned |
 | CAP-I04 | Implement bounded backoff and model-specific probe controller | CAP-I03 | Planned |
 | CAP-R01 | Implement deterministic decision library, dry-run and hash | CAP-L04, CAP-I03, CAP-G02 | Planned |
 | CAP-O01 | Implement cross-gateway audit ring and heuristic telemetry | CAP-L05, CAP-R01 | Planned |
@@ -93,6 +94,14 @@ Deliverable: dated primary-source capability matrix and exact source/image diges
 
 Acceptance: Zen API variants, Ollama, streaming, tools, model map, virtual keys, health/fallback and CLIProxyAPI forwarding are verified; mutable tags fail validation.
 
+### CAP-S01 — End-to-end affinity spike
+
+Deliverable: versions-bound decision packet that either defines or rejects the LiteLLM-to-CLIProxyAPI affinity interface.
+
+Acceptance: pin both upstream versions; identify the exact LiteLLM hook and forwarded header/metadata field; define a collision-resistant opaque value and privacy boundary; prove matching CLIProxyAPI account selection; specify missing/malformed/expired key, account exhaustion, retry, failover and paid-fallback behavior; add black-box contract tests; obtain independent architecture/security review. If any element cannot be proven, record No-Go and retain single-account/fail-closed behavior.
+
+Boundary: research, fixtures and isolated test topology only. No production subscriptions, credentials, ports or services.
+
 ### CAP-L02 — LiteLLM frontdoor preparation
 
 Deliverable: Compose/config artifacts for a private, reproducible LiteLLM service without deploying them.
@@ -109,7 +118,7 @@ Acceptance: no automatic model discovery is assumed; stale/missing aliases fail 
 
 Deliverable: LiteLLM model groups and transport mapping for private CLIProxyAPI ingress.
 
-Acceptance: backend identity/auth class/compliance metadata survive routing; no direct OpenCode URL exists; subscription exhaustion cannot reach a paid API fallback without governance approval.
+Acceptance: backend identity/auth class/compliance metadata survive routing; no direct OpenCode URL exists; the accepted CAP-S01 affinity contract is implemented exactly; subscription exhaustion cannot change accounts for a stateful session or reach a paid API fallback unless that behavior is explicitly authorized by the contract and governance.
 
 ### CAP-L05 — LiteLLM telemetry hooks
 
@@ -137,9 +146,9 @@ Acceptance: each provider records auth class, compliance status, ports and revoc
 
 ### CAP-I03 — Sequential pools and affinity
 
-Deliverable: `fill-first` pool config and normalized affinity-key mapping across LiteLLM and CLIProxyAPI.
+Deliverable: `fill-first` stateless pool config plus only the affinity mapping accepted by CAP-S01.
 
-Acceptance: same session stays on one eligible account, exhaustion moves to the next, unavailable account fails over, unrelated sessions cannot infer account identity.
+Acceptance: stateless exhaustion moves to the next eligible account; a stateful session stays on one account; loss of that account follows CAP-S01 fail-closed/failover semantics; unrelated sessions cannot infer account identity.
 
 ### CAP-I04 — Backoff and probe controller
 
