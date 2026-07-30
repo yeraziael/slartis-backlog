@@ -1,0 +1,37 @@
+manifest_version: v2
+project: arch
+repository: Homelab/Architecture
+canonical_pr: null
+base_commit: 08ee3f69af3445c58e72e9d74754a94dc4667412
+head_commit: cb8ed5e89bffa5183fa0f30adaeafe20fde8b8e2
+author: slarti
+change_request: yeraziael/slartis-backlog#165
+statistics:
+  files_changed: 1
+  insertions: 504
+  deletions: 0
+review_scope:
+  architecture: true
+  implementation: false
+  governance: false
+  security: false
+  compatibility: false
+  documentation: true
+integrity:
+  changeset_sha256: 1b7f3184362d008bc72a286e97e263107ee98c14d15fc2a2bb2543405c72ad0a
+generated:
+  timestamp: '2026-07-30T16:00:00+01:00'
+  tool: opencode/slarti
+review_verdict:
+  schema: acp.review-verdict.v2
+  reviewed_commit: cb8ed5e89bffa5183fa0f30adaeafe20fde8b8e2
+  review_type: self-verification
+  review_basis: pull-request
+  reviewer: slarti
+  verdict: consistency-verified
+  blocking_findings: []
+  remaining_followups:
+  - PR #139 in Homelab/Architecture (Gitea) was closed; canonical PR does not exist yet
+  - Verify bundle validation passes
+  supersedes_review: null
+  review_timestamp: '2026-07-30T16:00:00+01:00'

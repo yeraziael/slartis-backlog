@@ -1,0 +1,510 @@
+diff --git a/docs/architecture-decision-audit.md b/docs/architecture-decision-audit.md
+new file mode 100644
+index 0000000..8556231
+--- /dev/null
++++ b/docs/architecture-decision-audit.md
+@@ -0,0 +1,504 @@
++# Architecture Decision Audit — Issue #165
++
++**Audit date:** 2026-07-30
++**Repository:** `Homelab/Architecture`
++**Source:** `yeraziael/slartis-backlog#165`
++
++This document audits the Architecture repository against the 10 decision areas
++required before product selection and property-specific design can begin. Each
++area is rated, evidenced, gapped, and assigned a next action.
++
++---
++
++## 1. Capabilities / Scope
++
++**Status:** `partially resolved`
++
++**Evidence:**
++- `docs/ARCHITECTURE.md` — Two-plane design, physical nodes, data flow, dispatch
++  system, plugin system, messenger system. Documents what the system *does* but
++  not its *boundaries*.
++- `docs/SERVICES.md` — Lists active systemd services and dependencies.
++- `docs/PI_SERVICES.md` — Complete inventory of Docker services, their compose
++  files, and backup procedures.
++- `docs/adr/001-matrix-synapse-keycloak.md` through `docs/adr/005-discord-bridge.md` —
++  Per-bridge scope decisions (implement/defer/reject) for the Matrix ecosystem.
++- `docs/decisions/playwright/runner-bootstrap.md` — Defines the Playwright browser
++  platform scope (Chromium only, no Firefox/WebKit).
++- `docs/M3_GITOPS.md` — Documents the autonomous git operations capability.
++
++**Gap:** No single bounded scope document exists. The architecture describes what
++services exist but not what the system explicitly *excludes* or where its growth
++boundaries lie. The bridge ADRs are a good pattern (explicitly stating
++"implement", "defer", "do not implement") but this isn't applied to the overall
++system.
++
++**Blocks:** No — the scope is derivable from the service inventory. However,
++future scope creep lacks a defined escalation path.
++
++**Next:** Create a `CONTEXT.md` or `SCOPE.md` that lists what the Homelab does,
++what it explicitly does not do, and where the boundary between "Homelab" and
++"external service" lies.
++
++---
++
++## 2. Household Roles
++
++**Status:** `resolved`
++
++**Evidence:**
++- `docs/ARCHITECTURE.md` (lines 6–19) — Defines Slarti (Control Plane) and Lydia
++  (Execution Plane) with clear responsibilities.
++- `docs/matrix/identity-and-access.md` — Complete identity table with six
++  distinct identities: Operator, Break-glass admin, Lydia, Slarti, Vekling,
++  Gateway (bridges). Each has authentication method, room scope, token lifecycle,
++  and revocation owner.
++- `docs/SECURITY.md` (lines 30–34) — Token conventions per user.
++- `docs/keycloak-service-sso.md` — Operator procedures for linking identities
++  across services via OIDC.
++
++**Gap:** The "Operator" role is assumed but not formally defined elsewhere (is it
++always Michael? Are there secondary operators?). Family/household member roles
++are not distinguished from the Operator role.
++
++**Blocks:** No — the architectural roles (Control Plane, Execution Plane,
++service identities) are fully defined. Human role definition is a policy concern
++that can be deferred or handled elsewhere.
++
++**Next:** Consider documenting whether "Operator" is a single person or a role
++with deputies, and whether future household members (e.g., Francine, children)
++are Operator-level or limited-scope users.
++
++---
++
++## 3. Quality Priorities
++
++**Status:** `partially resolved`
++
++**Evidence:**
++- `docs/ARCHITECTURE.md` (lines 240–257) — Seven-layer safety architecture,
++  demonstrating security as implicit priority #1.
++- `docs/SECURITY.md` — Detailed safety layers, Git rules, escalation policies.
++- `docs/adr/001-matrix-synapse-keycloak.md` — Explicit trade-off: choosing
++  Synapse despite higher RAM consumption (500–800 MB vs 50–250 MB for Dendrite)
++  for the sake of feature completeness, documentation, and OIDC maturity.
++- `docs/decisions/playwright/` — Each decision includes "Consequences" and
++  "Alternatives Considered" sections that reveal trade-off reasoning.
++- `docs/HARDWARE_REQUIREMENTS.md` — Resource monitoring data that implicitly
++  prioritises stability (recommends 16 GB RAM, documents swap exhaustion as a
++  blocker).
++
++**Gap:** No explicit, ranked list of quality attribute priorities (e.g.,
++"security > maintainability > performance > cost"). Trade-offs are explained
++per-decision but not traceable back to a system-level quality contract.
++
++**Blocks:** No — existing decisions show consistent implicit priorities.
++However, a future product-selection decision with conflicting SEO attributes
++(e.g., lower-cost vs higher-security) has no tie-breaking rule.
++
++**Next:** Add a brief quality-attribute profile to `docs/ARCHITECTURE.md` or a
++new `docs/QUALITY.md` that ranks the top 3–5 quality priorities and documents
++the tie-breaking rule.
++
++---
++
++## 4. Resilience and Recovery
++
++**Status:** `resolved`
++
++**Evidence:**
++- `docs/SERVICES.md` (lines 83–107) — Restart procedures, crash recovery, after
++  plugin deployment, manual debug commands.
++- `docs/DEPLOYMENT.md` (lines 228–253) — Migration from old system with state
++  backup and restore.
++- `docs/PI_SERVICES.md` (lines 188–258) — Daily backup system with multiple
++  scripts, rotation strategy, documented stale-sync warning for rechenknecht.
++- `docs/matrix/runbook.md` — Complete runbook for start, stop, health
++  verification, upgrade, rollback, restore, credential rotation, emergency
++  isolation, and external fallback.
++- `docs/matrix/security-and-retention.md` (lines 79–94) — Incident response,
++  backup and credential exposure procedures.
++- `docs/matrix/storage-and-retention.md` (lines 157–198) — Full restore-input
++  inventory (R1–R6) with restore order and backup artifact list.
++- `docs/releases/matrix-profile-v1.md` — Release contract with rollback
++  classification (config-only, application-compatible, database-migration,
++  restore-required).
++
++**Gap:** Resilience is thoroughly documented for the Matrix stack. Core Pi
++services (Paperless, Gitea, Calibre-Web) have backup scripts but no formal
++rollback/restore test evidence in the repository. The "stale backup sync to
++rechenknecht" issue is acknowledged but unresolved (PI_SERVICES.md line 248).
++
++**Blocks:** No — the Matrix stack recovery evidence is a model for other
++services to follow. The core services gap is operational risk but not an
++architecture blocker.
++
++**Next:** Extend the release-profile pattern from Matrix to at least the
++Paperless and Gitea services, including a documented restore test.
++
++---
++
++## 5. Threat and Access Model
++
++**Status:** `partially resolved`
++
++**Evidence:**
++- `docs/SECURITY.md` — Token management, 7-layer safety architecture, Git safety
++  rules, escalation policies, known gotchas.
++- `docs/matrix/identity-and-access.md` — Detailed identity model with
++  authentication methods, token lifecycle, revocation procedures, enforcement
++  controls, and the hard constraint "no service account is granted server-admin
++  scope."
++- `docs/matrix/security-and-retention.md` — Registration policy, TLS/network
++  boundary, resource/abuse limits, retention and privacy, logging/redaction
++  rules, backup/incident response, and a full Threat-To-Control Matrix (RISK-01
++  through RISK-07).
++- `docs/keycloak-service-sso.md` — Token-preservation contract for OIDC migration.
++
++**Gap:** The threat model is comprehensive for Matrix but partial for the wider
++system. There is no documented threat model for:
++- The NAS (YeraNAS) — old QTS OS, SSH with password auth, wide-open NFS exports
++  (though restricted to 2 hosts).
++- The Pi's Docker attack surface beyond Matrix.
++- Physical access threats to rechenknecht or YeraNAS.
++- Supply chain threats (pinned images help, but no audit trail for upstream
++  compromise of pinned artifacts).
++
++**Blocks:** No — the Matrix security model is a template. The NAS and Pi
++container threats are real but part of the existing design and not unique to
++product selection.
++
++**Next:** Extend the Threat-To-Control Matrix pattern from Matrix to the overall
++system, covering at least the NAS, Pi Docker hosts, and the inter-node network.
++
++---
++
++## 6. Data Ownership and Lifecycle
++
++**Status:** `partially resolved`
++
++**Evidence:**
++- `docs/STORAGE.md` — Overview of three-node storage, capacity plan, backup
++  strategy, NFS export details. Backup strategy has gaps marked "Unknown."
++- `docs/PI_SERVICES.md` (lines 188–258) — Detailed backup scripts for Paperless,
++  PaperlessFrancine, Gitea, Keycloak. Rotation strategies (2-version for
++  Paperless, 7-day for Gitea).
++- `docs/matrix/storage-and-retention.md` — Comprehensive volume inventory,
++  retention policy per category, growth alarms and thresholds, owner matrix,
++  restore inputs.
++- `docs/QNAP_TS559_PRO_II.md` — Storage configuration with 89% capacity usage
++  identified as HIGH risk.
++
++**Gap:** No data lifecycle policy for the overall system:
++- What data is critical vs. disposable?
++- What is the archival policy for old data?
++- Who is the data owner for each category?
++- When is data deleted and under what conditions?
++- The backup strategy in STORAGE.md marks several items as "Unknown" (e.g.,
++  Gitea repos backup target).
++- No single "data catalogue" document exists.
++
++**Blocks:** No — individual services have adequate backup. The lifecycle gap
++becomes a blocker only when data grows beyond the NAS capacity (89% today).
++
++**Next:** Create a data catalogue that maps data categories to owner, retention,
++backup method, and deletion policy. Resolve the "Unknown" entries in STORAGE.md.
++
++---
++
++## 7. Overall Architecture Shape
++
++**Status:** `resolved`
++
++**Evidence:**
++- `docs/ARCHITECTURE.md` — Complete architectural description: two-plane design,
++  three physical nodes (rechenknecht, Pi5, YeraNAS), data flow diagram, dispatch
++  system, plugin system, worker system, GitOps system, safety layers, state
++  files, messenger system, observability, directory layout, system interaction.
++- `docs/NETWORK.md` — Network topology diagram, node inventory with IPs, network
++  services table, gateway/DNS info.
++- `docs/HARDWARE.md` — Current system specs, GPU details, migration targets,
++  storage layout, verification commands.
++- `docs/PI_SERVICES.md` — Detailed Docker architecture diagram with running
++  containers, compose file inventory, volume list.
++- `docs/STORAGE.md` — Visual storage layout across all three nodes.
++
++**Gap:** Minor — the architecture does not explicitly document which concerns
++are deferred to later phases (a "deferred decisions register").
++
++**Blocks:** No.
++
++**Next:** Add a "Deferred Decisions" section to `docs/ARCHITECTURE.md` listing
++concerns explicitly excluded from the current architecture (e.g., property-
++specific cabling, room-level device placement, product selection).
++
++---
++
++## 8. Subsystem Boundaries and Contracts
++
++**Status:** `partially resolved`
++
++**Evidence:**
++- `docs/ARCHITECTURE.md` (lines 93–166) — Dispatch system with pattern→handler
++  registration, plugin auto-loading, handler signature convention.
++- `docs/ARCHITECTURE.md` (lines 168–230) — Worker system with GPU lock, Ollama
++  models, GitOps system with conflict resolution.
++- `docs/adr/006-approved-service-release-handoff.md` — Formal release contract:
++  CI emits SHA-bound request → operator approves → Lydia deploys → evidence
++  published.
++- `docs/service-release-contract.md` — Service lifecycle from PR CI through
++  operator approval to post-deployment smoke tests. Schema-validated JSON
++  request/result contracts.
++- `docs/decisions/playwright/evidence-provenance.md` — Extremely detailed
++  contract for manifest v1, trusted input envelope, runtime provenance, schema
++  evolution.
++- `docs/decisions/playwright/runner-bootstrap.md` — Complete Docker invocation
++  contract with every argument pinned.
++- `docs/matrix/proxy.md`, `docs/matrix/keycloak-oidc.md`, `docs/matrix/element.md` —
++  Per-component contracts specifying network, proxy, auth, and deployment
++  boundaries.
++
++**Gap:** Contracts are very strong for:
++- The Playwright test platform (pinned images, argument-for-argument contracts)
++- Service releases (formal handoff with schema validation)
++- Matrix components (per-service runbooks)
++
++Contracts are implicit or absent for:
++- The NAS interface: what exactly does the architecture expect from YeraNAS?
++  NFS is documented at the protocol level but no SLA or contract.
++- Inter-agent communication: Slarti ↔ Lydia communication is described but not
++  formally contracted (e.g., message schema, retry policy, timeout).
++- Plugin API: the handler signature is documented but no formal plugin API
++  version or compatibility contract.
++
++**Blocks:** No — existing contracts are sufficient for the current operational
++scale. The contract gap becomes a blocker only when third-party or external
++developers need to integrate.
++
++**Next:** Formalise the plugin API contract and add a versioning scheme.
++Document the NAS service-level expectation (minimum throughput, maximum
++latency, availability target).
++
++---
++
++## 9. Property-Adaptation Method
++
++**Status:** `not found`
++
++**Evidence:** No document in the repository discusses how the architecture is
++adapted to the physical property (room layout, wall construction, cable routes,
++floor plans, equipment placement). The hardware locations (rechenknecht in
++office/serverspace, Pi5 near router, YeraNAS in utility room) are stated as
++facts in `docs/HARDWARE.md` and `docs/NETWORK.md` but the *method* for adapting
++architecture to property constraints is not documented.
++
++**Gap:** This is the single largest gap in the architecture documentation. The
++entire Homelab exists inside a physical building, yet there is:
++- No documented process for incorporating property constraints into
++  architecture decisions.
++- No evidence that the current placement was evaluated against alternatives.
++- No method for deciding where future devices should be placed.
++- No consideration of construction-material impact on WiFi, cable routes, or
++  heat dissipation.
++- No way to distinguish between "this is where the device happens to be" and
++  "this location was chosen for these architectural reasons."
++
++**Blocks:** **YES.** Until the property-adaptation method is defined, any
++product-selection decision (e.g., "which access point?") or property-specific
++design (e.g., "where do I run the cable?") has no architectural framework to
++constrain it. Products could be selected without understanding whether they fit
++the property's constraints.
++
++**Next:** Create a `docs/PROPERTY-ADAPTATION.md` (or fold into a living
++architecture document) that defines:
++1. How property constraints enter architecture decisions (e.g., a property-
++   context document that gets updated when physical conditions change).
++2. Which decisions are property-dependent vs. property-independent.
++3. A method for resolving architecture × property conflicts (e.g., "device
++   needs X, but wall material prevents Y → trade-off rule Z").
++4. How to defer property-specific details without blocking architecture work.
++
++---
++
++## 10. Validation Criteria
++
++**Status:** `partially resolved`
++
++**Evidence:**
++- `docs/matrix/poc-plan.md` (lines 178–349) — Complete G1–G4 pass/fail budgets
++  with expected values, budgets, and measurement commands. Operator blackbox
++  procedure with explicit pass/fail decision.
++- `docs/decisions/playwright/evidence-provenance.md` — Manifest validation
++  contract (schema, invariants, result precedence).
++- `docs/decisions/playwright/artifact-security.md` — Sanitisation gate, bundle
++  validation, negative coverage tests.
++- `docs/decisions/playwright/runner-bootstrap.md` — PW-I01 verification contract
++  with 7 categories of mandatory tests.
++- `docs/service-release-contract.md` — Schema-validated JSON handoff with
++  state machine (awaiting_operator_approval, blocked_inactive_services,
++  no_service_changes).
++- `docs/matrix/primary-channel-declaration.md` — 8 explicit preconditions
++  (checklist-style) before Matrix can become primary internal channel.
++- `docs/releases/matrix-profile-v1.md` — Release contract with backup/restore
++  evidence requirements and smoke-test contract.
++
++**Gap:** Validation criteria exist at the *component/project level* (Matrix PoC,
++Playwright pipeline, service releases) but not at the *architecture level*:
++- How do we know the overall architecture is "good enough" to proceed to
++  product selection?
++- What is the minimum set of documented decisions required before property-
++  specific design begins?
++- There is no architecture-level acceptance test, review gate, or sign-off
++  procedure.
++- The Matrix pattern (G1–G4 budgets) is excellent but confined to one subsystem.
++
++**Blocks:** Only indirectly — the matrix PoC criteria show the right pattern,
++and the release contracts show good component-level validation. But the absence
++of architecture-level validation means there is no formal way to declare
++"architecture is complete enough for product selection." This blocks the
++transition from architecture phase to product-selection phase.
++
++**Next:** Define a lightweight architecture validation framework that:
++1. Lists the minimum set of resolved decision areas (this document can serve
++   as a starting point).
++2. Defines a go/no-go gate for moving to product selection.
++3. Specifies how architecture validation results are recorded and reviewed.
++4. Borrows the G1–G4 pass/fail pattern from the Matrix PoC plan.
++
++---
++
++## Cross-Cutting Questions
++
++### How do known household/property facts influence the architecture?
++
++**Status:** `not found`
++
++There is no mechanism, section, or process in the repository that describes how
++property facts (room dimensions, wall construction, cable availability, power
++outlet placement, climate/temperature zones) influence architectural decisions.
++The current node locations appear as assertions in `docs/HARDWARE.md` without
++a rationale that ties them to property constraints.
++
++### How do product, placement, room-level, and construction details remain deferred?
++
++**Status:** `partially resolved`
++
++The ADR-based decision process shows a clear pattern for deferral:
++- ADR-004 (Twitter/X Bridge) explicitly defers with a re-evaluation trigger.
++- ADR-005 (Discord Bridge) explicitly rejects with a "do not implement" status.
++- Playwright decisions (PW-D01 through PW-D06) define what is *in scope* and
++  what is *deferred* in each decision.
++
++However, this pattern is not applied systematically. There is no "deferred
++decisions register" or explicit statement that "product selection, placement,
++cabling, and construction details are out of scope for this architecture
++phase." This makes it hard to tell whether a missing decision is genuinely
++deferred or simply undocumented.
++
++### What evidence proves the architecture is good enough before product selection and property-specific design begin?
++
++**Status:** `not found`
++
++No document defines what "good enough" means at the architecture level. While
++individual subsystems have validation criteria (Matrix PoC gates, Playwright
++evidence contracts, service-release schema validation), there is no:
++- Architecture completeness checklist.
++- Sign-off procedure for the architecture phase.
++- Criteria for declaring the architecture ready for product selection.
++- Mechanism to prevent premature product selection with unresolved
++  architectural constraints.
++
++---
++
++## Summary of Unresolved Architecture Decisions
++
++The following decisions are genuinely unresolved (not missing documentation of
++an existing decision):
++
++1. **NAS replacement strategy** — YeraNAS is at 89% capacity, running outdated
++   QTS 4.2.6, with 1 GB RAM and aging drives. The architecture documents the
++   risk (`docs/QNAP_TS559_PRO_II.md`) but has no decided replacement timeline,
++   architecture for a new NAS, or migration path.
++
++2. **Primary internal channel activation** — Matrix is proposed as the primary
++   internal communication channel (`docs/matrix/primary-channel-declaration.md`)
++   but is blocked on 8 preconditions (#238 Parallelbetrieb, #239 runbook, #234
++   monitoring, #235 backup/restore test, #236 hardening, #237 CI/CD, #241
++   release profile, #240 operator sign-off).
++
++3. **Property-adaptation methodology** — The architecture has no decided method
++   for incorporating physical property constraints into design decisions. This
++   is a resolved *gap* but an unresolved *decision* about how to fill it.
++
++4. **Architecture validation gate** — No decision has been made about what
++   constitutes "architecture complete" or how to transition from architecture
++   to product selection.
++
++---
++
++## Documentation Gaps (Decision Exists but Not Recorded Clearly)
++
++1. **Quality attribute priorities** — The architecture consistently prioritises
++   security and resilience but has no written priority ranking.
++
++2. **Data lifecycle policy** — Individual services have backup practices but
++   there is no system-wide data catalogue with ownership, retention, and
++   deletion rules.
++
++3. **Deferred decisions register** — Several concerns are intentionally deferred
++   (product selection, cabling, placement) but no single document lists them.
++
++4. **Threat model beyond Matrix** — The Matrix Threat-To-Control Matrix
++   (RISK-01 through RISK-07) is excellent but has no counterpart for the NAS,
++   Pi host, rechenknecht compute node, or inter-node network.
++
++5. **Service resilience for core services** — Paperless, Gitea, and Calibre-Web
++   have backup scripts but no formal restore test or rollback contract
++   comparable to the Matrix release profile.
++
++6. **NAS service-level contract** — The architecture depends on YeraNAS for NFS
++   storage but has no documented availability, throughput, or latency
++   expectations.
++
++---
++
++## Go/No-Go Verdict
++
++**Verdict: NO-GO for product selection and property-specific design.**
++
++**Rationale:**
++
++The architecture has a strong foundation:
++- Architecture shape (7), household roles (2), resilience/recovery (4), and
++  system-wide contracts (8 for key subsystems) are well documented.
++
++However, these critical blockers remain:
++
++1. **Property-adaptation method (9)** is entirely absent. Without it, any
++   product selection (access points, IoT devices, media equipment) or property-
++   specific design (cable routing, device placement, construction planning)
++   lacks an architectural framework. Products could be selected that are
++   incompatible with the property's constraints, and there is no documented
++   process to prevent this.
++
++2. **Architecture validation criteria (10)** are absent at the system level.
++   There is no definition of "architecture complete" and no gate to prevent
++   premature transition to product selection.
++
++3. **Data lifecycle (6)** gaps (89% NAS capacity, stale backups, missing data
++   ownership) create real operational risk that must be resolved before
++   expanding the system with new products.
++
++**Recommended sequence:**
++
++| Phase | Action | Criteria |
++|-------|--------|----------|
++| **Phase A** (immediate) | Define property-adaptation method | Document `docs/PROPERTY-ADAPTATION.md` with decision framework |
++| **Phase B** (immediate) | Define architecture validation criteria | Document gate criteria in `docs/ARCHITECTURE.md` or `docs/governance/` |
++| **Phase C** (next) | Create system-wide data catalogue | Resolve "Unknown" backup targets, set retention policies |
++| **Phase D** (next) | Build threat model for NAS and Pi | Extend Matrix Threat-To-Control Matrix pattern to all nodes |
++| **Phase E** (after A+B) | Re-evaluate go/no-go | All of A+B resolved → **GO for product selection** |
++
++**Note:** Phase A and B are documentation-only changes and do not require
++product selection, hardware purchase, or property access. They can be completed
++in the current architecture phase without blocking ongoing operations.
