@@ -12,14 +12,14 @@
 | CAP-G01 | Define released governance schema and local override model | CAP-P02 | Planned |
 | CAP-G02 | Implement pre-routing classification challenge and conflicts | CAP-G01 | Planned |
 | CAP-G03 | Implement checkpoint and commit-trailer validation | CAP-G01 | Planned |
-| CAP-L01 | Pin LiteLLM source, image and compatibility matrix | CAP-P02 | Planned |
+| CAP-L01 | Pin LiteLLM source, image and compatibility matrix | CAP-P02 | Implemented in code |
 | CAP-S01 | Verify or reject end-to-end affinity contract | CAP-L01, CAP-B01 | Planned |
-| CAP-L02 | Prepare reproducible LiteLLM frontdoor deployment | CAP-L01, CAP-P02 | Planned |
+| CAP-L02 | Prepare reproducible LiteLLM frontdoor deployment | CAP-L01, CAP-P02 | Implemented in code |
 | CAP-L03 | Implement LiteLLM model map, client-key schema and Keycloak contract | CAP-L02, CAP-G01 | Planned |
 | CAP-L04 | Implement LiteLLM-to-CLIProxyAPI forwarding contract | CAP-L02, CAP-S01 | Planned |
 | CAP-L05 | Implement LiteLLM routing audit and telemetry hooks | CAP-L03, CAP-G01 | Planned |
-| CAP-B01 | Pin CLIProxyAPI source, image and capability matrix | CAP-P02 | Planned |
-| CAP-I01 | Prepare hardened private CLIProxyAPI deployment | CAP-B01, CAP-P02 | Planned |
+| CAP-B01 | Pin CLIProxyAPI source, image and capability matrix | CAP-P02 | Implemented in code |
+| CAP-I01 | Prepare hardened private CLIProxyAPI deployment | CAP-B01, CAP-P02 | Implemented in code |
 | CAP-I02 | Implement provider/account schema and OAuth secret-mount contract | CAP-I01 | Planned |
 | CAP-I03 | Implement approved pools and end-to-end affinity | CAP-I02, CAP-G01, CAP-S01 | Planned |
 | CAP-I04 | Implement bounded backoff and model-specific probe controller | CAP-I03 | Planned |

@@ -15,15 +15,15 @@ workstreams:
   - {id: CAP-G01, title: Define governance schema, status: planned, depends_on: [CAP-P02], issue: 132}
   - {id: CAP-G02, title: Implement classification challenge, status: planned, depends_on: [CAP-G01], issue: 133}
   - {id: CAP-G03, title: Implement checkpoint and trailer gates, status: planned, depends_on: [CAP-G01], issue: 134}
-  - {id: CAP-L01, title: Pin LiteLLM, status: planned, depends_on: [CAP-P02], issue: 135}
+  - {id: CAP-L01, title: Pin LiteLLM, status: implemented_in_code, depends_on: [CAP-P02], issue: 135}
   - {id: CAP-S01, title: Verify or reject end-to-end affinity contract, status: planned, depends_on: [CAP-L01, CAP-B01], issue: 159}
-  - {id: CAP-L02, title: Prepare LiteLLM frontdoor deployment, status: planned, depends_on: [CAP-L01, CAP-P02], issue: 136}
+  - {id: CAP-L02, title: Prepare LiteLLM frontdoor deployment, status: implemented_in_code, depends_on: [CAP-L01, CAP-P02], issue: 136}
   - {id: CAP-L03, title: Implement LiteLLM model and client contract, status: planned, depends_on: [CAP-L02, CAP-G01], issue: 137}
   - {id: CAP-L04, title: Implement CLIProxyAPI downstream adapter, status: planned, depends_on: [CAP-L02, CAP-S01], issue: 138}
   - {id: CAP-L05, title: Implement LiteLLM telemetry hooks, status: planned, depends_on: [CAP-L03, CAP-G01], issue: 139}
-  - {id: CAP-B01, title: Pin CLIProxyAPI, status: planned, depends_on: [CAP-P02], issue: 140}
-  - {id: CAP-I01, title: Prepare hardened CLIProxyAPI deployment, status: planned, depends_on: [CAP-B01, CAP-P02], issue: 141}
-  - {id: CAP-I02, title: Implement provider and account contract, status: planned, depends_on: [CAP-I01], issue: 142}
+  - {id: CAP-B01, title: Pin CLIProxyAPI, status: implemented_in_code, depends_on: [CAP-P02], issue: 140}
+  - {id: CAP-I01, title: Prepare hardened CLIProxyAPI deployment, status: implemented_in_code, depends_on: [CAP-B01, CAP-P02], issue: 141}
+  - {id: CAP-I02, title: Implement provider and account contract, status: planned, depends_on: [CAP-I01], issue: 300}
   - {id: CAP-I03, title: Implement approved pools and affinity, status: planned, depends_on: [CAP-I02, CAP-G01, CAP-S01], issue: 143}
   - {id: CAP-I04, title: Implement backoff and probe controller, status: planned, depends_on: [CAP-I03], issue: 144}
   - {id: CAP-R01, title: Implement deterministic decision library, status: planned, depends_on: [CAP-L04, CAP-I03, CAP-G02], issue: 145}
